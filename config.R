@@ -1,5 +1,6 @@
 library(tidyverse)
 library(devtools)
+options(stringsAsFactors = FALSE)
 devtools::install_github("patelm9/mirroR")
 devtools::install_github("patelm9/caterpillaR")
 devtools::install_github("patelm9/somersaulteR")
@@ -10,14 +11,16 @@ devtools::install_github("patelm9/typewriteR")
 source("./R/open_metamorphysis.R")
 
 ##Settings
-subdir_names <- c("INPUT", "OUTPUT")
-input_dir_names <- "INPUT"
-output_dir_names <- c("OUTPUT", "R")
+subdir_names <- c("INPUT", "OUTPUT", "UMLS", "UMLS/OUTPUT")
+input_dir_names <- c("INPUT")
+output_dir_names <- c("OUTPUT")
+other_dir_names  <- c("R", "UMLS", "UMLS/OUTPUT")
 
 
 ##Creating Directory Tree
 projektoR::setup_project_dirtree(input_dir_names = input_dir_names,
-                                 output_dir_names = output_dir_names)
+                                 output_dir_names = output_dir_names,
+                                 )
 
 
 ##Creating Logs

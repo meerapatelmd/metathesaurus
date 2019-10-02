@@ -1,6 +1,9 @@
 
 open_metamorphysis <-
-        function() {
-                system("UMLS/01_2019AA_INPUT/run_mac.sh")
+        function(path_to_mmsys) {
+                command <- mirroR::create_path_to_file(path_to_mmsys,
+                                                       "run_mac.sh"
+                                                       )
+                system(command)
         }
 
