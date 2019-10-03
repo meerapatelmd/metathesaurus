@@ -1,10 +1,13 @@
 ##Settings
 PROJECT_ROADMAP_ID          <- "1"
-PROJECT_ROADMAP_ID_COMMENT <- "Instantiating UMLS vocabulary from MetaMorphoSys using open_metamorphysis() and whole_enchilada.props configuration file because batch run method was throwing errors."
+PROJECT_ROADMAP_ID_STATUS <- "Completed"
+PROJECT_ROADMAP_ID_STATUS_COMMENT <- "All NET tables using shell script written my Metamorphysis and the custom shell script I wrote to load only the tables used in OMOP Vocabulary 5.0. UMLS LEX/ was not loaded into any tables."
 
 ##Preparation
-somersaulteR::mutate_new_cols_if_not_exist(PROJECT_ROADMAP, "PROJECT_ROADMAP_ID_COMMENT")
-somersaulteR::append_dataframe_if_new_obs(PROJECT_ROADMAP, "PROJECT_ROADMAP_ID", "PROJECT_ROADMAP_ID_COMMENT", PROJECT_ROADMAP_TIMESTAMP)
+somersaulteR::mutate_new_cols_if_not_exist(PROJECT_ROADMAP, "PROJECT_ROADMAP_ID_STATUS")
+somersaulteR::mutate_new_cols_if_not_exist(PROJECT_ROADMAP, "PROJECT_ROADMAP_ID_STATUS_COMMENT")
+somersaulteR::append_dataframe_if_new_obs(PROJECT_ROADMAP, "PROJECT_ROADMAP_ID", "PROJECT_ROADMAP_ID_STATUS", PROJECT_ROADMAP_TIMESTAMP)
+somersaulteR::append_dataframe_if_new_obs(PROJECT_ROADMAP, "PROJECT_ROADMAP_ID", "PROJECT_ROADMAP_ID_STATUS_COMMENT", PROJECT_ROADMAP_TIMESTAMP)
 mirroR::save_robj(PROJECT_ROADMAP)
 
 

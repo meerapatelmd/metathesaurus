@@ -7,11 +7,12 @@ devtools::install_github("patelm9/somersaulteR")
 devtools::install_github("patelm9/projektoR")
 devtools::install_github("patelm9/projectloggeR")
 devtools::install_github("patelm9/typewriteR")
+devtools::install_github("patelm9/mySeagull")
 
 source("./R/open_metamorphysis.R")
 
 ##Settings
-subdir_names <- c("INPUT", "OUTPUT", "UMLS", "UMLS/OUTPUT")
+subdir_names <- c("INPUT", "OUTPUT", "UMLS", "UMLS/OUTPUT", "R")
 input_dir_names <- c("INPUT")
 output_dir_names <- c("OUTPUT")
 other_dir_names  <- c("R", "UMLS", "UMLS/OUTPUT")
@@ -20,12 +21,11 @@ other_dir_names  <- c("R", "UMLS", "UMLS/OUTPUT")
 ##Creating Directory Tree
 projektoR::setup_project_dirtree(input_dir_names = input_dir_names,
                                  output_dir_names = output_dir_names,
-                                 )
+                                 other_dir_names = other_dir_names)
 
 
 ##Creating Logs
-projectloggeR::instantiate_project_log(subdir_names = subdir_names)
-
+projectloggeR::instantiate_project_log(dirs_to_log = c(input_dir_names, output_dir_names))
 
 ##Checklist
 ## A. Instantiate UMLS from OHDSI git repo
@@ -50,14 +50,14 @@ PROJECT_ROADMAP <-
                         ),
                 data.frame(
                         STEP_NUMBER = 3,
-                        STEP_LABEL  = c("Execute mapping strategy") 
+                        STEP_LABEL  = c("Execute mapping strategy")
                 )
         ) %>%
         somersaulteR::add_primary_key("PROJECT_ROADMAP_ID") %>%
         somersaulteR::add_timestamp_column("PROJECT_ROADMAP_TIMESTAMP")
-        
+
 if (!(file.exists("PROJECT_ROADMAP.RData"))) {
         saveRDS(PROJECT_ROADMAP, "PROJECT_ROADMAP.RData")
 } else {
         PROJECT_ROADMAP <- readRDS("PROJECT_ROADMAP.RData")
-}       
+}

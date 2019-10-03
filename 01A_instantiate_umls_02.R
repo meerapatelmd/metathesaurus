@@ -1,15 +1,20 @@
 ##Settings
-## After executing UMLS Metathesaurus, the following were copied from UMLS to INPUT/NEW:
+## Metamorphosys saves output to the UMLS/OUTPUT/{version}/ Directory. MySQL scripts for the NET subdir are executed, but MySQL scripts are not
+## available for the META or LEX outputs and need to be generated in-house. For this iteration the following RRF files are chosen to populate
+## our mySQL umls database in their respective tables because these are the files used for OMOP Vocabulary 5.0:
 ##      MRCONSO.RRF
 ##      MRHIER.RRF
 ##      MRMAP.RRF
 ##      MRSMAP.RRF
 ##      MRSAT.RRF
 ##      MRREL.RRF
+## shell/mysql_meta_tables.sql was forked from the load_source_tables.sql found at https://github.com/patelm9/Vocabulary-v5.0/tree/master/UMLS
+## and the LOAD DATA INTO... statements were added to populate the tables. The following script will create new LOAD DATA INTO statements if
+## additional tables/rrfs are desired in the umls database in the future. However, the CREATE TABLE functions would still need to be written
+## to mysql_meta_tables.sql
 
 ##Settings
-path_to_mmys_output <- "./UMLS/OUTPUT/2019AA/META"
-target_filenames    <- c("MRCONSO.RRF",
+target_rrf_files <- c("MRCONSO.RRF",
                          "MRHIER.RRF",
                          "MRMAP.RRF",
                          "MRSMAP.RRF",
@@ -17,9 +22,15 @@ target_filenames    <- c("MRCONSO.RRF",
                          "MRREL.RRF"
 )
 
-destination_path <- "./INPUT/NEW"
+##Getting tablenames from rrf filenames
+target_tablenames <- mirroR::strip_fn(target_rrf_files)
+current_tablenames <- mySeagull::get_tables("umls")
+if (length(caterpillaR::diff_between_vectors(target_tablenames, current_tablenames))) {
+        typewriteR::tell_me("The following tables need to be written:")
+        typewriteR::tell_me("\t", caterpillaR::diff_between_vectors(target_tablenames, current_tablenames))
+}
 
-full_filenames <- mirroR::create_path_to_file(path_to_mmys_output, target_filenames)
-new_full_filenames <- mirroR::create_path_to_file(destination_path, target_filenames)
+rm(target_tablenames, current_tablenames, target_rrf_files)
 
-mapply(file.copy, full_filenames, new_full_filenames)
+
+
