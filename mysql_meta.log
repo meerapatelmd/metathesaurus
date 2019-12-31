@@ -1,0 +1,11 @@
+----------------------------------------
+Starting ... Tue Dec 31 16:58:21 EST 2019
+----------------------------------------
+MYSQL_HOME = /opt/local/lib/mysql55
+user =       root
+db_name =    umls
+    Create and load tables ... Tue Dec 31 16:58:21 EST 2019
+----------------------------------------
+There were one or more errors.  Please reference the mysql_meta.log file for details.
+Finished ... Tue Dec 31 16:58:21 EST 2019
+----------------------------------------
