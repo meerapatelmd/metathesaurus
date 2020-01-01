@@ -1,22 +1,3 @@
-/**************************************************************************
-* Copyright 2016 Observational Health Data Sciences and Informatics (OHDSI)
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* Authors: Timur Vakhitov, Christian Reich
-* Date: 2017
-**************************************************************************/
-
 DROP TABLE IF EXISTS MRCONSO;
 CREATE TABLE MRCONSO
 (
@@ -161,6 +142,57 @@ CREATE TABLE MRREL
 
 load data local infile 'MRREL.RRF' into table MRREL fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
+DROP TABLE IF EXISTS MRXNS_ENG;
+CREATE TABLE MRXNS_ENG
+(
+  LAT       CHAR(3),
+  NSTR      VARCHAR(8000),
+  CUI       CHAR(8),
+  LUI       VARCHAR(10),
+  SUI       VARCHAR(10)
+);
+
+load data local infile 'MRXNS_ENG.RRF' into table MRXNS_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+
+
+DROP TABLE IF EXISTS MRXNW_ENG;
+CREATE TABLE MRXNW_ENG
+(
+  LAT       CHAR(3),
+  NWD      VARCHAR(8000),
+  CUI       CHAR(8),
+  LUI       VARCHAR(10),
+  SUI       VARCHAR(10)
+);
+
+load data local infile 'MRXNW_ENG.RRF' into table MRXNW_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+
+DROP TABLE IF EXISTS MRXW_ENG;
+CREATE TABLE MRXW_ENG
+(
+  LAT       CHAR(3),
+  WD      VARCHAR(8000),
+  CUI       CHAR(8),
+  LUI       VARCHAR(10),
+  SUI       VARCHAR(10)
+);
+
+load data local infile 'MRXW_ENG.RRF' into table MRXW_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+
+DROP TABLE IF EXISTS MRSTY;
+CREATE TABLE MRSTY (CUI CHAR(8), TUI CHAR(4), STN VARCHAR(100), STY VARCHAR(50), ATUI VARCHAR(11), CVF INT);
+
+load data local infile 'MRSTY.RRF' into table MRSTY fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+
+DROP TABLE IF EXISTS MRDEF;
+CREATE TABLE MRDEF (CUI CHAR(8), AUI VARCHAR(9), ATUI VARCHAR(11), SATUI VARCHAR(50), SAB VARCHAR(40), DEF TEXT, SUPPRESS CHAR(1), CVF INT
+);
+
+load data local infile 'MRDEF.RRF' into table MRDEF fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+
+
+
+
 CREATE INDEX X_MRSAT_CUI ON MRSAT (CUI);
 CREATE INDEX X_MRCONSO_CODE ON MRCONSO (CODE);
 CREATE INDEX X_MRCONSO_CUI ON MRCONSO (CUI);
@@ -172,3 +204,42 @@ CREATE INDEX X_MRCONSO_SDUI ON MRCONSO (SDUI);
 CREATE INDEX X_MRCONSO_STR ON MRCONSO (STR);
 CREATE INDEX X_MRCONSO_SUI ON MRCONSO (SUI);
 CREATE INDEX X_MRREL_AUI ON MRREL (AUI1, AUI2);
+
+CREATE INDEX X_MRDEF_CUI ON MRDEF (CUI);
+CREATE INDEX X_MRDEF_AUI ON MRDEF(AUI);
+ALTER TABLE MRDEF ADD CONSTRAINT X_MRDEF_PK  PRIMARY KEY BTREE (ATUI);
+CREATE INDEX X_MRDEF_SAB ON MRDEF(SAB);
+
+CREATE INDEX X_MRHIER_CUI ON MRHIER(CUI);
+CREATE INDEX X_MRHIER_AUI ON MRHIER(AUI);
+CREATE INDEX X_MRHIER_SAB ON MRHIER(SAB);
+CREATE INDEX X_MRHIER_PTR ON MRHIER(PTR(255));
+CREATE INDEX X_MRHIER_PAUI ON MRHIER(PAUI);
+
+CREATE INDEX X_MRREL_CUI1 ON MRREL(CUI1);
+CREATE INDEX X_MRREL_AUI1 ON MRREL(AUI1);
+CREATE INDEX X_MRREL_CUI2 ON MRREL(CUI2);
+CREATE INDEX X_MRREL_AUI2 ON MRREL(AUI2);
+ALTER TABLE MRREL ADD CONSTRAINT X_MRREL_PK  PRIMARY KEY BTREE (RUI);
+CREATE INDEX X_MRREL_SAB ON MRREL(SAB);
+
+CREATE INDEX X_MRSTY_CUI ON MRSTY (CUI);
+CREATE INDEX X_MRXW_ENG_CUI ON MRXW_ENG (CUI);
+
+
+ALTER TABLE MRSAB ADD CONSTRAINT X_MRSAB_PK  PRIMARY KEY BTREE (VSAB);
+CREATE INDEX X_MRSAB_RSAB ON MRSAB(RSAB);
+
+CREATE INDEX X_MRSAT_CUI ON MRSAT(CUI);
+CREATE INDEX X_MRSAT_METAUI ON MRSAT(METAUI);
+ALTER TABLE MRSAT ADD CONSTRAINT X_MRSAT_PK  PRIMARY KEY BTREE (ATUI);
+CREATE INDEX X_MRSAT_SAB ON MRSAT(SAB);
+CREATE INDEX X_MRSAT_ATN ON MRSAT(ATN);
+
+CREATE INDEX X_MRSTY_CUI ON MRSTY(CUI);
+ALTER TABLE MRSTY ADD CONSTRAINT X_MRSTY_PK  PRIMARY KEY BTREE (ATUI);
+CREATE INDEX X_MRSTY_STY ON MRSTY(STY);
+
+
+
+

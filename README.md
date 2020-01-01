@@ -18,9 +18,11 @@
                 c. Etc... files
 
 ## NOTES  
-- Every run of Metamorphoysis can create mySQL scripts for the NET/ outputs, but will not generate one for the LEX/ or META/ outputs. shell scripts found in ./shell can be used as templates to populate a database using the output files. (LEX/ shell script has not been written yet, but META has been.)  
-- Shell scripts for META/ is modeled after OHDSI's Vocabulary 5.0, which only uses the following RRF files: MRCONSO.RRF, MRHIER.RRF, MRMAP.RRF, MRSMAP.RRF, MRSAT.RRF, MRREL.RRF. If other tables are desired in future iterations, _01A_instantiate_umls_02.R_ would need to be modified to reflect this. All the default tables in NET/ are in the umls database.
-
+The MySQL5.6 loading scripts that come packaged with the Metathesaurus have historically run errors and scripts modeled after OHDI's Vocabulary5.0 are used instead (found in shell/)  
+Shell scripts are present for NET/ and META/ outputs, but not for the LEX/, which requires downloading additional tools such as lvg. The shell scripts can be invoked as follows once in the subset directory containing all the NET/ or META/ outputs:
+        % cd <subset directory>  
+        % chmod 775 populate_mysql_db.sh  
+        % populate_mysql_db.sh &  
 
 
 
