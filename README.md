@@ -11,11 +11,14 @@
   -Unzip downloaded file
   -Unzip mmys.zip and move unzipped contents into root folder
   -Execute shell script either from terminal or using the open_metamorphysis function using the path to run_mac.sh as the argument
-  -Install UMLS Metamorphysis (current configurations are all English vocabularies available). Time estimations for installation are approximately 45-1 hour, but this is dependent on the configurations chosen.
+  -Install UMLS Metamorphysis (current configurations are all English vocabularies available). Time estimations for installation are approximately 45 minutes-1 hour, but this is dependent on the configurations chosen.
   -The user designated destination directory will have the following directory tree: 
                 a. original_version_folder > LEX, NET, and META subfolders
                 b. RRF files
                 c. Etc... files
+
+## Related Packages  
+I wrote a querying package called "metaorite" that can be downloaded at patelm9/metaorite that aids in mapping using Metathesaurus.
 
 ## NOTES  
 The MySQL5.6 loading scripts that come packaged with the Metathesaurus have historically run errors and scripts modeled after OHDI's Vocabulary5.0 are used instead (found in shell/)  
