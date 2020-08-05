@@ -12,8 +12,8 @@ The metaorite R Package contains functions that query the tables in your MySQL i
 
 ## MySQL v5.5 Requirement  
 * MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL.  
-* /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation.  
-* Socket: /opt/local/var/run/mysql55/mysqld.sock   
+* /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation  
+* Socket: /opt/local/var/run/mysql55/mysqld.sock  
 * Example of creating a database named `umls` using `root` as user:  
 
          ```
@@ -21,6 +21,7 @@ The metaorite R Package contains functions that query the tables in your MySQL i
          -mysql> CREATE DATABASE umls;  
          -mysql -u root -p --local-infile umls  
          -mysql> SHOW PROCESSLIST
+         
          ```  
          
 ## Downloading UMLS Files   
