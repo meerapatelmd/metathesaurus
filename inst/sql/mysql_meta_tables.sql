@@ -1,13 +1,13 @@
 DROP TABLE IF EXISTS MRCONSO;
 CREATE TABLE MRCONSO
 (
-  CUI       CHAR(8),
-  LAT       CHAR(3),
-  TS        CHAR(1),
+  CUI       VARCHAR(8),
+  LAT       VARCHAR(3),
+  TS        VARCHAR(1),
   LUI       VARCHAR(10),
   STT       VARCHAR(3),
   SUI       VARCHAR(10),
-  ISPREF    CHAR(1),
+  ISPREF    VARCHAR(1),
   AUI       VARCHAR(9) NOT NULL,
   SAUI      VARCHAR(50),
   SCUI      VARCHAR(100),
@@ -17,7 +17,7 @@ CREATE TABLE MRCONSO
   CODE      VARCHAR(100),
   STR       VARCHAR(3000),
   SRL       INT ,
-  SUPPRESS  CHAR(1),
+  SUPPRESS  VARCHAR(1),
   CVF       INT,
   FILLER_COLUMN INT
 );
@@ -28,7 +28,7 @@ load data local infile '@filePath/MRCONSO.RRF' into table MRCONSO fields termina
 DROP TABLE IF EXISTS MRHIER;
 CREATE TABLE MRHIER
 (
-  CUI   CHAR(8),
+  CUI   VARCHAR(8),
   AUI   VARCHAR(9),
   CXN   INT,
   PAUI  VARCHAR(9),
@@ -46,7 +46,7 @@ load data local infile '@filePath/MRHIER.RRF' into table MRHIER fields terminate
 DROP TABLE IF EXISTS MRMAP;
 CREATE TABLE MRMAP
 (
-  MAPSETCUI    CHAR(8),
+  MAPSETCUI    VARCHAR(8),
   MAPSETSAB    VARCHAR(40),
   MAPSUBSETID  VARCHAR(10),
   MAPRANK      INT,
@@ -80,7 +80,7 @@ load data local infile '@filePath/MRMAP.RRF' into table MRMAP fields terminated 
 DROP TABLE IF EXISTS MRSMAP;
 CREATE TABLE MRSMAP
 (
-  MAPSETCUI            CHAR (8),
+  MAPSETCUI            VARCHAR (8),
   MAPSETSAB            VARCHAR (40),
   MAPID                VARCHAR (50),
   MAPSID               VARCHAR (50),
@@ -100,7 +100,7 @@ load data local infile '@filePath/MRSMAP.RRF' into table MRSMAP fields terminate
 DROP TABLE IF EXISTS MRSAT;
 CREATE TABLE MRSAT
 (
-  CUI       CHAR(8),
+  CUI       VARCHAR(8),
   LUI       VARCHAR(10),
   SUI       VARCHAR(10),
   METAUI    VARCHAR(50),
@@ -111,7 +111,7 @@ CREATE TABLE MRSAT
   ATN       VARCHAR(100),
   SAB       VARCHAR(40),
   ATV       TEXT,
-  SUPPRESS  CHAR(1),
+  SUPPRESS  VARCHAR(1),
   CVF       VARCHAR(50),
   FILLER_COLUMN INT
 );
@@ -121,11 +121,11 @@ load data local infile '@filePath/MRSAT.RRF' into table MRSAT fields terminated 
 DROP TABLE IF EXISTS MRREL;
 CREATE TABLE MRREL
 (
-  CUI1      CHAR(8),
+  CUI1      VARCHAR(8),
   AUI1      VARCHAR(9),
   STYPE1    VARCHAR(50),
   REL       VARCHAR(4),
-  CUI2      CHAR(8),
+  CUI2      VARCHAR(8),
   AUI2      VARCHAR(9),
   STYPE2    VARCHAR(50),
   RELA      VARCHAR(100),
@@ -135,7 +135,7 @@ CREATE TABLE MRREL
   SL        VARCHAR(40),
   RG        VARCHAR(10),
   DIR       VARCHAR(1),
-  SUPPRESS  CHAR(1),
+  SUPPRESS  VARCHAR(1),
   CVF       INT,
   FILLER_COLUMN INT
 );
@@ -145,9 +145,9 @@ load data local infile '@filePath/MRREL.RRF' into table MRREL fields terminated 
 DROP TABLE IF EXISTS MRXNS_ENG;
 CREATE TABLE MRXNS_ENG
 (
-  LAT       CHAR(3),
+  LAT       VARCHAR(3),
   NSTR      VARCHAR(8000),
-  CUI       CHAR(8),
+  CUI       VARCHAR(8),
   LUI       VARCHAR(10),
   SUI       VARCHAR(10)
 );
@@ -158,9 +158,9 @@ load data local infile '@filePath/MRXNS_ENG.RRF' into table MRXNS_ENG fields ter
 DROP TABLE IF EXISTS MRXNW_ENG;
 CREATE TABLE MRXNW_ENG
 (
-  LAT       CHAR(3),
+  LAT       VARCHAR(3),
   NWD      VARCHAR(8000),
-  CUI       CHAR(8),
+  CUI       VARCHAR(8),
   LUI       VARCHAR(10),
   SUI       VARCHAR(10)
 );
@@ -170,9 +170,9 @@ load data local infile '@filePath/MRXNW_ENG.RRF' into table MRXNW_ENG fields ter
 DROP TABLE IF EXISTS MRXW_ENG;
 CREATE TABLE MRXW_ENG
 (
-  LAT       CHAR(3),
+  LAT       VARCHAR(3),
   WD      VARCHAR(8000),
-  CUI       CHAR(8),
+  CUI       VARCHAR(8),
   LUI       VARCHAR(10),
   SUI       VARCHAR(10)
 );
@@ -180,12 +180,12 @@ CREATE TABLE MRXW_ENG
 load data local infile '@filePath/MRXW_ENG.RRF' into table MRXW_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRSTY;
-CREATE TABLE MRSTY (CUI CHAR(8), TUI CHAR(4), STN VARCHAR(100), STY VARCHAR(50), ATUI VARCHAR(11), CVF INT);
+CREATE TABLE MRSTY (CUI VARCHAR(8), TUI VARCHAR(4), STN VARCHAR(100), STY VARCHAR(50), ATUI VARCHAR(11), CVF INT);
 
 load data local infile '@filePath/MRSTY.RRF' into table MRSTY fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRDEF;
-CREATE TABLE MRDEF (CUI CHAR(8), AUI VARCHAR(9), ATUI VARCHAR(11), SATUI VARCHAR(50), SAB VARCHAR(40), DEF TEXT, SUPPRESS CHAR(1), CVF INT
+CREATE TABLE MRDEF (CUI VARCHAR(8), AUI VARCHAR(9), ATUI VARCHAR(11), SATUI VARCHAR(50), SAB VARCHAR(40), DEF TEXT, SUPPRESS VARCHAR(1), CVF INT
 );
 
 load data local infile '@filePath/MRDEF.RRF' into table MRDEF fields terminated by '|' ESCAPED BY '' lines terminated by '\n';

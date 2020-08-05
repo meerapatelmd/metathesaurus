@@ -20,8 +20,14 @@ loadMeta <-
                 sql_statement <-
                         SqlRender::render(SqlRender::readSql(sourceFile = sqlPath))
 
+                sql_statement <-
+                        SqlRender::translate(sql = sql_statement,
+                                             targetDialect = "oracle")
+
+                print(sql_statement)
+
                 DatabaseConnector::dbExecute(conn = conn,
-                              sql_statement = sql_statement)
+                              statement = sql_statement)
 
                 preQL::dcMySQL5.5(conn = conn)
 
