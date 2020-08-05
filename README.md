@@ -22,6 +22,7 @@ The metaorite R Package contains functions that query the tables in your MySQL i
          -mysql -u root -p --local-infile umls  
          -mysql> SHOW PROCESSLIST
          ```  
+         
 ## Downloading UMLS Files   
 * Files can be downloaded at https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html and requires an account.    
 * Full Release is required to run Metamorphosys, at which point the user can select various specialized configurations desired in the MySQL Tables, such as a specific set of source vocabularies. The total time estimations of downloading, configuring, and processing the Metathesaurus tables in this way is approximately 2-3 hours. To save time, the Metamorphosys step may be skipped if the user does not desire this type of customizability and the `UMLS Metathesaurus Files` can be downloaded directly at the link and used as the source files in lieu of a Metamorphosys output.  
