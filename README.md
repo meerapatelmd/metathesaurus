@@ -4,15 +4,14 @@
     * MySQL version 5.5 server installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL.  
     * /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation.  
     * Socket: /opt/local/var/run/mysql55/mysqld.sock  
+    * To create `umls` database using `root` user:
 
-```
-
- -mysql -u root -p  
- -mysql> CREATE DATABASE umls;  
- -mysql -u root -p --local-infile umls  
- -mysql> SHOW PROCESSLIST
- 
- ```
+         ```
+         -mysql -u root -p  
+         -mysql> CREATE DATABASE umls;  
+         -mysql -u root -p --local-infile umls  
+         -mysql> SHOW PROCESSLIST
+         ```
  
  2. Download and install most current version of UMLS Metathesaurus  
   -Unzip downloaded file  
