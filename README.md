@@ -1,11 +1,11 @@
 # Setup Metathesaurus  
 This package runs UMLS's Metamorphosys from the R console as well as loads select UMLS Metathesaurus tables in a MySQL database:  
-    * MRCONSO.RRF  
-    * MRHIER.RRF  
-    * MRMAP.RRF  
-    * MRSMAP.RRF  
-    * MRSAT.RRF  
-    * MRREL.RRF  
+* MRCONSO.RRF
+* MRHIER.RRF
+* MRMAP.RRF
+* MRSMAP.RRF
+* MRSAT.RRF
+* MRREL.RRF  
 
 ## Related Packages  
 The metaorite R Package contains functions that query the tables in your MySQL instance.  
@@ -13,7 +13,7 @@ The metaorite R Package contains functions that query the tables in your MySQL i
 ## MySQL v5.5 Requirement  
 * MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL.  
 * /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation.  
-* Socket: /opt/local/var/run/mysql55/mysqld.sock  
+* Socket: /opt/local/var/run/mysql55/mysqld.sock   
 * Example of creating a database named `umls` using `root` as user:  
 
          ```
