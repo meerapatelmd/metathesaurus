@@ -1,11 +1,11 @@
 # Setup Metathesaurus  
 This package runs UMLS's Metamorphosys from the R console as well as loads select UMLS Metathesaurus tables in a MySQL database:  
-* MRCONSO.RRF  
-* MRHIER.RRF  
-* MRMAP.RRF  
-* MRSMAP.RRF  
-* MRSAT.RRF  
-* MRREL.RRF  
+    * MRCONSO.RRF  
+    * MRHIER.RRF  
+    * MRMAP.RRF  
+    * MRSMAP.RRF  
+    * MRSAT.RRF  
+    * MRREL.RRF  
 
 ## Related Packages  
 The metaorite R Package contains functions that query the tables in your MySQL instance.  
@@ -13,16 +13,14 @@ The metaorite R Package contains functions that query the tables in your MySQL i
 ## MySQL v5.5 Requirement  
 * MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL.  
 * /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation.  
-* Socket: /opt/local/var/run/mysql55/mysqld.sock   
-* Example of creating a database named `umls` using `root` as user:   
-  
+* Socket: /opt/local/var/run/mysql55/mysqld.sock  
+* Example of creating a database named `umls` using `root` as user:  
          ```
          -mysql -u root -p  
          -mysql> CREATE DATABASE umls;  
          -mysql -u root -p --local-infile umls  
          -mysql> SHOW PROCESSLIST
-         ```
-   
+         ```  
 ## Downloading UMLS Files   
 * Files can be downloaded at https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html and requires an account.    
 * Full Release is required to run Metamorphosys, at which point the user can select various specialized configurations desired in the MySQL Tables, such as a specific set of source vocabularies. The total time estimations of downloading, configuring, and processing the Metathesaurus tables in this way is approximately 2-3 hours. To save time, the Metamorphosys step may be skipped if the user does not desire this type of customizability and the `UMLS Metathesaurus Files` can be downloaded directly at the link and used as the source files in lieu of a Metamorphosys output.  
