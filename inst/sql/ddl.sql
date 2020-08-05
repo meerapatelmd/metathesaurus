@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS MRCONSO;
+
 CREATE TABLE MRCONSO
 (
   CUI       CHAR(8),
@@ -40,33 +41,33 @@ CREATE TABLE MRHIER
 DROP TABLE IF EXISTS MRMAP;
 CREATE TABLE MRMAP
 (
-  MAPSETCUI    CHAR(8),
-  MAPSETSAB    VARCHAR(40),
-  MAPSUBSETID  VARCHAR(10),
-  MAPRANK      INT,
-  MAPID        VARCHAR(50),
-  MAPSID       VARCHAR(50),
-  FROMID       VARCHAR(50),
-  FROMSID      VARCHAR(50),
-  FROMEXPR     VARCHAR(4000),
-  FROMTYPE     VARCHAR(50),
-  FROMRULE     VARCHAR(4000),
-  FROMRES      VARCHAR(4000),
-  REL          VARCHAR(4),
-  RELA         VARCHAR(100),
-  TOID         VARCHAR(50),
-  TOSID        VARCHAR(50),
-  TOEXPR       VARCHAR(4000),
-  TOTYPE       VARCHAR(50),
-  TORULE       VARCHAR(4000),
-  TORES        VARCHAR(4000),
-  MAPRULE      VARCHAR(4000),
-  MAPRES       VARCHAR(4000),
-  MAPTYPE      VARCHAR(50),
-  MAPATN       VARCHAR(20),
-  MAPATV       VARCHAR(4000),
-  CVF          INT,
-  FILLER_COLUMN INT
+        MAPSETCUI    CHAR(8),
+        MAPSETSAB    VARCHAR(40),
+        MAPSUBSETID  VARCHAR(10),
+        MAPRANK      INT,
+        MAPID        VARCHAR(50),
+        MAPSID       VARCHAR(50),
+        FROMID       VARCHAR(50),
+        FROMSID      VARCHAR(50),
+        FROMEXPR     VARCHAR(4000),
+        FROMTYPE     VARCHAR(50),
+        FROMRULE     VARCHAR(4000),
+        FROMRES      VARCHAR(4000),
+        REL          VARCHAR(4),
+        RELA         VARCHAR(100),
+        TOID         VARCHAR(50),
+        TOSID        VARCHAR(50),
+        TOEXPR       VARCHAR(4000),
+        TOTYPE       VARCHAR(50),
+        TORULE       TEXT,
+        TORES        TEXT,
+        MAPRULE      TEXT,
+        MAPRES       TEXT,
+        MAPTYPE      VARCHAR(50),
+        MAPATN       VARCHAR(20),
+        MAPATV       TEXT,
+        CVF          INT,
+        FILLER_COLUMN INT
 );
 
 DROP TABLE IF EXISTS MRSMAP;
