@@ -3,3 +3,4 @@
 export(loadMeta)
 export(openMetamorphosys)
 import(preQL)
+importFrom(DatabaseConnector,dbExecute)

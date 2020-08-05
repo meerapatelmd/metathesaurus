@@ -1,6 +1,7 @@
 #' Load META Tables
 #' @param path Path to the unpacked RRF files
 #' @import preQL
+#' @importFrom DatabaseConnector dbExecute
 #' @export
 
 loadMeta <-
@@ -19,7 +20,7 @@ loadMeta <-
                 sql_statement <-
                         SqlRender::render(SqlRender::readSql(sourceFile = sqlPath))
 
-                pg13::execute(conn = conn,
+                DatabaseConnector::dbExecute(conn = conn,
                               sql_statement = sql_statement)
 
                 preQL::dcMySQL5.5(conn = conn)
