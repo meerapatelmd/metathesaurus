@@ -1,9 +1,9 @@
 # metathesaurus-setup  
 ## Requirements  
 1. A new MySQL Database `umls`
-    *MySQL version 5.5 server installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL.  
-    */opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation.  
-    *Socket: /opt/local/var/run/mysql55/mysqld.sock  
+    * MySQL version 5.5 server installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL.  
+    * /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation.  
+    * Socket: /opt/local/var/run/mysql55/mysqld.sock  
 
 ```
 
