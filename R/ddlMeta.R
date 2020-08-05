@@ -1,4 +1,4 @@
-#' Load META Tables
+#' DDL META Tables
 #' @param path Path to the unpacked RRF files
 #' @import preQL
 #' @importFrom DatabaseConnector dbExecute
@@ -35,40 +35,17 @@
 # );")
 
 
-loadMeta <-
-        function(path,
-                 dbname = "umls",
+ddlMeta <-
+        function(dbname = "umls",
                  username,
                  password) {
-
-
-                ddlMeta(dbname = dbname,
-                        username = username,
-                        password = password)
-
 
                 conn <-
                 preQL::connectMySQL5.5(dbname = dbname,
                                        username = username,
                                        password = password)
 
-                sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/load.sql")
-
-                sql_statement <-
-                        SqlRender::render(SqlRender::readSql(sourceFile = sqlPath),
-                                          filePath = path)
-
-                sql_statement <-
-                        SqlRender::translate(sql = sql_statement,
-                                             targetDialect = "oracle")
-
-                print(sql_statement)
-
-                RMySQL::dbSendQuery(conn = conn,
-                              statement = sql_statement)
-
-                #########
-                sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/indices.sql")
+                sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/ddl.sql")
 
                 sql_statement <-
                         SqlRender::render(SqlRender::readSql(sourceFile = sqlPath))
@@ -80,8 +57,7 @@ loadMeta <-
                 print(sql_statement)
 
                 RMySQL::dbSendQuery(conn = conn,
-                                    statement = sql_statement)
-
+                              statement = sql_statement)
 
                 preQL::dcMySQL5.5(conn = conn)
 

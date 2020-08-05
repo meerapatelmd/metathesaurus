@@ -128,29 +128,18 @@ CREATE TABLE MRREL
   FILLER_COLUMN INT
 );
 
+DROP TABLE IF EXISTS MRHIER;
+CREATE TABLE MRHIER
+(
+  CUI   VARCHAR(8),
+  AUI   VARCHAR(9),
+  CXN   INT,
+  PAUI  VARCHAR(9),
+  SAB   VARCHAR(40),
+  RELA  VARCHAR(100),
+  PTR   VARCHAR(1000),
+  HCD   VARCHAR(150),
+  CVF   INT,
+  FILLER_COLUMN INT
+);
 
-load data local infile '@filePath/MRCONSO.RRF' into table MRCONSO fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
-
-load data local infile '@filePath/MRHIER.RRF' into table MRHIER fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
-
-load data local infile '@filePath/MRMAP.RRF' into table MRMAP fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
-
-load data local infile '@filePath/MRSMAP.RRF' into table MRSMAP fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
-
-load data local infile '@filePath/MRSAT.RRF' into table MRSAT fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
-
-load data local infile '@filePath/MRREL.RRF' into table MRREL fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
-
-
-CREATE INDEX X_MRSAT_CUI ON MRSAT (CUI);
-CREATE INDEX X_MRCONSO_CODE ON MRCONSO (CODE);
-CREATE INDEX X_MRCONSO_CUI ON MRCONSO (CUI);
-CREATE INDEX X_MRCONSO_LUI ON MRCONSO (LUI);
-CREATE UNIQUE INDEX X_MRCONSO_PK ON MRCONSO (AUI);
-CREATE INDEX X_MRCONSO_SAB_TTY ON MRCONSO (SAB, TTY);
-CREATE INDEX X_MRCONSO_SCUI ON MRCONSO (SCUI);
-CREATE INDEX X_MRCONSO_SDUI ON MRCONSO (SDUI);
-CREATE INDEX X_MRCONSO_STR ON MRCONSO (STR);
-CREATE INDEX X_MRCONSO_SUI ON MRCONSO (SUI);
-CREATE INDEX X_MRREL_AUI ON MRREL (AUI1, AUI2);
-ALTER TABLE MRCONSO ADD CONSTRAINT X_MRCONSO_PK PRIMARY KEY USING INDEX X_MRCONSO_PK;
