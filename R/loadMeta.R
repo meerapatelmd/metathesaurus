@@ -4,6 +4,37 @@
 #' @importFrom DatabaseConnector dbExecute
 #' @export
 
+# conn <-
+#         preQL::connectMySQL5.5(dbname = "umls",
+#                                username = Sys.getenv("umls_username"),
+#                                password = Sys.getenv("umls_password"))
+# RMySQL::dbSendQuery(conn = conn,
+#                     statement = "DROP TABLE IF EXISTS MRCONSO;")
+# RMySQL::dbSendQuery(conn = conn,
+#                     statement = "CREATE TABLE MRCONSO
+# (
+#   CUI       CHAR(8),
+#   LAT       CHAR(3),
+#   TS        CHAR(1),
+#   LUI       VARCHAR(10),
+#   STT       VARCHAR(3),
+#   SUI       VARCHAR(10),
+#   ISPREF    VARCHAR(1),
+#   AUI       VARCHAR(9) NOT NULL,
+#   SAUI      VARCHAR(50),
+#   SCUI      VARCHAR(100),
+#   SDUI      VARCHAR(100),
+#   SAB       VARCHAR(40),
+#   TTY       VARCHAR(40),
+#   CODE      VARCHAR(100),
+#   STR       VARCHAR(3000),
+#   SRL       INT ,
+#   SUPPRESS  VARCHAR(1),
+#   CVF       INT,
+#   FILLER_COLUMN INT
+# );")
+
+
 loadMeta <-
         function(path,
                  dbname = "umls",
@@ -26,7 +57,7 @@ loadMeta <-
 
                 print(sql_statement)
 
-                DatabaseConnector::dbExecute(conn = conn,
+                RMySQL::dbSendQuery(conn = conn,
                               statement = sql_statement)
 
                 preQL::dcMySQL5.5(conn = conn)
