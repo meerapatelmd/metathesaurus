@@ -22,7 +22,7 @@ CREATE TABLE MRCONSO
   FILLER_COLUMN INT
 );
 
-load data local infile 'MRCONSO.RRF' into table MRCONSO fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRCONSO.RRF' into table MRCONSO fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 
 DROP TABLE IF EXISTS MRHIER;
@@ -40,7 +40,7 @@ CREATE TABLE MRHIER
   FILLER_COLUMN INT
 );
 
-load data local infile 'MRHIER.RRF' into table MRHIER fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRHIER.RRF' into table MRHIER fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 
 DROP TABLE IF EXISTS MRMAP;
@@ -75,7 +75,7 @@ CREATE TABLE MRMAP
   FILLER_COLUMN INT
 );
 
-load data local infile 'MRMAP.RRF' into table MRMAP fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRMAP.RRF' into table MRMAP fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRSMAP;
 CREATE TABLE MRSMAP
@@ -95,7 +95,7 @@ CREATE TABLE MRSMAP
   VOCABULARY_VERSION   VARCHAR (200)
 );
 
-load data local infile 'MRSMAP.RRF' into table MRSMAP fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRSMAP.RRF' into table MRSMAP fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRSAT;
 CREATE TABLE MRSAT
@@ -116,7 +116,7 @@ CREATE TABLE MRSAT
   FILLER_COLUMN INT
 );
 
-load data local infile 'MRSAT.RRF' into table MRSAT fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRSAT.RRF' into table MRSAT fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRREL;
 CREATE TABLE MRREL
@@ -140,7 +140,7 @@ CREATE TABLE MRREL
   FILLER_COLUMN INT
 );
 
-load data local infile 'MRREL.RRF' into table MRREL fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRREL.RRF' into table MRREL fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRXNS_ENG;
 CREATE TABLE MRXNS_ENG
@@ -152,7 +152,7 @@ CREATE TABLE MRXNS_ENG
   SUI       VARCHAR(10)
 );
 
-load data local infile 'MRXNS_ENG.RRF' into table MRXNS_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRXNS_ENG.RRF' into table MRXNS_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 
 DROP TABLE IF EXISTS MRXNW_ENG;
@@ -165,7 +165,7 @@ CREATE TABLE MRXNW_ENG
   SUI       VARCHAR(10)
 );
 
-load data local infile 'MRXNW_ENG.RRF' into table MRXNW_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRXNW_ENG.RRF' into table MRXNW_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRXW_ENG;
 CREATE TABLE MRXW_ENG
@@ -177,18 +177,18 @@ CREATE TABLE MRXW_ENG
   SUI       VARCHAR(10)
 );
 
-load data local infile 'MRXW_ENG.RRF' into table MRXW_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRXW_ENG.RRF' into table MRXW_ENG fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRSTY;
 CREATE TABLE MRSTY (CUI CHAR(8), TUI CHAR(4), STN VARCHAR(100), STY VARCHAR(50), ATUI VARCHAR(11), CVF INT);
 
-load data local infile 'MRSTY.RRF' into table MRSTY fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRSTY.RRF' into table MRSTY fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 DROP TABLE IF EXISTS MRDEF;
 CREATE TABLE MRDEF (CUI CHAR(8), AUI VARCHAR(9), ATUI VARCHAR(11), SATUI VARCHAR(50), SAB VARCHAR(40), DEF TEXT, SUPPRESS CHAR(1), CVF INT
 );
 
-load data local infile 'MRDEF.RRF' into table MRDEF fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
+load data local infile '@filePath/MRDEF.RRF' into table MRDEF fields terminated by '|' ESCAPED BY '' lines terminated by '\n';
 
 
 
