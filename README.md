@@ -15,6 +15,7 @@ The metaorite R Package contains functions that query the tables in your MySQL i
 * /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation.  
 * Socket: /opt/local/var/run/mysql55/mysqld.sock  
 * Example of creating a database named `umls` using `root` as user:  
+
          ```
          -mysql -u root -p  
          -mysql> CREATE DATABASE umls;  
