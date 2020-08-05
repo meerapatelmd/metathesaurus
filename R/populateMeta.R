@@ -5,7 +5,7 @@
 populateMeta <-
         function(path) {
 
-                shellPath <- paste0(system.file(package = "metathesaurus-setup"), "/shell/populate_meta_mysql_db.sh")
+                shellPath <- paste0(system.file(package = "setupMetathesaurus"), "/shell/populate_meta_mysql_db.sh")
 
                 system(paste0("cd ", path, "\n", shellPath))
 
