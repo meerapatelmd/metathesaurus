@@ -1,0 +1,54 @@
+---
+title: "MySQL Setup and Maintenance"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MySQLSetupandMaintenance}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE, echo=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Setup  
+```{r setup, echo=TRUE,eval=TRUE}
+library(setupMetathesaurus)
+```
+
+# DDL  
+
+```{r ddl, echo=TRUE, eval = FALSE}
+
+ddlMeta(dbname = "umls",
+        username = Sys.getenv("umls_username"),
+        password = Sys.getenv("umls_password"))
+
+```
+
+# Load 
+Time Estimates ~15-20 minutes  
+
+```{r load, echo = TRUE, eval = FALSE}
+
+loadMeta(path = "~/Desktop/2020AA/META",
+         username = Sys.getenv("umls_username"),
+         password = Sys.getenv("umls_password"))
+
+
+```
+
+# Indices 
+Time Estimate: ~30 minutes  
+```{r indices, echo = TRUE, eval = FALSE}
+
+runIndices(dbname = "umls",
+        username = Sys.getenv("umls_username"),
+        password = Sys.getenv("umls_password"))
+
+```
+
+
