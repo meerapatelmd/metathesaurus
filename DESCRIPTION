@@ -1,6 +1,6 @@
 Package: setupMetathesaurus
 Title: Setup the Latest Release of the UMLS Metathesaurus as a MySQL Database  
-Version: 0.1.0.0
+Version: 1.0.0
 Authors@R: 
     person(given = "Meera",
            family = "Patel",
