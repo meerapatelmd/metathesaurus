@@ -48,9 +48,6 @@ executeSQL <-
                 for (i in 1:length(sql_statement)) {
                         sql <- sql_statement[i]
 
-                        pb$tick()
-                        # Sleep time required to allow for progress bar to update after each pb$tick
-                        Sys.sleep(0.2)
 
                         res <-
                                 tryCatch(RMySQL::dbSendQuery(conn = conn,
@@ -71,5 +68,11 @@ executeSQL <-
                                 error = function(e) "Error")
 
                         Sys.sleep(0.2)
+
+                        pb$tick()
+                        # Sleep time required to allow for progress bar to update after each pb$tick
+                        Sys.sleep(0.2)
+
+
                 }
         }
