@@ -1,7 +1,7 @@
 #' @title
 #' Get Data Elements
 #' @description
-#' Get the table found at \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html} as a data frame
+#' Get the table found at \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}{NIH Data Elements} as a data frame
 #' @seealso
 #'  \code{\link[xml2]{read_xml}}
 #'  \code{\link[rvest]{html_nodes}},\code{\link[rvest]{html_table}}
