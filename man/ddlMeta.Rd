@@ -4,7 +4,7 @@
 \alias{ddlMeta}
 \title{DDL META Tables}
 \usage{
-ddlMeta(dbname = "umls", username, password)
+ddlMeta(dbname = "umls", username, password, full = FALSE)
 }
 \arguments{
 \item{path}{Path to the unpacked RRF files}
