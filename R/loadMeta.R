@@ -8,7 +8,8 @@ loadMeta <-
         function(path,
                  dbname = "umls",
                  username,
-                 password) {
+                 password,
+                 full = FALSE) {
 
                 if (grepl("[/]{1}$", path)) {
                         stop("'path' value ", path, " cannot end with slash")
@@ -27,7 +28,13 @@ loadMeta <-
                                        username = username,
                                        password = password)
 
+
+                if (full) {
+                        sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/full_load.sql")
+
+                } else {
                 sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/load.sql")
+                }
 
                 executeSQL(sqlPath = sqlPath,
                            filePath = filePath,

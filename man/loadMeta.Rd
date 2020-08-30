@@ -4,7 +4,7 @@
 \alias{loadMeta}
 \title{Load META Tables}
 \usage{
-loadMeta(path, dbname = "umls", username, password)
+loadMeta(path, dbname = "umls", username, password, full = FALSE)
 }
 \arguments{
 \item{path}{Path to the unpacked RRF files}
