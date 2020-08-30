@@ -4,7 +4,7 @@
 \alias{runIndices}
 \title{Run Indices}
 \usage{
-runIndices(dbname = "umls", username, password)
+runIndices(dbname = "umls", username, password, full = FALSE)
 }
 \arguments{
 \item{path}{Path to the unpacked RRF files}

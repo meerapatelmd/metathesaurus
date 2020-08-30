@@ -55,7 +55,7 @@ executeSQL <-
                                          error = function(e) "Error")
 
                         if (class(res) != "MySQLResult") {
-                                secretary::typewrite_error("\n", sql, "\n")
+                                secretary::typewrite_error("\n\n", sql, "\n")
                         }
 
                         tryCatch(

@@ -1,0 +1,7 @@
+# setupMetathesaurus::ddlMeta(full = TRUE,
+#                             username = Sys.getenv("umls_username"),
+#                             password = Sys.getenv("umls_password"))
+setupMetathesaurus::loadMeta(full = TRUE,
+                             path = "~/Desktop/2020AA/META",
+                             username = Sys.getenv("umls_username"),
+                             password = Sys.getenv("umls_password"))

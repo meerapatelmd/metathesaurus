@@ -8,7 +8,8 @@
 runIndices <-
         function(dbname = "umls",
                  username,
-                 password) {
+                 password,
+                 full = FALSE) {
 
 
                 conn <-
@@ -16,7 +17,14 @@ runIndices <-
                                        username = username,
                                        password = password)
 
-                sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/indices.sql")
+                if (full) {
+                        sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/full_indexes.sql")
+
+                } else {
+
+                        sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/indices.sql")
+
+                }
 
                 executeSQL(sqlPath = sqlPath,
                            conn = conn)
