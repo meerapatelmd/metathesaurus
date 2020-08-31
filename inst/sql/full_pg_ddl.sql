@@ -8,7 +8,7 @@ CREATE TABLE umls.MRCOLS (
     MAX	integer,
     FIL	varchar(50),
     DTY	varchar(40)
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRCONSO;
 CREATE TABLE umls.MRCONSO (
     CUI	char(8) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE umls.MRCONSO (
     SRL	integer NOT NULL,
     SUPPRESS	char(1) NOT NULL,
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRCUI;
 CREATE TABLE umls.MRCUI (
     CUI1	char(8) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE umls.MRCUI (
     MAPREASON	text,
     CUI2	char(8),
     MAPIN	char(1)
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRCXT;
 CREATE TABLE umls.MRCXT (
     CUI	char(8),
@@ -57,7 +57,7 @@ CREATE TABLE umls.MRCXT (
     RELA	varchar(100),
     XC	varchar(1),
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRDEF;
 CREATE TABLE umls.MRDEF (
     CUI	char(8) NOT NULL,
@@ -68,14 +68,14 @@ CREATE TABLE umls.MRDEF (
     DEF	text NOT NULL,
     SUPPRESS	char(1) NOT NULL,
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRDOC;
 CREATE TABLE umls.MRDOC (
     DOCKEY	varchar(50) NOT NULL,
     VALUE	varchar(200),
     TYPE	varchar(50) NOT NULL,
     EXPL	text
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRFILES;
 CREATE TABLE umls.MRFILES (
     FIL	varchar(50),
@@ -84,7 +84,7 @@ CREATE TABLE umls.MRFILES (
     CLS	integer,
     RWS	integer,
     BTS	bigint
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRHIER;
 CREATE TABLE umls.MRHIER (
     CUI	char(8) NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE umls.MRHIER (
     PTR	text,
     HCD	varchar(100),
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRHIST;
 CREATE TABLE umls.MRHIST (
     CUI	char(8),
@@ -108,7 +108,7 @@ CREATE TABLE umls.MRHIST (
     CHANGEVAL	text,
     REASON	text,
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRMAP;
 CREATE TABLE umls.MRMAP (
     MAPSETCUI	char(8) NOT NULL,
@@ -137,14 +137,14 @@ CREATE TABLE umls.MRMAP (
     MAPATN	varchar(100),
     MAPATV	text,
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRRANK;
 CREATE TABLE umls.MRRANK (
     MRRANK_RANK	integer NOT NULL,
     SAB	varchar(40) NOT NULL,
     TTY	varchar(40) NOT NULL,
     SUPPRESS	char(1) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRREL;
 CREATE TABLE umls.MRREL (
     CUI1	char(8) NOT NULL,
@@ -163,7 +163,7 @@ CREATE TABLE umls.MRREL (
     DIR	varchar(1),
     SUPPRESS	char(1) NOT NULL,
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRSAB;
 CREATE TABLE umls.MRSAB (
     VCUI	char(8),
@@ -191,7 +191,7 @@ CREATE TABLE umls.MRSAB (
     SABIN	char(1) NOT NULL,
     SSN	text NOT NULL,
     SCIT	text NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRSAT;
 CREATE TABLE umls.MRSAT (
     CUI	char(8) NOT NULL,
@@ -207,7 +207,7 @@ CREATE TABLE umls.MRSAT (
     ATV	text,
     SUPPRESS	char(1) NOT NULL,
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRSMAP;
 CREATE TABLE umls.MRSMAP (
     MAPSETCUI	char(8) NOT NULL,
@@ -221,7 +221,7 @@ CREATE TABLE umls.MRSMAP (
     TOEXPR	text,
     TOTYPE	varchar(50),
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRSTY;
 CREATE TABLE umls.MRSTY (
     CUI	char(8) NOT NULL,
@@ -230,7 +230,7 @@ CREATE TABLE umls.MRSTY (
     STY	varchar(50) NOT NULL,
     ATUI	varchar(11) NOT NULL,
     CVF	integer
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXNS_ENG;
 CREATE TABLE umls.MRXNS_ENG (
     LAT	char(3) NOT NULL,
@@ -238,7 +238,7 @@ CREATE TABLE umls.MRXNS_ENG (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXNW_ENG;
 CREATE TABLE umls.MRXNW_ENG (
     LAT	char(3) NOT NULL,
@@ -246,7 +246,7 @@ CREATE TABLE umls.MRXNW_ENG (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRAUI;
 CREATE TABLE umls.MRAUI (
     AUI1	varchar(9) NOT NULL,
@@ -258,7 +258,7 @@ CREATE TABLE umls.MRAUI (
     AUI2	varchar(9) NOT NULL,
     CUI2	char(8) NOT NULL,
     MAPIN	char(1) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_BAQ;
 CREATE TABLE umls.MRXW_BAQ (
     LAT	char(3) NOT NULL,
@@ -266,7 +266,7 @@ CREATE TABLE umls.MRXW_BAQ (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_CHI;
 CREATE TABLE umls.MRXW_CHI (
     LAT	char(3) NOT NULL,
@@ -274,7 +274,7 @@ CREATE TABLE umls.MRXW_CHI (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_CZE;
 CREATE TABLE umls.MRXW_CZE (
     LAT	char(3) NOT NULL,
@@ -282,7 +282,7 @@ CREATE TABLE umls.MRXW_CZE (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_DAN;
 CREATE TABLE umls.MRXW_DAN (
     LAT	char(3) NOT NULL,
@@ -290,7 +290,7 @@ CREATE TABLE umls.MRXW_DAN (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_DUT;
 CREATE TABLE umls.MRXW_DUT (
     LAT	char(3) NOT NULL,
@@ -298,7 +298,7 @@ CREATE TABLE umls.MRXW_DUT (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_ENG;
 CREATE TABLE umls.MRXW_ENG (
     LAT	char(3) NOT NULL,
@@ -306,7 +306,7 @@ CREATE TABLE umls.MRXW_ENG (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_EST;
 CREATE TABLE umls.MRXW_EST (
     LAT	char(3) NOT NULL,
@@ -314,7 +314,7 @@ CREATE TABLE umls.MRXW_EST (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_FIN;
 CREATE TABLE umls.MRXW_FIN (
     LAT	char(3) NOT NULL,
@@ -322,7 +322,7 @@ CREATE TABLE umls.MRXW_FIN (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_FRE;
 CREATE TABLE umls.MRXW_FRE (
     LAT	char(3) NOT NULL,
@@ -330,7 +330,7 @@ CREATE TABLE umls.MRXW_FRE (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRXW_GER;
 CREATE TABLE umls.MRXW_GER (
     LAT	char(3) NOT NULL,
@@ -338,7 +338,7 @@ CREATE TABLE umls.MRXW_GER (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_GRE;
 CREATE TABLE umls.MRXW_GRE (
@@ -347,7 +347,7 @@ CREATE TABLE umls.MRXW_GRE (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_HEB;
 CREATE TABLE umls.MRXW_HEB (
@@ -356,7 +356,7 @@ CREATE TABLE umls.MRXW_HEB (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_HUN;
 CREATE TABLE umls.MRXW_HUN (
@@ -365,7 +365,7 @@ CREATE TABLE umls.MRXW_HUN (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_ITA;
 CREATE TABLE umls.MRXW_ITA (
@@ -374,7 +374,7 @@ CREATE TABLE umls.MRXW_ITA (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_JPN;
 CREATE TABLE umls.MRXW_JPN (
@@ -383,7 +383,7 @@ CREATE TABLE umls.MRXW_JPN (
     CUI char(8) NOT NULL,
     LUI varchar(10) NOT NULL,
     SUI varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_KOR;
 CREATE TABLE umls.MRXW_KOR (
@@ -392,7 +392,7 @@ CREATE TABLE umls.MRXW_KOR (
     CUI char(8) NOT NULL,
     LUI varchar(10) NOT NULL,
     SUI varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_LAV;
 CREATE TABLE umls.MRXW_LAV (
@@ -401,7 +401,7 @@ CREATE TABLE umls.MRXW_LAV (
     CUI char(8) NOT NULL,
     LUI varchar(10) NOT NULL,
     SUI varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_NOR;
 CREATE TABLE umls.MRXW_NOR (
@@ -410,7 +410,7 @@ CREATE TABLE umls.MRXW_NOR (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_POL;
 CREATE TABLE umls.MRXW_POL (
@@ -419,7 +419,7 @@ CREATE TABLE umls.MRXW_POL (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_POR;
 CREATE TABLE umls.MRXW_POR (
@@ -428,7 +428,7 @@ CREATE TABLE umls.MRXW_POR (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_RUS;
 CREATE TABLE umls.MRXW_RUS (
@@ -437,7 +437,7 @@ CREATE TABLE umls.MRXW_RUS (
     CUI char(8) NOT NULL,
     LUI varchar(10) NOT NULL,
     SUI varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_SCR;
 CREATE TABLE umls.MRXW_SCR (
@@ -446,7 +446,7 @@ CREATE TABLE umls.MRXW_SCR (
     CUI char(8) NOT NULL,
     LUI varchar(10) NOT NULL,
     SUI varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_SPA;
 CREATE TABLE umls.MRXW_SPA (
@@ -455,7 +455,7 @@ CREATE TABLE umls.MRXW_SPA (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_SWE;
 CREATE TABLE umls.MRXW_SWE (
@@ -464,7 +464,7 @@ CREATE TABLE umls.MRXW_SWE (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MRXW_TUR;
 CREATE TABLE umls.MRXW_TUR (
@@ -473,48 +473,48 @@ CREATE TABLE umls.MRXW_TUR (
     CUI	char(8) NOT NULL,
     LUI	varchar(10) NOT NULL,
     SUI	varchar(10) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.AMBIGSUI;
 CREATE TABLE umls.AMBIGSUI (
     SUI	varchar(10) NOT NULL,
     CUI	char(8) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.AMBIGLUI;
 CREATE TABLE umls.AMBIGLUI (
     LUI	varchar(10) NOT NULL,
     CUI	char(8) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.DELETEDCUI;
 CREATE TABLE umls.DELETEDCUI (
     PCUI	char(8) NOT NULL,
     PSTR	text NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.DELETEDLUI;
 CREATE TABLE umls.DELETEDLUI (
     PLUI	varchar(10) NOT NULL,
     PSTR	text NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.DELETEDSUI;
 CREATE TABLE umls.DELETEDSUI (
     PSUI	varchar(10) NOT NULL,
     LAT	char(3) NOT NULL,
     PSTR	text NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MERGEDCUI;
 CREATE TABLE umls.MERGEDCUI (
     PCUI	char(8) NOT NULL,
     CUI	char(8) NOT NULL
-);
+,FILLER_COLUMN text);
 
 DROP TABLE IF EXISTS umls.MERGEDLUI;
 CREATE TABLE umls.MERGEDLUI (
     PLUI	varchar(10),
     LUI	varchar(10)
-);
+,FILLER_COLUMN text);
 
