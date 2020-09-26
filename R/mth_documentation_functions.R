@@ -70,8 +70,10 @@ Root Source Abbreviation (RSAB) — short form, no version information, for exam
 
 #' @title
 #' Get the definitions of al the Metathesaurus Fields
+#'
 #' @description
-#' Sourced from \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}
+#' Sourced from \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}
+#'
 #' @seealso
 #'  \code{\link[tibble]{tribble}}
 #' @export
@@ -552,7 +554,8 @@ mth_fields_to_tables <-
 #' Annotate the SAB Field with Vocabulary details
 #'
 #' @description
-#' Get Maps Between the SAB where the Vocabulary is referred to by Abbreviation. Expansion is sourced from \href{https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html}
+#' Get Maps Between the SAB where the Vocabulary is referred to by Abbreviation. Expansion is sourced from \href{https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html}{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}
+#'
 #' @seealso
 #'  \code{\link[tibble]{tribble}}
 #' @export
@@ -787,7 +790,7 @@ sab_annotation <-
 #' Annotate Field Values with Details in UMLS Documentation
 #'
 #' @description
-#' Get Maps Between Field-Value Pairs where the Value is abbreviated as show at \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/abbreviations.html}.
+#' Get Maps Between Field-Value Pairs where the Value is abbreviated as show at \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/abbreviations.html}{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}.
 #' @seealso
 #'  \code{\link[tibble]{tribble}}
 #' @export

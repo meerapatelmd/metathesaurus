@@ -7,7 +7,7 @@
 sab_annotation()
 }
 \description{
-Get Maps Between the SAB where the Vocabulary is referred to by Abbreviation. Expansion is sourced from \href{https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html}
+Get Maps Between the SAB where the Vocabulary is referred to by Abbreviation. Expansion is sourced from \href{https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html}{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}
 }
 \seealso{
 \code{\link[tibble]{tribble}}

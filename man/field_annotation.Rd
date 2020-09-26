@@ -7,7 +7,7 @@
 field_annotation()
 }
 \description{
-Get Maps Between Field-Value Pairs where the Value is abbreviated as show at \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/abbreviations.html}.
+Get Maps Between Field-Value Pairs where the Value is abbreviated as show at \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/abbreviations.html}{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}.
 }
 \seealso{
 \code{\link[tibble]{tribble}}

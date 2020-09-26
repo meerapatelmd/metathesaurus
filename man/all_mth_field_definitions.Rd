@@ -7,7 +7,7 @@
 all_mth_field_definitions()
 }
 \description{
-Sourced from \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}
+Sourced from \href{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}{https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/columns_data_elements.html}
 }
 \seealso{
 \code{\link[tibble]{tribble}}
