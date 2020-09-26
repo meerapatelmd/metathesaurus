@@ -28,3 +28,54 @@ Official source names, RSABs, and VSABs are included on the UMLS Source Vocabula
                         'SUPPRESS', 'Suppressible flag. Values = O, E, Y, or NO: All obsolete content, whether they are obsolesced by the source or by NLM. These will include all atoms having obsolete TTYs, and other atoms becoming obsolete that have not acquired an obsolete TTY (e.g. RxNorm SCDs no longer associated with current drugs, LNC atoms derived from obsolete LNC concepts). E: Non-obsolete content marked suppressible by an editor. These do not have a suppressible SAB/TTY combination.Y: Non-obsolete content deemed suppressible during inversion. These can be determined by a specific SAB/TTY combination explicitly listed in MRRANK.N: None of the aboveDefault suppressibility as determined by NLM (i.e., no changes at the Suppressibility tab in MetamorphoSys) should be used by most users, but may not be suitable in some specialized applications. See the MetamorphoSys Help page for information on how to change the SAB/TTY suppressibility to suit your requirements. NLM strongly recommends that users not alter editor-assigned suppressibility, and MetamorphoSys cannot be used for this purpose.',
                         'CVF', 'Content View Flag. Bit field used to flag rows included in Content View. This field is a varchar field to maximize the number of bits available for use.')
         }
+
+
+
+
+table_titles <-
+        function() {
+                tibble::tribble(
+                        ~Table Title,~RRF,
+                        'Files', 'MRFILES.RRF',
+                        'Data Elements', 'MRCOLS.RRF',
+                        'Documentation for Abbreviated Values', 'MRDOC.RRF',
+                        'Concept Names and Sources', 'MRCONSO.RRF',
+                        'Simple Concept and Atom Attributes', 'MRSAT.RRF',
+                        'Definitions', 'MRDEF.RRF',
+                        'Semantic Types', 'MRSTY.RRF',
+                        'History', 'MRHIST.RRF',
+                        'Related Concepts', 'MRREL.RRF',
+                        'NA', 'NA',
+                        'Computable Hierarchies', 'MRHIER.RRF',
+                        'Contexts', 'MRCXT.RRF',
+                        'Mappings', 'MRMAP.RRF',
+                        'Simple Mappings', 'MRSMAP.RRF',
+                        'Source Information', 'MRSAB.RRF',
+                        'Concept Name Ranking', 'MRRANK.RRF',
+                        'Ambiguous Term Identifiers', 'AMBIGLUI.RRF',
+                        'Ambiguous String Identifiers', 'AMBIGSUI.RRF',
+                        'NA', 'NA',
+                        'Word Index', 'MRXW_BAQ.RRF, MRXW_DAN.RRF, MRXW_DUT.RRF, MRXW_ENG.RRF, MRXW_FIN.RRF, MRXW_FRE.RRF, MRXW_GER.RRF, MRXW_HEB.RRF, MRXW_HUN.RRF, MRXW_ITA.RRF, MRXW_NOR.RRF, MRXW_POR.RRF, MRXW_RUS.RRF, MRXW_SPA.RRF, MRXW_SWE.RRF',
+                        'Normalized Word Index', 'MRXNW_ENG.RRF',
+                        'Normalized String Index', 'MRXNS_ENG.RRF')
+        }
+
+
+
+
+input <-
+input %>%
+        rvest::html_nodes("h3") %>%
+        rvest::html_text() %>%
+        tibble::as_tibble_col("h3") %>%
+        tidyr::extract(col = h3,
+                       into = c("Table Title", "RRF"),
+                       regex = "^.*?([A-Za-z]{1,}.*?) [(]{1}File [=]{1} (.*RRF)[)]{1}")
+
+
+
+%>%
+        stringr::str_replace_all(pattern = "(^.* )([A-Za-z].*)")
+
+
+
