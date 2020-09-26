@@ -1,3 +1,7 @@
+<!-- badges: start -->
+  [![R build status](https://github.com/meerapatelmd/setupMetathesaurus/workflows/R-CMD-check/badge.svg)](https://github.com/meerapatelmd/setupMetathesaurus/actions)
+  <!-- badges: end -->
+
 # Setup Metathesaurus  
 This package 1) runs UMLS's Metamorphosys from the R console as well as 2) loads UMLS Metathesaurus tables in a MySQL database. If a full installation is chosen, all Tables except the foreign language tables are loaded into the database. Otherwise the following tables are loaded in a non-full installation (which are the target tables determined by OHDSI):    
 * MRCONSO.RRF
