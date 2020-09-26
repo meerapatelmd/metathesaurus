@@ -3,7 +3,7 @@
 #'
 #' @description
 #' This family of functions returns the RRF file descriptions found at
-#' \href{https://www.ncbi.nlm.nih.gov/books/NBK9685/} as a tibble.
+#' \href{https://www.ncbi.nlm.nih.gov/books/NBK9685/}{https://www.ncbi.nlm.nih.gov/books/NBK9685/} as a tibble.
 #'
 #' @name mth_file_description_functions
 NULL

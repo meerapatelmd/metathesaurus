@@ -5,5 +5,5 @@
 \title{Metathesaurus File Descriptions}
 \description{
 This family of functions returns the RRF file descriptions found at
-\href{https://www.ncbi.nlm.nih.gov/books/NBK9685/} as a tibble.
+\href{https://www.ncbi.nlm.nih.gov/books/NBK9685/}{https://www.ncbi.nlm.nih.gov/books/NBK9685/} as a tibble.
 }
