@@ -63,16 +63,64 @@ table_titles <-
 
 
 
-input <-
-input %>%
-        rvest::html_nodes("h3") %>%
-        rvest::html_text() %>%
-        tibble::as_tibble_col("h3") %>%
-        tidyr::extract(col = h3,
-                       into = c("Table Title", "RRF"),
-                       regex = "^.*?([A-Za-z]{1,}.*?) [(]{1}File [=]{1} (.*RRF)[)]{1}")
+
+mrsat_data_definitions <-
+        function() {
+                tibble::tribble(~Col.,~Description,
+                                'COL', 'Column or data element name',
+                                'DES', 'Descriptive Name',
+                                'REF', 'Documentation Section Number',
+                                'MIN', 'Minimum Length, Characters',
+                                'AV', 'Average Length',
+                                'MAX', 'Maximum Length, Characters',
+                                'FIL', 'Physical FILENAME in which this field occurs',
+                                'DTY', 'SQL-92 data type for this column')
+        }
 
 
+
+mrdef_data_definitions <-
+        function() {
+                tibble::tribble(~Col.,~Description,
+                                'DOCKEY', 'Data element or attribute',
+                                'VALUE', 'Abbreviation that is one of its values',
+                                'TYPE', 'Type of information in EXPL column',
+                                'EXPL', 'Explanation of VALUE')
+        }
+
+
+
+mrhist_data_definitions <-
+        function() {
+                tibble::tribble(~Col.,~Description,
+                                'CUI', 'Unique identifier of concept',
+                                'TUI', 'Unique identifier of Semantic Type',
+                                'STN', 'Semantic Type tree number',
+                                'STY', 'Semantic Type. The valid values are defined in the Semantic Network.',
+                                'ATUI', 'Unique identifier for attribute',
+                                'CVF', 'Content View Flag. Bit field used to flag rows included in Content View. This field is a varchar field to maximize the number of bits available for use.')
+        }
+
+
+mrrel_data_definitions <-
+        function() {
+                tibble::tribble(
+                        ~Col.,~Description,
+                        'LUI', 'Lexical Unique Identifier',
+                        'CUI', 'Concept Unique Identifier'
+                )
+        }
+
+
+
+mrcoc_data_definitions <-
+        function() {
+                tibble::tribble(
+                        ~Col.,~Description,
+                        'SUI', 'String Unique Identifier',
+                        'CUI', 'Concept Unique Identifier'
+                )
+        }
 
 %>%
         stringr::str_replace_all(pattern = "(^.* )([A-Za-z].*)")
