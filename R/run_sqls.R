@@ -14,27 +14,12 @@
 #' @param ... Parameter values, if any, that are passed to the SqlRender::render function.
 #' @export
 
-executeSQL <-
-        function(sqlPath,
+run_sqls <-
+        function(sqls,
                  ...,
                  conn) {
 
-                sql_statement <-
-                        SqlRender::render(SqlRender::readSql(sourceFile = sqlPath),
-                                          ...)
-
-                # sql_statement <-
-                #         SqlRender::translate(sql = sql_statement,
-                #                              targetDialect = "oracle")
-
-
-                sql_statement <-
-                        centipede::strsplit(sql_statement, split = "[;]{1}", type = "after") %>%
-                        unlist() %>%
-                        trimws() %>%
-                        centipede::no_blank()
-
-                total <- length(sql_statement)
+                total <- length(sqls)
                 pb <- progress::progress_bar$new(
                         format = "[:bar] :elapsedfull :current/:total (:percent)",
                         total = total,
@@ -45,11 +30,9 @@ executeSQL <-
                 # Sleep time required to allow for progress bar to update after each pb$tick
                 Sys.sleep(0.2)
 
-                for (i in 1:length(sql_statement)) {
-                        sql <- sql_statement[i]
+                for (i in 1:length(sqls)) {
+                        sql <- sqls[i]
 
-
-                        sql1 <<- sql
                         res <-
                                 tryCatch(RMySQL::dbSendQuery(conn = conn,
                                                              statement = sql),

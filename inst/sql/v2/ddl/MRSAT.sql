@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS MRSAT;
 CREATE TABLE MRSAT (
     CUI	char(8) NOT NULL,
     LUI	varchar(10),

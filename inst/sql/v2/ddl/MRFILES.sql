@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS MRFILES;
 CREATE TABLE MRFILES (
     FIL	varchar(50),
     DES	varchar(200),

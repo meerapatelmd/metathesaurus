@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS MRCOLS;
 CREATE TABLE MRCOLS (
     COL	varchar(40),
     DES	varchar(200),

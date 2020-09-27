@@ -20,7 +20,7 @@ executeSQL2 <-
                  conn) {
 
                 sql_statement <-
-                        SqlRender::render(SqlRender::readSql(sourceFile = sqlPath),
+                        SqlRender::render(SqlRender::readSql(sourceFile = sqlPaths),
                                           ...)
 
                 # sql_statement <-
@@ -28,7 +28,7 @@ executeSQL2 <-
                 #                              targetDialect = "oracle")
 
 
-                sql_statements <-
+                sql_statements <<-
                         sqlPaths %>%
                         purrr::map(function(x)
                                         SqlRender::render(SqlRender::readSql(sourceFile = x),
@@ -36,7 +36,8 @@ executeSQL2 <-
 
 
 
-                total <- length(sql_statement)
+                total <- length(sql_statements)
+
                 pb <- progress::progress_bar$new(
                         format = "[:bar] :elapsedfull :current/:total (:percent)",
                         total = total,
@@ -51,6 +52,7 @@ executeSQL2 <-
                 for (i in 1:length(sql_statements)) {
                         sql <- sql_statements[[i]]
 
+                        sql2 <<- sql
 
                         res <-
                                 tryCatch(RMySQL::dbSendQuery(conn = conn,
@@ -73,6 +75,7 @@ executeSQL2 <-
                                 RMySQL::dbClearResult(res),
                                 error = function(e) "Error")
 
+                        Sys.sleep(0.2)
 
                         pb$tick()
                         # Sleep time required to allow for progress bar to update after each pb$tick

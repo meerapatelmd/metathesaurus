@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS MRSAB;
 CREATE TABLE MRSAB (
     VCUI	char(8),
     RCUI	char(8),

@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS MRCXT;
 CREATE TABLE MRCXT (
     CUI	char(8),
     SUI	varchar(10),
