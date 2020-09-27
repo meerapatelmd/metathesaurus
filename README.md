@@ -25,10 +25,10 @@ devtools::install_github("meerapatelmd/setupMetathesaurus")
 
 ## Prerequisites      
 ### MySQL v5.5        
-* MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL
-* /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation
-* Socket: /opt/local/var/run/mysql55/mysqld.sock
-* Example of creating a database named `umls` using `root` as user:  
+* MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information can be found here: https://trac.macports.org/wiki/howto/MySQL   
+* /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation    
+* Socket: /opt/local/var/run/mysql55/mysqld.sock   
+* Example of creating a database named `umls` using `root` as user:    
   
          ```
          -mysql -u root -p  
