@@ -14,7 +14,12 @@ If you'd like to run Metamorphosys to set configurations instead, jump to [Metam
 
 ## Related Packages  
 The metaorite R Package contains functions that query the tables in your MySQL instance.  
-CallMeMaybe  
+CallMeMaybe   
+
+## Installation    
+```
+devtools::install_github("meerapatelmd/setupMetathesaurus")
+```
 
 ## Prerequisites      
 ### MySQL v5.5        
