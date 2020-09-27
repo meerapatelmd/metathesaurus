@@ -69,7 +69,7 @@ scrape_field_value_annotations <-
 
 #' @title
 #' Scrape Vocabulary Annotations
-#' @inherit documentation_scraping_functions title description importFrom
+#' @inherit documentation_scraping_functions title description
 #' @keywords internal
 
 scrape_vocabulary_annotations <-
