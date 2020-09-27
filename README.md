@@ -14,7 +14,7 @@ If you'd like to run Metamorphosys to set configurations instead, jump to [Metam
 
 ## Related R Packages   
 
-* [metaorite](https://github.com/meerapatelmd/setupMetathesaurus/blob/master/README.md) to query the instance.   
+* [metaorite](https://github.com/meerapatelmd/metaorite/blob/master/README.md) to query the instance.   
 
 * [CallMeMaybe](https://github.com/meerapatelmd/callMeMaybe/blob/master/README.md) to make API Calls to the UMLS REST API.    
 
