@@ -1,7 +1,7 @@
 #' DDL META Tables
-#' @param path Path to the unpacked RRF files
 #' @import preQL
 #' @importFrom DatabaseConnector dbExecute
+#' @keywords internal
 #' @export
 
 

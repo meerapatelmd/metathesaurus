@@ -19,7 +19,7 @@
 #' @importFrom SqlRender render
 
 
-load_all_mth <-
+migrate_mysql_to_pg <-
         function(umls_conn,
                  conn) {
 

@@ -12,3 +12,4 @@ runIndices(dbname = "umls", username, password, full = FALSE)
 \description{
 Run indices on the loaded data.
 }
+\keyword{internal}
