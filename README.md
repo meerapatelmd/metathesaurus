@@ -6,9 +6,9 @@
 This package sets up an instance of the UMLS Metathesaurus in either the native MySQL5.5 or Postgres DBMS sourced from the RRF files downloaded and from https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html. The list of instantiated tables can be customized depending on user needs. These options include      
 
 1. All MTH Tables
-1. a MRCONSO only     
+1. MRCONSO Table only     
 1. OMOP Only (MRCONSO, MRHIER, MRMAP, MRSMAP, MRSAT, AND MRREL)      
-1. English Only (Non-English Language Tables are excluded).     
+1. English Only (Non-English Language Tables are excluded)     
 
 If you'd like to run Metamorphosys to set configurations instead, jump to [Metamorphosys](#metamorphosys).  
 
@@ -28,7 +28,6 @@ CallMeMaybe
          -mysql> CREATE DATABASE umls;  
          -mysql -u root -p --local-infile umls  
          -mysql> SHOW PROCESSLIST
-         
          ```  
          
 ### Downloading UMLS Files   
