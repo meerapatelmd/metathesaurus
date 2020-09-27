@@ -102,7 +102,9 @@ mysql_run <-
                 }
 
                 if (english_only) {
+
                         tables <- tables[!(tables %in% c('MRXW_BAQ', 'MRXW_CHI', 'MRXW_CZE', 'MRXW_DAN', 'MRXW_DUT', 'MRXW_EST', 'MRXW_FIN', 'MRXW_FRE', 'MRXW_GER', 'MRXW_GRE', 'MRXW_HEB', 'MRXW_HUN', 'MRXW_ITA', 'MRXW_JPN', 'MRXW_KOR', 'MRXW_LAV', 'MRXW_NOR', 'MRXW_POL', 'MRXW_POR', 'MRXW_RUS', 'MRXW_SCR', 'MRXW_SPA', 'MRXW_SWE', 'MRXW_TUR'))]
+
                 }
 
 
@@ -885,7 +887,8 @@ mysql_run <-
                                 )
 
                         if (class(resultset) != "MySQLResult") {
-                                secretary::typewrite_error("\n\n", indexes[i], "\n")
+                                cat("\n")
+                                secretary::typewrite_error(indexes[i])
                                 index_errors <-
                                         c(index_errors,
                                           indexes[i])
