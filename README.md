@@ -12,6 +12,9 @@ This package sets up an instance of the UMLS Metathesaurus in either the native 
 
 All SQL scripts used in this package can be accessed at inst/sql to run directly in the client instead. If you'd like to run Metamorphosys to set configurations prior to installation, jump to [Metamorphosys](#metamorphosys)  
 
+## Dependencies    
+This package requires a connection by `RMySQL::dbConnect` or `DatabaseConnector::dbConnect` for MySQL and Postgres, respectively.     
+
 ## Related R Packages   
 
 * [metaorite](https://github.com/meerapatelmd/metaorite/blob/master/README.md) to query the instance.   
@@ -24,7 +27,7 @@ devtools::install_github("meerapatelmd/setupMetathesaurus")
 ```
 
 ## Prerequisites      
-### MySQL v5.5        
+### MySQL5.5        
 * MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information at https://trac.macports.org/wiki/howto/MySQL   
 * /opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation    
 * Socket: /opt/local/var/run/mysql55/mysqld.sock   
