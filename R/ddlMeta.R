@@ -12,6 +12,8 @@ ddlMeta <-
                  full = FALSE) {
 
 
+                .Deprecated("mysql_ddl")
+
                 conn <-
                 preQL::connectMySQL5.5(dbname = dbname,
                                        username = username,
@@ -23,6 +25,7 @@ ddlMeta <-
                 } else {
                         sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/ddl.sql")
                 }
+
 
                 executeSQL(sqlPath = sqlPath,
                            conn = conn)
