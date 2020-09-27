@@ -10,7 +10,7 @@ This package sets up an instance of the UMLS Metathesaurus in either the native 
 1. OMOP Only (MRCONSO, MRHIER, MRMAP, MRSMAP, MRSAT, AND MRREL)      
 1. English Only (Non-English Language Tables are excluded)     
 
-All SQL scripts used in this package can be accessed at inst/sql to run directly in the client instead. If you'd like to run Metamorphosys to set configurations, jump to [Metamorphosys](#metamorphosys)  
+All SQL scripts used in this package can be accessed at inst/sql to run directly in the client instead. If you'd like to run Metamorphosys to set configurations prior to installation, jump to [Metamorphosys](#metamorphosys)  
 
 ## Related R Packages   
 
