@@ -678,20 +678,42 @@ psql_run <-
                                         tableName = tables_to_drop[i])
                 }
 
+                rrf_files <-
+                        list.files(path = filePath,
+                                   recursive = TRUE,
+                                   pattern = "[.]RRF$",
+                                   full.names = TRUE) %>%
+                                tibble::as_tibble_col("filePaths") %>%
+                                dplyr::mutate(baseNames = basename(filePaths)) %>%
+                                dplyr::mutate(tableNames = stringr::str_remove_all(baseNames, "[.]RRF$")) %>%
+                                rubix::filter_for(tableNames,
+                                                  inclusion_vector = tables) %>%
+                                dplyr::select(filePaths) %>%
+                                dplyr::distinct() %>%
+                                unlist()
 
-                pb <- progress::progress_bar$new(format = ":what [:bar] :current/:total :percent :elapsedtotal",
+
+                pb <- progress::progress_bar$new(format = "    :what [:bar] :current/:total :percent :elapsedfull",
                                                  total = length(tables),
-                                                 clear = FALSE)
+                                                 clear = FALSE,
+                                                 width = 60)
 
                 pb$tick(0)
                 Sys.sleep(0.2)
 
 
+                errors <- tibble::tibble()
                 for (i in 1:length(tables)) {
 
 
                         table <- tables[i]
-                        rrf_path <- file.path(path.expand(filePath, paste0(table, ".RRF")))
+                        rrf_path <- path.expand(
+                                        grep(pattern = table,
+                                         rrf_files,
+                                         value = TRUE)
+                        )
+
+
                         sql <- SqlRender::render(
                                 "COPY @schema.@tableName FROM '@rrf_path' WITH DELIMITER E'|' CSV QUOTE E'\b';",
                                 schema = schema,
@@ -703,7 +725,18 @@ psql_run <-
                         Sys.sleep(1)
 
 
+                        tryCatch(
+                        pg13::send(conn = conn,
+                                   sql_statement = sql),
+                        error = function(e) dplyr::bind_rows(errors,
+                                                             tibble::tibble(
+                                                                TABLE = table,
+                                                                 SQL = sql)))
 
+                }
+
+                if (nrow(errors)) {
+                        errors
                 }
 
         }
