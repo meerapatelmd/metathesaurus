@@ -1,12 +1,31 @@
-#' DDL META Tables
-#' @param path Path to the unpacked RRF files
-#' @import preQL
-#' @importFrom DatabaseConnector dbExecute
+#' @title
+#' Instantiate MySQL5.5
+#' @inherit run_setup description
+#' @inheritParams run_setup
+#' @seealso
+#'  \code{\link[preQL]{query}}
+#'  \code{\link[purrr]{map}},\code{\link[purrr]{map2}}
+#'  \code{\link[SqlRender]{render}}
+#'  \code{\link[stringr]{str_replace}},\code{\link[stringr]{str_remove}}
+#'  \code{\link[RMySQL]{character(0)}}
+#'  \code{\link[tibble]{as_tibble}}
+#'  \code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
+#'  \code{\link[rubix]{filter_for}}
+#'  \code{\link[progress]{progress_bar}}
+#' @rdname run_mysql
+#' @family setup
 #' @export
+#' @importFrom preQL query
+#' @importFrom purrr map map2
+#' @importFrom SqlRender render
+#' @importFrom stringr str_replace_all str_remove
+#' @importFrom RMySQL dbSendQuery dbClearResult
+#' @importFrom tibble as_tibble_col
+#' @importFrom dplyr mutate select distinct filter
+#' @importFrom progress progress_bar
 
 run_mysql <-
-        function(dbname = "umls",
-                 conn,
+        function(conn,
                  mrconso_only = FALSE,
                  omop_only = FALSE,
                  english_only = TRUE,
@@ -621,8 +640,7 @@ run_mysql <-
                                    full.names = TRUE) %>%
                         tibble::as_tibble_col("filePaths") %>%
                         dplyr::mutate(baseNames = basename(filePaths)) %>%
-                        rubix::filter_for(baseNames,
-                                          inclusion_vector = rrfFileNames) %>%
+                        dplyr::filter(baseNames %in% rrfFileNames) %>%
                         dplyr::select(filePaths) %>%
                         dplyr::distinct() %>%
                         unlist()
@@ -818,7 +836,7 @@ run_mysql <-
                 CREATE INDEX X_MRCUI_CUI2 ON MRCUI(CUI2);
 
                 CREATE INDEX X_MRMAP_MAPSETCUI ON MRMAP(MAPSETCUI);" %>%
-                        centipede::strsplit(split = "[;]", type = "after") %>%
+                       sqlsplit(split = "[;]", type = "after") %>%
                         unlist() %>%
                         trimws()
 

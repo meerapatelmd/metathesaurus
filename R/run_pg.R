@@ -1,12 +1,26 @@
+#' @title
+#' Instantiate Postgres
+#' @inherit run_setup description
+#' @inheritParams run_setup
+#' @seealso
+#'  \code{\link[pg13]{lsSchema}},\code{\link[pg13]{send}},\code{\link[pg13]{lsTables}},\code{\link[pg13]{dropTable}}
+#'  \code{\link[SqlRender]{render}}
+#'  \code{\link[tibble]{as_tibble}}
+#'  \code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
+#'  \code{\link[stringr]{str_remove}}
+#'  \code{\link[progress]{progress_bar}}
+#' @rdname run_pg
+#' @family setup
+#' @export
+#' @importFrom pg13 lsSchema send lsTables dropTable
+#' @importFrom SqlRender render
+#' @importFrom tibble as_tibble_col
+#' @importFrom dplyr mutate select distinct filter
+#' @importFrom stringr str_remove_all
+#' @importFrom progress progress_bar
 
 
-#' @details
-#'  https://www.nlm.nih.gov/research/umls/implementation_resources/community/index.html Created by: Yeb Havinga, MSc \href{yhavinga@gmail.com}
-
-
-# conn <- chariot::connectAthena()
-
-psql_run <-
+run_pg <-
         function(conn,
                  schema = "mth",
                  rrf_dir,
@@ -692,8 +706,7 @@ psql_run <-
                                 tibble::as_tibble_col("filePaths") %>%
                                 dplyr::mutate(baseNames = basename(filePaths)) %>%
                                 dplyr::mutate(tableNames = stringr::str_remove_all(baseNames, "[.]RRF$")) %>%
-                                rubix::filter_for(tableNames,
-                                                  inclusion_vector = tables) %>%
+                        dplyr::filter(tableNames %in% tables) %>%
                                 dplyr::select(filePaths) %>%
                                 dplyr::distinct() %>%
                                 unlist()
