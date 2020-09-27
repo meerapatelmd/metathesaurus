@@ -1,6 +1,0 @@
-CREATE TABLE MRRANK (
-    MRRANK_RANK	int unsigned NOT NULL,
-    SAB	varchar(40) NOT NULL,
-    TTY	varchar(40) NOT NULL,
-    SUPPRESS	char(1) NOT NULL
-) CHARACTER SET utf8;

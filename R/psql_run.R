@@ -9,10 +9,14 @@
 psql_run <-
         function(conn,
                  schema = "mth",
-                 filePath,
+                 rrf_dir,
                  mrconso_only = FALSE,
                  omop_only = FALSE,
                  english_only = TRUE) {
+
+
+                ##### Setup Objects
+                errors <- vector()
 
                 tables <-
                         c('AMBIGLUI',
@@ -681,7 +685,7 @@ psql_run <-
                 }
 
                 rrf_files <-
-                        list.files(path = filePath,
+                        list.files(path = rrf_dir,
                                    recursive = TRUE,
                                    pattern = "[.]RRF$",
                                    full.names = TRUE) %>%
@@ -704,7 +708,7 @@ psql_run <-
                 Sys.sleep(0.2)
 
 
-                errors <- tibble::tibble()
+
                 for (i in 1:length(tables)) {
 
 
@@ -723,21 +727,28 @@ psql_run <-
                                 rrf_path = rrf_path)
 
 
-
+                        output <-
                         tryCatch(
                         pg13::send(conn = conn,
                                    sql_statement = sql),
-                        error = function(e) dplyr::bind_rows(errors,
-                                                             tibble::tibble(
-                                                                TABLE = table,
-                                                                 SQL = sql)))
+                        error = function(e) "Error")
 
+                        if (length(output) == 1) {
+
+                                if (output == "Error") {
+
+                                        errors <-
+                                                c(errors,
+                                                  sql)
+                                }
+
+                        }
                         pb$tick(tokens = list(what = table))
                         Sys.sleep(1)
 
                 }
 
-                index_sqls <-
+                indexes <-
                 c(
                 "CREATE INDEX X_MRCOC_CUI1 ON @schema.MRCOC(CUI1);",
                 "CREATE INDEX X_MRCOC_AUI1 ON @schema.MRCOC(AUI1);",
@@ -807,8 +818,8 @@ psql_run <-
                 "CREATE INDEX X_AMBIGLUI_LUI ON @schema.AMBIGLUI(LUI);")
 
 
-                pb <- progress::progress_bar$new(format = "    :what [:bar] :current/:total :percent :elapsedfull",
-                                                 total = length(index_sqls),
+                pb <- progress::progress_bar$new(format = "    [:bar] :current/:total :percent :elapsedfull",
+                                                 total = length(indexes),
                                                  clear = FALSE,
                                                  width = 60)
 
@@ -817,27 +828,35 @@ psql_run <-
 
 
                 for (i in 1:length(index_sqls)) {
-                        index_sql <- SqlRender::render(index_sqls[i],
+                        index <- SqlRender::render(indexes[i],
                                                        schema = schema)
 
+                        output <-
                                 tryCatch(
                                 pg13::send(conn = conn,
-                                           sql_statement = index_sql),
-                                error = function(e) dplyr::bind_rows(errors,
-                                                                     tibble::tibble(
-                                                                             TABLE = NA,
-                                                                             SQL = index_sql)))
+                                           sql_statement = index),
+                                error = function(e) "Error")
 
-                        pb$tick(1)
+
+                        if (length(output) == 1) {
+
+                                if (output == "Error") {
+
+                                        errors <-
+                                                c(errors,
+                                                  index)
+                                }
+
+                        }
+                        pb$tick()
                         Sys.sleep(1)
 
-
                 }
 
+                if (length(errors)) {
 
+                        cat(errors,
+                            sep = "\n")
 
-                if (nrow(errors)) {
-                        errors
                 }
-
         }

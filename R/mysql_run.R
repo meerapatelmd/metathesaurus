@@ -4,27 +4,15 @@
 #' @importFrom DatabaseConnector dbExecute
 #' @export
 
-#
-# mysql_ddl(username = Sys.getenv("umls_username"),
-#           password = Sys.getenv("umls_password"))
-#
-#
-
 mysql_run <-
         function(dbname = "umls",
-                 username,
-                 password,
+                 conn,
                  mrconso_only = FALSE,
                  omop_only = FALSE,
                  english_only = TRUE,
-                 rrf_dir_path)
+                 rrf_dir)
 
                 {
-
-                conn <-
-                preQL::connectMySQL5.5(dbname = dbname,
-                                       username = username,
-                                       password = password)
 
 
                 Tables <- preQL::query(conn = conn,
@@ -610,7 +598,7 @@ mysql_run <-
                                                     statement = sql)
 
                         if (class(resultset) != "MySQLResult") {
-                                #secretary::typewrite_error("\n\n", sql, "\n")
+
                                 errors <-
                                         c(errors,
                                           sql)
@@ -620,25 +608,6 @@ mysql_run <-
 
                 }
 
-                # executeSQL2(sqlPaths = sqlFiles, conn = conn)
-
-
-
-                if (length(errors)) {
-
-                        secretary::typewrite(secretary::timepunch(), secretary::redTxt("\tErrors: "))
-
-                        errors %>%
-                                purrr::map(~secretary::typewrite(., tabs = 3))
-
-                } else {
-
-                        secretary::typewrite(secretary::timepunch(), "\tNo errors.")
-
-                }
-
-
-
                 # Load data
                 Tables <- preQL::query(conn = conn,
                                        "SHOW TABLES;") %>%
@@ -646,7 +615,7 @@ mysql_run <-
 
                 rrfFileNames <- paste0(Tables, ".RRF")
                 rrfFilePaths <-
-                        list.files(path = rrf_dir_path,
+                        list.files(path = rrf_dir,
                                    recursive = TRUE,
                                    pattern = "[.]RRF$",
                                    full.names = TRUE) %>%
@@ -678,8 +647,6 @@ mysql_run <-
                 pb$tick(0)
                 Sys.sleep(0.2)
 
-                load_errors <- vector()
-
                 for (i in 1:length(sqls)) {
 
                         sql <- sqls[[i]]
@@ -689,9 +656,9 @@ mysql_run <-
                                                     statement = sql)
 
                         if (class(resultset) != "MySQLResult") {
-                                #secretary::typewrite_error("\n\n", sql, "\n")
-                                load_errors <-
-                                        c(load_errors,
+
+                                errors <-
+                                        c(errors,
                                           sql)
                         }
 
@@ -701,17 +668,6 @@ mysql_run <-
                         pb$tick()
                         Sys.sleep(0.2)
 
-                }
-
-
-                if (length(load_errors)) {
-
-                        secretary::typewrite(secretary::timepunch(), secretary::redTxt("\tLoad Errors: "))
-                        load_errors %>%
-                                purrr::map(~secretary::typewrite(., tabs = 3))
-
-                } else {
-                        secretary::typewrite(secretary::timepunch(), "\tNo Load Errors.")
                 }
 
 
@@ -876,7 +832,7 @@ mysql_run <-
                 pb$tick(0)
                 Sys.sleep(0.2)
 
-                index_errors <- vector()
+
                 for (i in 1:length(indexes)) {
 
                         resultset <-
@@ -887,10 +843,9 @@ mysql_run <-
                                 )
 
                         if (class(resultset) != "MySQLResult") {
-                                cat("\n")
-                                secretary::typewrite_error(indexes[i])
-                                index_errors <-
-                                        c(index_errors,
+
+                                errors <-
+                                        c(errors,
                                           indexes[i])
                         }  else {
 
@@ -906,7 +861,11 @@ mysql_run <-
 
                 }
 
+                if (length(errors)) {
 
-                preQL::dcMySQL5.5(conn = conn)
+                        cat(errors,
+                            sep = "\n")
+
+                }
 
         }

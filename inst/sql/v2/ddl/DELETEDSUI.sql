@@ -1,6 +1,0 @@
-CREATE TABLE DELETEDSUI (
-    PSUI	varchar(10) NOT NULL,
-    LAT	char(3) NOT NULL,
-    PSTR	text NOT NULL
-) CHARACTER SET utf8;
-

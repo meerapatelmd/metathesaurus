@@ -1,5 +1,0 @@
-CREATE TABLE MERGEDCUI (
-    PCUI	char(8) NOT NULL,
-    CUI	char(8) NOT NULL
-) CHARACTER SET utf8;
-
