@@ -12,9 +12,12 @@ This package sets up an instance of the UMLS Metathesaurus in either the native 
 
 If you'd like to run Metamorphosys to set configurations instead, jump to [Metamorphosys](#metamorphosys).  
 
-## Related Packages  
-The metaorite R Package contains functions that query the tables in your MySQL instance.  
-CallMeMaybe   
+## Related R Packages   
+
+* [metaorite](https://github.com/meerapatelmd/setupMetathesaurus/blob/master/README.md) to query the instance.   
+
+* [CallMeMaybe](https://github.com/meerapatelmd/callMeMaybe/blob/master/README.md) to make API Calls to the UMLS REST API.    
+
 
 ## Installation    
 ```
