@@ -25,10 +25,10 @@ CREATE TABLE umls.MRCONSO (
     SAB	varchar(40) NOT NULL,
     TTY	varchar(40) NOT NULL,
     CODE	varchar(100) NOT NULL,
-    STR	text NOT NULL,
+    STR	text,
     SRL	integer NOT NULL,
     SUPPRESS	char(1) NOT NULL,
-    CVF	integer
+    CVF	text
 ,FILLER_COLUMN text);
 DROP TABLE IF EXISTS umls.MRCUI;
 CREATE TABLE umls.MRCUI (
