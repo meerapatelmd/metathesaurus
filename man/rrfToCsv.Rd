@@ -13,6 +13,6 @@ RRF to CSV
 \code{\link[progress]{progress_bar}}
 \code{\link[cave]{strip_fn}}
 \code{\link[readr]{read_delim}}
-\code{\link[rubix]{rm_multibyte_chars}},\code{\link[rubix]{call_mr_clean}}
+\code{\link[rubix]{rm_multibyte_chars}}
 \code{\link[broca]{simply_write_csv}}
 }

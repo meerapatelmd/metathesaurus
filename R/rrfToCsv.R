@@ -4,14 +4,14 @@
 #'  \code{\link[progress]{progress_bar}}
 #'  \code{\link[cave]{strip_fn}}
 #'  \code{\link[readr]{read_delim}}
-#'  \code{\link[rubix]{rm_multibyte_chars}},\code{\link[rubix]{call_mr_clean}}
+#'  \code{\link[rubix]{rm_multibyte_chars}}
 #'  \code{\link[broca]{simply_write_csv}}
 #' @rdname rrfToCsv
 #' @export
 #' @importFrom progress progress_bar
 #' @importFrom cave strip_fn
 #' @importFrom readr read_delim
-#' @importFrom rubix rm_multibyte_chars call_mr_clean
+#' @importFrom rubix rm_multibyte_chars
 #' @importFrom broca simply_write_csv
 #' @importFrom magrittr %>%
 
@@ -44,7 +44,7 @@ rrfToCsv <-
                                         rrf <-
                                                 rrf %>%
                                                 rubix::rm_multibyte_chars() %>%
-                                                rubix::call_mr_clean()
+                                                dplyr::mutate_all(trimws, which = "both")
 
                                         broca::simply_write_csv(rrf,
                                                                 file = csvFile)

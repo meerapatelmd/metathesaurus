@@ -8,7 +8,6 @@
 #' @importFrom purrr map map2 pluck
 #' @importFrom stringr str_replace_all
 #' @importFrom dplyr mutate_all
-#' @importFrom rubix call_mr_clean
 #' @importFrom broca makeTribble
 #' @importFrom secretary press_enter
 #' @name documentation_scraping_functions
@@ -40,7 +39,7 @@ scrape_field_value_annotations <-
                                                 dplyr::mutate_all(stringr::str_replace_all, "[\r\n\t]", " ")) %>%
                         purrr::map(function(x) x %>%
                                            dplyr::mutate_all(stringr::str_replace_all, "[ ]{2,}", " ")) %>%
-                        purrr::map(rubix::call_mr_clean)
+                        purrr::map(dplyr::mutate_all, trimws, which = "both")
 
                 tribble_part <- list()
                 for (i in 1:length(tables)) {
