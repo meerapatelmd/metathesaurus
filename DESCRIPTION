@@ -1,5 +1,5 @@
 Package: setupMetathesaurus
-Title: Setup UMLS Metathesaurus in MySQL5.5 or Postgres  
+Title: Setup UMLS Metathesaurus in MySQL5.5 or Postgres
 Version: 2.0.0
 Authors@R: 
     person(given = "Meera",
@@ -7,27 +7,50 @@ Authors@R:
            role = c("aut", "cre"),
            email = "patelmeeray@gmail.com",
            comment = c(ORCID = "0000-0002-3401-3948"))
-Description: 
-    Setup UMLS Metathesaurus in MySQL5.5 or Postgres. Metamorphosys can optionally be run from the console to customize UMLS Metathesaurus configurations prior to installation.  
-License: Apache License 2.0  
+Description:  Setup UMLS Metathesaurus in MySQL5.5 or
+    Postgres. Metamorphosys can optionally be run from the console to
+    customize UMLS Metathesaurus configurations prior to installation.  
+License: Apache License 2.0
+URL: https://meerapatelmd.github.io/setupMetathesaurus/,
+    https://github.com/meerapatelmd/setupMetathesaurus/
+BugReports: 
+    https://github.com/meerapatelmd/setupMetathesaurus/issues
+Depends: 
+    R (>= 2.10)
+Imports: 
+    broca,
+    cave,
+    centipede,
+    DatabaseConnector,
+    dplyr,
+    magrittr,
+    pg13,
+    preQL,
+    progress,
+    purrr,
+    readr,
+    RMySQL,
+    rubix,
+    rvest,
+    secretary,
+    SqlRender,
+    stringr,
+    tibble,
+    xml2
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: 
+    knitr
+Remotes:
+    meerapatelmd/broca,
+    meerapatelmd/cave,
+    meerapatelmd/centipede,
+    meerapatelmd/pg13,
+    meerapatelmd/preQL,
+    meerapatelmd/rubix,
+    meerapatelmd/secretary
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
-Imports:
-    magrittr,
-    tidyverse,
-    RMySQL,
-    pg13,
-    preQL,
-    progress,
-    SqlRender
-Remotes:
-    meerapatelmd/preQL,
-    meerapatelmd/pg13
-Suggests: 
-    knitr,
-    rmarkdown
-VignetteBuilder: knitr
-Depends: 
-    R (>= 2.10)
