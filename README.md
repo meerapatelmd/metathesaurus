@@ -52,4 +52,10 @@ A Full Release download at https://www.nlm.nih.gov/research/umls/licensedcontent
 * Unzip mmys.zip in the unpacked download and move unzipped contents into a root folder  
 * Run `openMetamorphysis()` with path to `run_mac.sh` as the argument  
 * If not yet installed, install UMLS Metamorphosys (current configurations are all English vocabularies available). Time estimations for installation are approximately 45 minutes-1 hour, but this depends on the configurations.    
-* Run the remainder of setup using the path to the META/ output    
+* Run the remainder of setup using the path to the META/ output  
+
+## Code of Conduct
+
+Please note that the setupMetathesaurus project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.  
+
+
