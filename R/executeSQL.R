@@ -12,7 +12,7 @@
 #' @import RMySQL
 #' @param sqlPath path to source SQL file
 #' @param ... Parameter values, if any, that are passed to the SqlRender::render function.
-#' @export
+#' @keywords internal
 
 executeSQL <-
         function(sqlPath,
@@ -49,6 +49,7 @@ executeSQL <-
                         sql <- sql_statement[i]
 
 
+                        sql1 <<- sql
                         res <-
                                 tryCatch(RMySQL::dbSendQuery(conn = conn,
                                                              statement = sql),

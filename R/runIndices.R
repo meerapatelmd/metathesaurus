@@ -1,9 +1,7 @@
 #' Run Indices
 #' @description Run indices on the loaded data.
 #' @param path Path to the unpacked RRF files
-#' @import preQL
-#' @importFrom DatabaseConnector dbExecute
-#' @export
+#' @keywords internal
 
 runIndices <-
         function(dbname = "umls",
@@ -11,6 +9,7 @@ runIndices <-
                  password,
                  full = FALSE) {
 
+                .Deprecated()
 
                 conn <-
                 preQL::connectMySQL5.5(dbname = dbname,

@@ -1,18 +1,30 @@
 Package: setupMetathesaurus
-Title: Setup the Latest Release of the UMLS Metathesaurus as a MySQL Database  
-Version: 1.0.0
+Title: Setup UMLS Metathesaurus in MySQL5.5 or Postgres  
+Version: 2.0.0
 Authors@R: 
     person(given = "Meera",
            family = "Patel",
            role = c("aut", "cre"),
            email = "patelmeeray@gmail.com",
            comment = c(ORCID = "0000-0002-3401-3948"))
-Description: This package primarily has been written to setup a MySQL Database of a UMLS Metathesaurus. It also includes a function that will run Metamorphysis from the R console for other use cases.  
+Description: 
+    Setup UMLS Metathesaurus in MySQL5.5 or Postgres. Metamorphosys can optionally be run from the console to customize UMLS Metathesaurus configurations prior to installation.  
 License: Apache License 2.0  
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+Imports:
+    magrittr,
+    tidyverse,
+    RMySQL,
+    pg13,
+    preQL,
+    progress,
+    SqlRender
+Remotes:
+    meerapatelmd/preQL,
+    meerapatelmd/pg13
 Suggests: 
     knitr,
     rmarkdown

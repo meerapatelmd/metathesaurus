@@ -1,7 +1,7 @@
 #' DDL META Tables
-#' @param path Path to the unpacked RRF files
 #' @import preQL
 #' @importFrom DatabaseConnector dbExecute
+#' @keywords internal
 #' @export
 
 
@@ -11,6 +11,8 @@ ddlMeta <-
                  password,
                  full = FALSE) {
 
+
+                .Deprecated("mysql_ddl")
 
                 conn <-
                 preQL::connectMySQL5.5(dbname = dbname,
@@ -23,6 +25,7 @@ ddlMeta <-
                 } else {
                         sqlPath <- paste0(system.file(package = "setupMetathesaurus"), "/sql/ddl.sql")
                 }
+
 
                 executeSQL(sqlPath = sqlPath,
                            conn = conn)

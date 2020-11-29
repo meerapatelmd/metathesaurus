@@ -18,3 +18,4 @@ This function:
 3. To identify exact statements that have thrown errors and they are first isolated by splitting single string read from the file on the semicolon
 4. Each single line is sent to the database. If an error is thrown, the single statement is printed in the R console in red.
 }
+\keyword{internal}

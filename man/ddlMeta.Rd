@@ -6,9 +6,7 @@
 \usage{
 ddlMeta(dbname = "umls", username, password, full = FALSE)
 }
-\arguments{
-\item{path}{Path to the unpacked RRF files}
-}
 \description{
 DDL META Tables
 }
+\keyword{internal}
