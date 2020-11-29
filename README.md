@@ -1,7 +1,3 @@
-<!-- badges: start -->
-  [![R build status](https://github.com/meerapatelmd/setupMetathesaurus/workflows/R-CMD-check/badge.svg)](https://github.com/meerapatelmd/setupMetathesaurus/actions)
-  <!-- badges: end -->
-
 # Setup Metathesaurus  
 This package sets up an instance of the UMLS Metathesaurus in either the native MySQL5.5 or Postgres DBMS sourced from the RRF files downloaded and from https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html. The list of instantiated tables can be customized depending on user needs. These options include      
 
