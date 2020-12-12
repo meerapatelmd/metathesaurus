@@ -12,4 +12,4 @@ createMedallion(sourceImg = "logo.jpg",
                 s_y = 1.1,
                 filename = "logo.png")
 
-createFavicons()
+createFavicons(overwrite = TRUE)
