@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">metathesaurus</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -131,10 +131,13 @@
     <pre class="usage"><span class='fu'>setup_pg_mth</span><span class='op'>(</span>
   <span class='va'>conn</span>,
   schema <span class='op'>=</span> <span class='st'>"mth"</span>,
-  <span class='va'>rrf_dir</span>,
+  <span class='va'>path_to_rrfs</span>,
+  steps <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"reset_schema"</span>, <span class='st'>"ddl_tables"</span>, <span class='st'>"copy_rrfs"</span>, <span class='st'>"add_indexes"</span><span class='op'>)</span>,
   mrconso_only <span class='op'>=</span> <span class='cn'>FALSE</span>,
   omop_only <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  english_only <span class='op'>=</span> <span class='cn'>TRUE</span>
+  english_only <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  render_sql <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
 
