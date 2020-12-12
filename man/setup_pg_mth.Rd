@@ -7,10 +7,13 @@
 setup_pg_mth(
   conn,
   schema = "mth",
-  rrf_dir,
+  path_to_rrfs,
+  steps = c("reset_schema", "ddl_tables", "copy_rrfs", "add_indexes"),
   mrconso_only = FALSE,
   omop_only = FALSE,
-  english_only = TRUE
+  english_only = TRUE,
+  verbose = TRUE,
+  render_sql = TRUE
 )
 }
 \description{

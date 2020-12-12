@@ -38,6 +38,7 @@ reset_schema <-
 #' @rdname ddl_tables
 #' @export
 #' @importFrom pg13 send
+#' @importFrom SqlRender render
 
 ddl_tables <-
         function(conn,
@@ -59,7 +60,7 @@ ddl_tables <-
                                                 FIL	varchar(50),
                                                 DTY	varchar(40),
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRCONSO = '
                                         DROP TABLE IF EXISTS @schema.MRCONSO;
                                         CREATE TABLE @schema.MRCONSO (
@@ -82,7 +83,7 @@ ddl_tables <-
                                                 SUPPRESS	char(1) NOT NULL,
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRCUI = '
                                         DROP TABLE IF EXISTS @schema.MRCUI;
                                         CREATE TABLE @schema.MRCUI (
@@ -94,7 +95,7 @@ ddl_tables <-
                                                 CUI2	char(8),
                                                 MAPIN	char(1),
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRCXT = '
                                         DROP TABLE IF EXISTS @schema.MRCXT;
                                         CREATE TABLE @schema.MRCXT (
@@ -114,7 +115,7 @@ ddl_tables <-
                                                 XC	varchar(1),
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRDEF = '
                                         DROP TABLE IF EXISTS @schema.MRDEF;
                                         CREATE TABLE @schema.MRDEF (
@@ -127,7 +128,7 @@ ddl_tables <-
                                                 SUPPRESS	char(1) NOT NULL,
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRDOC = '
                                         DROP TABLE IF EXISTS @schema.MRDOC;
                                         CREATE TABLE @schema.MRDOC (
@@ -136,7 +137,7 @@ ddl_tables <-
                                                 TYPE	varchar(50) NOT NULL,
                                                 EXPL	text,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRFILES = '
                                         DROP TABLE IF EXISTS @schema.MRFILES;
                                         CREATE TABLE @schema.MRFILES (
@@ -147,7 +148,7 @@ ddl_tables <-
                                                 RWS	integer,
                                                 BTS	bigint,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRHIER = '
                                         DROP TABLE IF EXISTS @schema.MRHIER;
                                         CREATE TABLE @schema.MRHIER (
@@ -161,7 +162,7 @@ ddl_tables <-
                                                 HCD	varchar(100),
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRHIST = '
                                         DROP TABLE IF EXISTS @schema.MRHIST;
                                         CREATE TABLE @schema.MRHIST (
@@ -175,7 +176,7 @@ ddl_tables <-
                                                 REASON	text,
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRMAP = '
                                         DROP TABLE IF EXISTS @schema.MRMAP;
                                         CREATE TABLE @schema.MRMAP (
@@ -206,7 +207,7 @@ ddl_tables <-
                                                 MAPATV	text,
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRRANK = '
                                         DROP TABLE IF EXISTS @schema.MRRANK;
                                         CREATE TABLE @schema.MRRANK (
@@ -215,7 +216,7 @@ ddl_tables <-
                                                 TTY	varchar(40) NOT NULL,
                                                 SUPPRESS	char(1) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRREL = '
                                         DROP TABLE IF EXISTS @schema.MRREL;
                                         CREATE TABLE @schema.MRREL (
@@ -236,7 +237,7 @@ ddl_tables <-
                                                 SUPPRESS	char(1) NOT NULL,
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRSAB = '
                                         DROP TABLE IF EXISTS @schema.MRSAB;
                                         CREATE TABLE @schema.MRSAB (
@@ -266,7 +267,7 @@ ddl_tables <-
                                                 SSN	text NOT NULL,
                                                 SCIT	text NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRSAT = '
                                         DROP TABLE IF EXISTS @schema.MRSAT;
                                         CREATE TABLE @schema.MRSAT (
@@ -284,7 +285,7 @@ ddl_tables <-
                                                 SUPPRESS	char(1) NOT NULL,
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRSMAP = '
                                         DROP TABLE IF EXISTS @schema.MRSMAP;
                                         CREATE TABLE @schema.MRSMAP (
@@ -300,7 +301,7 @@ ddl_tables <-
                                                 TOTYPE	varchar(50),
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRSTY = '
                                         DROP TABLE IF EXISTS @schema.MRSTY;
                                         CREATE TABLE @schema.MRSTY (
@@ -311,7 +312,7 @@ ddl_tables <-
                                                 ATUI	varchar(11) NOT NULL,
                                                 CVF	integer,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXNS_ENG = '
                                         DROP TABLE IF EXISTS @schema.MRXNS_ENG;
                                         CREATE TABLE @schema.MRXNS_ENG (
@@ -321,7 +322,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXNW_ENG = '
                                         DROP TABLE IF EXISTS @schema.MRXNW_ENG;
                                         CREATE TABLE @schema.MRXNW_ENG (
@@ -331,7 +332,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRAUI = '
                                         DROP TABLE IF EXISTS @schema.MRAUI;
                                         CREATE TABLE @schema.MRAUI (
@@ -345,7 +346,7 @@ ddl_tables <-
                                                 CUI2	char(8) NOT NULL,
                                                 MAPIN	char(1) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_BAQ = '
                                         DROP TABLE IF EXISTS @schema.MRXW_BAQ;
                                         CREATE TABLE @schema.MRXW_BAQ (
@@ -355,7 +356,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_CHI = '
                                         DROP TABLE IF EXISTS @schema.MRXW_CHI;
                                         CREATE TABLE @schema.MRXW_CHI (
@@ -365,7 +366,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_CZE = '
                                         DROP TABLE IF EXISTS @schema.MRXW_CZE;
                                         CREATE TABLE @schema.MRXW_CZE (
@@ -375,7 +376,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_DAN = '
                                         DROP TABLE IF EXISTS @schema.MRXW_DAN;
                                         CREATE TABLE @schema.MRXW_DAN (
@@ -385,7 +386,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_DUT = '
                                         DROP TABLE IF EXISTS @schema.MRXW_DUT;
                                         CREATE TABLE @schema.MRXW_DUT (
@@ -395,7 +396,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_ENG = '
                                         DROP TABLE IF EXISTS @schema.MRXW_ENG;
                                         CREATE TABLE @schema.MRXW_ENG (
@@ -405,7 +406,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_EST = '
                                         DROP TABLE IF EXISTS @schema.MRXW_EST;
                                         CREATE TABLE @schema.MRXW_EST (
@@ -415,7 +416,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_FIN = '
                                         DROP TABLE IF EXISTS @schema.MRXW_FIN;
                                         CREATE TABLE @schema.MRXW_FIN (
@@ -425,7 +426,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_FRE = '
                                         DROP TABLE IF EXISTS @schema.MRXW_FRE;
                                         CREATE TABLE @schema.MRXW_FRE (
@@ -435,7 +436,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_GER = '
                                         DROP TABLE IF EXISTS @schema.MRXW_GER;
                                         CREATE TABLE @schema.MRXW_GER (
@@ -445,7 +446,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_GRE = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_GRE;
@@ -456,7 +457,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_HEB = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_HEB;
@@ -467,7 +468,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_HUN = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_HUN;
@@ -478,7 +479,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_ITA = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_ITA;
@@ -489,7 +490,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_JPN = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_JPN;
@@ -500,7 +501,7 @@ ddl_tables <-
                                                 LUI varchar(10) NOT NULL,
                                                 SUI varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_KOR = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_KOR;
@@ -511,7 +512,7 @@ ddl_tables <-
                                                 LUI varchar(10) NOT NULL,
                                                 SUI varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_LAV = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_LAV;
@@ -522,7 +523,7 @@ ddl_tables <-
                                                 LUI varchar(10) NOT NULL,
                                                 SUI varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_NOR = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_NOR;
@@ -533,7 +534,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_POL = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_POL;
@@ -544,7 +545,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_POR = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_POR;
@@ -555,7 +556,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_RUS = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_RUS;
@@ -566,7 +567,7 @@ ddl_tables <-
                                                 LUI varchar(10) NOT NULL,
                                                 SUI varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_SCR = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_SCR;
@@ -577,7 +578,7 @@ ddl_tables <-
                                                 LUI varchar(10) NOT NULL,
                                                 SUI varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_SPA = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_SPA;
@@ -588,7 +589,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_SWE = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_SWE;
@@ -599,7 +600,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MRXW_TUR = '
 
                                         DROP TABLE IF EXISTS @schema.MRXW_TUR;
@@ -610,7 +611,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 SUI	varchar(10) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 AMBIGSUI = '
 
                                         DROP TABLE IF EXISTS @schema.AMBIGSUI;
@@ -618,7 +619,7 @@ ddl_tables <-
                                                 SUI	varchar(10) NOT NULL,
                                                 CUI	char(8) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 AMBIGLUI = '
 
                                         DROP TABLE IF EXISTS @schema.AMBIGLUI;
@@ -626,7 +627,7 @@ ddl_tables <-
                                                 LUI	varchar(10) NOT NULL,
                                                 CUI	char(8) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 DELETEDCUI = '
 
                                         DROP TABLE IF EXISTS @schema.DELETEDCUI;
@@ -634,7 +635,7 @@ ddl_tables <-
                                                 PCUI	char(8) NOT NULL,
                                                 PSTR	text NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 DELETEDLUI = '
 
                                         DROP TABLE IF EXISTS @schema.DELETEDLUI;
@@ -642,7 +643,7 @@ ddl_tables <-
                                                 PLUI	varchar(10) NOT NULL,
                                                 PSTR	text NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 DELETEDSUI = '
 
                                         DROP TABLE IF EXISTS @schema.DELETEDSUI;
@@ -651,7 +652,7 @@ ddl_tables <-
                                                 LAT	char(3) NOT NULL,
                                                 PSTR	text NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MERGEDCUI = '
 
                                         DROP TABLE IF EXISTS @schema.MERGEDCUI;
@@ -659,7 +660,7 @@ ddl_tables <-
                                                 PCUI	char(8) NOT NULL,
                                                 CUI	char(8) NOT NULL,
                                                 FILLER_COL INTEGER
-                                        ',
+                                        )',
                                 MERGEDLUI = '
 
                                         DROP TABLE IF EXISTS @schema.MERGEDLUI;
@@ -667,14 +668,14 @@ ddl_tables <-
                                                 PLUI	varchar(10),
                                                 LUI	varchar(10),
                                                 FILLER_COL INTEGER
-                                        ')
+                                        )')
 
-                ddl <- ddl[[names(ddl) %in% tables]]
+                ddl <- ddl[names(ddl) %in% tables]
 
                 for (i in 1:length(ddl)) {
 
                         pg13::send(conn = conn,
-                                   sql_statement = ddl[[i]],
+                                   sql_statement = SqlRender::render(ddl[[i]], schema = schema),
                                    verbose = verbose,
                                    render_sql = render_sql)
                 }
@@ -900,7 +901,7 @@ add_indexes <-
 
 
                 errors <- vector()
-                for (i in 1:length(index_sqls)) {
+                for (i in 1:length(indexes)) {
                         index <- SqlRender::render(indexes[i],
                                                    schema = schema)
 

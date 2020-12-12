@@ -619,5 +619,3 @@ MERGEDLUI = '
                                                 LUI	varchar(10),
                                                 FILLER_COL INTEGER
                                         '
- = '
-                                        '
