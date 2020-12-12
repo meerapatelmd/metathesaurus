@@ -8,7 +8,7 @@
 #' @importFrom purrr map map2 pluck
 #' @importFrom stringr str_replace_all
 #' @importFrom dplyr mutate_all
-#' @importFrom broca makeTribble
+#' @importFrom broca make_trbl
 #' @importFrom secretary press_enter
 #' @name documentation_scraping_functions
 NULL
@@ -44,7 +44,7 @@ scrape_field_value_annotations <-
                 tribble_part <- list()
                 for (i in 1:length(tables)) {
                                 tribble_part[[i]] <-
-                                       capture.output(broca::makeTribble(tables[[i]]))
+                                       capture.output(broca::make_trbl(tables[[i]]))
                 }
                 names(tribble_part) <- names(tables)
                 tribble_part <-
