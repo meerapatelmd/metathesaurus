@@ -1,6 +1,6 @@
-# Getting help with setupMetathesaurus
+# Getting help with metathesaurus
 
-Thanks for using setupMetathesaurus!
+Thanks for using metathesaurus!
 Before filing an issue, there are a few places to explore and pieces to put together to make the process as smooth as possible.
 
 ## Make a reprex

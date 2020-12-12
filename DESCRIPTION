@@ -1,4 +1,4 @@
-Package: setupMetathesaurus
+Package: metathesaurus
 Title: Setup UMLS Metathesaurus in MySQL5.5 or Postgres
 Version: 2.0.0
 Authors@R: 
@@ -11,10 +11,10 @@ Description:  Setup UMLS Metathesaurus in MySQL5.5 or
     Postgres. Metamorphosys can optionally be run from the console to
     customize UMLS Metathesaurus configurations prior to installation.  
 License: Apache License 2.0
-URL: https://meerapatelmd.github.io/setupMetathesaurus/,
-    https://github.com/meerapatelmd/setupMetathesaurus/
+URL: https://meerapatelmd.github.io/metathesaurus/,
+    https://github.com/meerapatelmd/metathesaurus/
 BugReports: 
-    https://github.com/meerapatelmd/setupMetathesaurus/issues
+    https://github.com/meerapatelmd/metathesaurus/issues
 Depends: 
     R (>= 2.10)
 Imports: 

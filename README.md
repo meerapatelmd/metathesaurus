@@ -46,7 +46,7 @@ devtools::install_github("meerapatelmd/setupMetathesaurus")
          
 ### Downloading UMLS Files   
 
-* UMLS Metathesaurus Files can be downloaded at https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html and requires account setup.   
+* UMLS Metathesaurus Files can be downloaded at https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/index.html and requires account setup.   
 
 # Notes   
 
