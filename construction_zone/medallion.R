@@ -11,3 +11,5 @@ createMedallion(sourceImg = "logo.jpg",
                 s_x = 1,
                 s_y = 1.1,
                 filename = "logo.png")
+
+createFavicons()

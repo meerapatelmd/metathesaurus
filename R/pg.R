@@ -1,7 +1,7 @@
 #' @title
 #' Instantiate Postgres
-#' @inherit run_setup description
-#' @inheritParams run_setup
+#' @inherit setup description
+#' @inheritParams setup
 #' @seealso
 #'  \code{\link[pg13]{lsSchema}},\code{\link[pg13]{send}},\code{\link[pg13]{lsTables}},\code{\link[pg13]{dropTable}}
 #'  \code{\link[SqlRender]{render}}
@@ -9,7 +9,7 @@
 #'  \code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
 #'  \code{\link[stringr]{str_remove}}
 #'  \code{\link[progress]{progress_bar}}
-#' @rdname run_pg
+#' @rdname setup_pg_mth
 #' @family setup
 #' @export
 #' @importFrom pg13 lsSchema send lsTables dropTable
@@ -20,7 +20,7 @@
 #' @importFrom progress progress_bar
 
 
-run_pg <-
+setup_pg_mth <-
         function(conn,
                  schema = "mth",
                  rrf_dir,

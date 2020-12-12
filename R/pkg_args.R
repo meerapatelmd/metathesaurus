@@ -11,5 +11,5 @@
 #' @param omop_only     Setup the MRCONSO, MRHIER, MRMAP, MRSMAP, MRSAT, AND MRREL Tables only? Default: FALSE
 #' @param english_only  Setup only the ENG Tables? PARAM_DESCRIPTION, Default: TRUE
 #'
-#' @name run_setup
+#' @name pkg_args
 NULL
