@@ -18,20 +18,15 @@ BugReports:
 Depends: 
     R (>= 2.10)
 Imports: 
-    DatabaseConnector,
     RMySQL,
     SqlRender,
     broca,
-    cave,
-    centipede,
     dplyr,
     magrittr,
     pg13,
     preQL,
     progress,
     purrr,
-    readr,
-    rubix,
     rvest,
     secretary,
     stringr,
@@ -44,11 +39,8 @@ VignetteBuilder:
     knitr
 Remotes:
     meerapatelmd/broca,
-    meerapatelmd/cave,
-    meerapatelmd/centipede,
     meerapatelmd/pg13,
     meerapatelmd/preQL,
-    meerapatelmd/rubix,
     meerapatelmd/secretary
 Encoding: UTF-8
 LazyData: true

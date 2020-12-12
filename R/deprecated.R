@@ -1,7 +1,5 @@
 #' (Deprecated) DDL META Tables
 #' @param path Path to the unpacked RRF files
-#' @import preQL
-#' @importFrom DatabaseConnector dbExecute
 #' @export
 
 
@@ -33,8 +31,6 @@ copyPg <-
 
 
 #' (Deprecated) DDL META Tables
-#' @import preQL
-#' @importFrom DatabaseConnector dbExecute
 #' @keywords internal
 #' @export
 
@@ -78,12 +74,6 @@ ddlMeta <-
 #'     2. Translates the dialect to Oracle dialect
 #'     3. To identify exact statements that have thrown errors and they are first isolated by splitting single string read from the file on the semicolon
 #'     4. Each single line is sent to the database. If an error is thrown, the single statement is printed in the R console in red.
-#' @importFrom magrittr %>%
-#' @import SqlRender
-#' @importFrom centipede strsplit
-#' @importFrom centipede no_blank
-#' @importFrom secretary typewrite_error
-#' @import RMySQL
 #' @param sqlPath path to source SQL file
 #' @param ... Parameter values, if any, that are passed to the SqlRender::render function.
 #' @keywords internal
@@ -159,8 +149,6 @@ executeSQL <-
 
 #' (Deprecated) Load META Tables
 #' @param path Path to the unpacked RRF files
-#' @import preQL
-#' @importFrom DatabaseConnector dbExecute
 #' @export
 
 loadMeta <-
@@ -276,12 +264,6 @@ loadMeta <-
 #'  \code{\link[broca]{simply_write_csv}}
 #' @rdname rrfToCsv
 #' @export
-#' @importFrom progress progress_bar
-#' @importFrom cave strip_fn
-#' @importFrom readr read_delim
-#' @importFrom rubix rm_multibyte_chars
-#' @importFrom broca simply_write_csv
-#' @importFrom magrittr %>%
 
 rrfToCsv <-
         function(path) {
@@ -369,8 +351,6 @@ runIndices <-
 
 #' (Deprecated) DDL META Tables
 #' @param path Path to the unpacked RRF files
-#' @import preQL
-#' @importFrom DatabaseConnector dbExecute
 #' @export
 
 
