@@ -1,4 +1,5 @@
-# Setup Metathesaurus  
+# metathesaurus <img src="man/figures/logo.png" align="right" alt="" width="120" />  
+<a href="http://www.freepik.com">Designed by macrovector / Freepik</a>  
 
 This package sets up an instance of the UMLS Metathesaurus in either the native MySQL5.5 or Postgres DBMS sourced from the RRF files downloaded and from https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html. The list of instantiated tables can be customized depending on user needs. These options include      
 
