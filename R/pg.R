@@ -31,8 +31,16 @@ setup_pg_mth <-
                  mrconso_only = FALSE,
                  omop_only = FALSE,
                  english_only = TRUE,
+                 log_schema = "public",
+                 log_table_name = "setup_mth_log",
+                 log_version,
+                 log_release_date,
                  verbose = TRUE,
                  render_sql = TRUE) {
+
+                if (missing(log_version)|missing(log_release_date)) {
+                        stop("`log_version` and `log_release_date` are required.")
+                }
 
 
                 path_to_rrfs <- normalizePath(path = path_to_rrfs,
@@ -141,4 +149,77 @@ setup_pg_mth <-
                                     verbose = verbose,
                                     render_sql = render_sql)
                 }
+
+                #Log
+                table_names <-
+                        pg13::ls_tables(conn = conn,
+                                        schema = schema,
+                                        verbose = verbose,
+                                        render_sql = render_sql)
+
+                current_row_count <-
+                        table_names %>%
+                        purrr::map(function(x) pg13::query(conn = conn,
+                                                           sql_statement = pg13::render_row_count(schema = schema,
+                                                                                                  tableName = x))) %>%
+                        purrr::set_names(tolower(table_names)) %>%
+                        dplyr::bind_rows(.id = "Table") %>%
+                        dplyr::rename(Rows = count) %>%
+                        tidyr::pivot_wider(names_from = "Table",
+                                           values_from = "Rows") %>%
+                        dplyr::mutate(sm_datetime = Sys.time(),
+                                      sm_version = log_csv_version,
+                                      sm_release_date = log_release_date,
+                                      sm_schema = schema) %>%
+                        dplyr::select(sm_datetime,
+                                      sm_version,
+                                      sm_release_date,
+                                      sm_schema,
+                                      dplyr::everything())
+
+
+
+                if (pg13::table_exists(conn = conn,
+                                       schema = log_schema,
+                                       table_name = log_table_name)) {
+
+                        updated_log <-
+                                dplyr::bind_rows(
+                                        pg13::read_table(conn = conn,
+                                                         schema = log_schema,
+                                                         table = log_table_name,
+                                                         verbose = verbose,
+                                                         render_sql = render_sql,
+                                                         render_only = render_only),
+                                        current_row_count)  %>%
+                                dplyr::select(sm_datetime,
+                                              sm_version,
+                                              sm_release_date,
+                                              sm_schema,
+                                              dplyr::everything())
+
+                } else {
+                        updated_log <- current_row_count
+                }
+
+                pg13::drop_table(conn = conn,
+                                 schema = log_schema,
+                                 table = log_table_name,
+                                 verbose = verbose,
+                                 render_sql = render_sql,
+                                 render_only = render_only)
+
+                pg13::write_table(conn = conn,
+                                  schema = log_schema,
+                                  table_name = log_table_name,
+                                  data = updated_log,
+                                  verbose = verbose,
+                                  render_sql = render_sql,
+                                  render_only = render_only)
+
+                cli::cat_line()
+                cli::cat_boxx("Log Results",
+                              float = "center")
+                print(tibble::as_tibble(updated_log))
+                cli::cat_line()
         }

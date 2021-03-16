@@ -12,6 +12,10 @@ setup_pg_mth(
   mrconso_only = FALSE,
   omop_only = FALSE,
   english_only = TRUE,
+  log_schema = "public",
+  log_table_name = "setup_mth_log",
+  log_version,
+  log_release_date,
   verbose = TRUE,
   render_sql = TRUE
 )
