@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">metathesaurus</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.2.0</span>
       </span>
     </div>
 
@@ -79,9 +79,9 @@
       </header><div class="row">
   <div class="contents col-md-9">
 
-<div id="metathesaurus" class="section level1">
+<div id="metathesaurus-" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#metathesaurus" class="anchor"></a>metathesaurus <img src="reference/figures/logo.png" align="right" alt="" width="120">
+<a href="#metathesaurus-" class="anchor"></a>metathesaurus <img src="reference/figures/logo.png" align="right" alt="" width="120">
 </h1></div>
 <p><a href="http://www.freepik.com">Designed by macrovector / Freepik</a></p>
 <p>This package sets up an instance of the UMLS Metathesaurus in either the native MySQL5.5 or Postgres DBMS sourced from the RRF files downloaded and from <a href="https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html" class="uri">https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html</a>. The list of instantiated tables can be customized depending on user needs. These options include</p>
@@ -118,24 +118,21 @@
 <div id="prerequisites" class="section level2">
 <h2 class="hasAnchor">
 <a href="#prerequisites" class="anchor"></a>Prerequisites</h2>
-<div id="mysql5-5" class="section level3">
+<div id="mysql55" class="section level3">
 <h3 class="hasAnchor">
-<a href="#mysql5-5" class="anchor"></a>MySQL5.5</h3>
+<a href="#mysql55" class="anchor"></a>MySQL5.5</h3>
 <ul>
-<li>MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information at <a href="https://trac.macports.org/wiki/howto/MySQL" class="uri">https://trac.macports.org/wiki/howto/MySQL</a><br>
-</li>
-<li>/opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation<br>
-</li>
-<li>Socket: /opt/local/var/run/mysql55/mysqld.sock<br>
-</li>
+<li><p>MySQL version 5.5 server can be installed via MacPorts (Prerequisites are most current XCode and XCode Command Line tools). More information at <a href="https://trac.macports.org/wiki/howto/MySQL" class="uri">https://trac.macports.org/wiki/howto/MySQL</a><br></p></li>
+<li><p>/opt/local/etc/mysql55/my.cnf is a good place to customize your mysql55 installation<br></p></li>
+<li><p>Socket: /opt/local/var/run/mysql55/mysqld.sock<br></p></li>
 <li>
 <p>Example of creating a database named <code>umls</code> using <code>root</code> as user:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">   <span class="st">```</span></a>
-<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="dt">   -mysql -u root -p  </span></a>
-<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="dt">   -mysql&gt; CREATE DATABASE umls;  </span></a>
-<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="dt">   -mysql -u root -p --local-infile umls  </span></a>
-<a class="sourceLine" id="cb2-5" data-line-number="5"><span class="dt">   -mysql&gt; SHOW PROCESSLIST</span></a>
-<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="dt">   </span><span class="st">```</span>  </a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>   <span class="st">```</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">   -mysql -u root -p  </span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">   -mysql&gt; CREATE DATABASE umls;  </span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">   -mysql -u root -p --local-infile umls  </span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">   -mysql&gt; SHOW PROCESSLIST</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="at">   </span><span class="st">```</span>  </span></code></pre></div>
 </li>
 </ul>
 </div>
