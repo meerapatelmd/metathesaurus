@@ -27,7 +27,8 @@ setup_pg_mth <-
                  steps = c("reset_schema",
                            "ddl_tables",
                            "copy_rrfs",
-                           "add_indexes"),
+                           "add_indexes",
+                           "log"),
                  mrconso_only = FALSE,
                  omop_only = FALSE,
                  english_only = TRUE,
@@ -36,7 +37,8 @@ setup_pg_mth <-
                  log_version,
                  log_release_date,
                  verbose = TRUE,
-                 render_sql = TRUE) {
+                 render_sql = TRUE,
+                 render_only = FALSE) {
 
                 if (missing(log_version)|missing(log_release_date)) {
                         stop("`log_version` and `log_release_date` are required.")
@@ -150,7 +152,8 @@ setup_pg_mth <-
                                     render_sql = render_sql)
                 }
 
-                #Log
+                # Log
+                if ("log" %in% steps) {
                 table_names <-
                         pg13::ls_tables(conn = conn,
                                         schema = schema,
@@ -222,4 +225,6 @@ setup_pg_mth <-
                               float = "center")
                 print(tibble::as_tibble(updated_log))
                 cli::cat_line()
+
+                }
         }

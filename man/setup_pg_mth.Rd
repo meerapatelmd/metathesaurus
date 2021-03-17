@@ -8,7 +8,7 @@ setup_pg_mth(
   conn,
   schema = "mth",
   path_to_rrfs,
-  steps = c("reset_schema", "ddl_tables", "copy_rrfs", "add_indexes"),
+  steps = c("reset_schema", "ddl_tables", "copy_rrfs", "add_indexes", "log"),
   mrconso_only = FALSE,
   omop_only = FALSE,
   english_only = TRUE,
@@ -17,7 +17,8 @@ setup_pg_mth(
   log_version,
   log_release_date,
   verbose = TRUE,
-  render_sql = TRUE
+  render_sql = TRUE,
+  render_only = FALSE
 )
 }
 \description{
