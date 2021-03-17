@@ -168,7 +168,7 @@ setup_pg_mth <-
                         tidyr::pivot_wider(names_from = "Table",
                                            values_from = "Rows") %>%
                         dplyr::mutate(sm_datetime = Sys.time(),
-                                      sm_version = log_csv_version,
+                                      sm_version = log_version,
                                       sm_release_date = log_release_date,
                                       sm_schema = schema) %>%
                         dplyr::select(sm_datetime,
