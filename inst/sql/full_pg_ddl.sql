@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS umls.MRCOLS;
+ DROP TABLE IF EXISTS umls.MRCOLS;
 CREATE TABLE umls.MRCOLS (
     COL	varchar(40),
     DES	varchar(200),

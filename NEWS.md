@@ -1,3 +1,10 @@
+# metathesaurus 3.0.0  
+
+* Add Metathesaurus Extension  
+
+
+
+
 # metathesaurus 2.2.0  
 
 * Add logging feature to Postgres  
