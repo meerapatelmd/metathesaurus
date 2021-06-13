@@ -1,6 +1,30 @@
-
-# This assumes that MTH schema
-
+#' @title
+#' Write a SAB Subset
+#'
+#' @description
+#' Filter the MRCONSO table for a given vocabulary and the STR
+#' value designated as the main LABEL, which is an added field
+#' in the table. This function assumes that the core metathesaurus
+#' tables are within a `mth` schema.
+#'
+#' @param sab Vocabulary.
+#' @param extension_schema Schema to which these extension tables are to be written.
+#' @param tty_rank Vector of tty values for the given sab in the order of rank. If
+#' not provided, the function defaults to the rank given to the sab in the MRRANK
+#' table in descending order.
+#' @return
+#' A table named by `sab` is written to the `extension_schema`. If `sab`
+#' value contained any punctuation, it is replaced with an underscore.
+#'
+#' @seealso
+#'  \code{\link[stringr]{str_replace}}
+#'  \code{\link[SqlRender]{render}}
+#'  \code{\link[pg13]{send}},\code{\link[pg13]{query}}
+#' @rdname write_mrconso_sab_table
+#' @export
+#' @importFrom stringr str_replace_all
+#' @importFrom SqlRender render
+#' @importFrom pg13 send query
 write_mrconso_sab_table <-
         function(sab,
                  extension_schema,
@@ -169,6 +193,26 @@ write_mrconso_sab_table <-
         }
 
 
+#' @title
+#' Write More Than 1 SAB Subset at Once
+#'
+#' @description
+#' Write all or some of the SAB subset tables via
+#' `write_sab_subset_table()`.
+#'
+#' @param sabs (optional) Vector of SABs to write. If missing,
+#' all the sabs in the existing MRCONSO table are written.
+#' @param extension_schema Schema to write these extension tables to. Default: 'mrconso_sab'
+#' @return
+#' One or more tables of the sab subsets to the given schema. A new 'label'
+#' field is added to designate the core concept name for the given
+#' concept.
+
+#' @seealso
+#'  \code{\link[pg13]{drop_cascade}},\code{\link[pg13]{create_schema}}
+#' @rdname setup_mrconso_sab_subsets
+#' @export
+#' @importFrom pg13 drop_cascade create_schema query
 setup_mrconso_sab_subsets <-
         function(sabs,
                  conn_fun = "pg13::local_connect()",
