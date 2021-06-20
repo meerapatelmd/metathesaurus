@@ -1,0 +1,53 @@
+---
+title: "Version 2021AA Metadata"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Version 2021AA Metadata}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup,include=FALSE}
+library(pg13)
+library(metathesaurus)
+print_dt <-
+  function(x,
+           rownames = FALSE,
+           filter = "top",
+           scrollX = TRUE) {
+    DT::datatable(
+      x,
+      rownames = rownames,
+      filter = filter,
+      extensions = "Buttons",
+      options = 
+        list(dom = "Blfrtip", 
+             buttons = c("copy", "csv","excel", "pdf", "print"), 
+             lengthMenu = list(c(10, 25, 50, -1), c(10, 25, 50, "All")),
+             scrollX = scrollX
+            )
+      )
+  }
+```
+
+
+```{r,echo=FALSE,results='hide'}
+mrcols <- 
+  read_table(
+    conn_fun = "pg13::local_connect()",
+    schema   = "mth",
+    table    = "mrcols"
+  )
+```
+
+```{r,echo=FALSE}
+print_dt(mrcols)
+```
+
