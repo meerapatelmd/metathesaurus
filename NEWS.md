@@ -1,8 +1,11 @@
+# metathesaurus 3.0.1  
+
+* Add Metadata lookup page    
+
+
 # metathesaurus 3.0.0  
 
 * Add Metathesaurus Extension  
-
-
 
 
 # metathesaurus 2.2.0  

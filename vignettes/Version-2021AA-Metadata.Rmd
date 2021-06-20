@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 ```{r setup,include=FALSE}
 library(pg13)
 library(metathesaurus)
+library(dplyr)
 print_dt <-
   function(x,
            rownames = FALSE,
@@ -43,8 +44,10 @@ mrcols <-
   read_table(
     conn_fun = "pg13::local_connect()",
     schema   = "mth",
-    table    = "mrcols"
-  )
+    table    = "mrcols") %>%
+  select(-ref, -filler_col) %>%
+  mutate_at(vars(col, fil, dty),
+            factor)
 ```
 
 ```{r,echo=FALSE}
