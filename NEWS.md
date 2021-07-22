@@ -1,6 +1,7 @@
 # metathesaurus 3.0.1  
 
 * Add Metadata lookup page    
+* Bug fix mrrank filtering for setup extension.  
 
 
 # metathesaurus 3.0.0  
