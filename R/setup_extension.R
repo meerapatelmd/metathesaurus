@@ -25,6 +25,8 @@
 #' @importFrom stringr str_replace_all
 #' @importFrom SqlRender render
 #' @importFrom pg13 send query
+#' @importFrom dplyr transmute
+#' @importFrom tibble tibble
 write_mrconso_sab_table <-
         function(sab,
                  extension_schema,
@@ -103,9 +105,9 @@ write_mrconso_sab_table <-
                 fct_vector_index_last <- length(fct_vector)+1
 
                 df <-
-                        tibble(fct_vector,
+                        tibble::tibble(fct_vector,
                                fct_vector_index) %>%
-                        transmute(field = field,
+                        dplyr::transmute(field = field,
                                   fct_vector,
                                   fct_vector_index)
 
