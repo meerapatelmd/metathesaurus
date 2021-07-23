@@ -1,7 +1,9 @@
 # metathesaurus 4.0.0  
 
 * Apply tidy style to R files  
-* Incorporate crosswalk table setup as part of standard run  
+* Add and incorporate `crosswalk` features 
+as part of standard run   
+* Remove deprecated functions and stale dependencies  
 
 
 # metathesaurus 3.0.1  

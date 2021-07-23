@@ -6,9 +6,11 @@
 \usage{
 setup_pg_mth(
   conn,
+  conn_fun = "pg13::local_connect()",
   schema = "mth",
   path_to_rrfs,
-  steps = c("reset_schema", "ddl_tables", "copy_rrfs", "add_indexes", "log"),
+  steps = c("reset_schema", "ddl_tables", "copy_rrfs", "add_indexes", "log",
+    "setup_crosswalk"),
   mrconso_only = FALSE,
   omop_only = FALSE,
   english_only = TRUE,

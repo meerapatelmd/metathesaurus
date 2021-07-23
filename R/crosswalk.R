@@ -468,13 +468,33 @@ setup_crosswalk_schema <-
   }
 
 
-
+#' @title
+#' Crosswalk between 2 Sabs
+#' @description
+#' Write a crosswalk to a table or return into
+#' the R environment as a dataframe.
+#'
+#' @param to_schema (Optional). If provided along with a `to_table_name`, will
+#' write the crosswalk to Postgres. This is useful for larger crosswalks that
+#' would require too much memory in the R environment.
+#' @param to_table_name (Optional).
+#' @seealso
+#'  \code{\link[stringr]{str_replace}}
+#'  \code{\link[glue]{glue}}
+#'  \code{\link[pg13]{send}},\code{\link[pg13]{c("query", "query")}}
+#' @rdname crosswalk_sabs
+#' @export
+#' @importFrom stringr str_replace_all
+#' @importFrom glue glue
+#' @importFrom pg13 send query
 
 crosswalk_sabs <-
         function(conn,
                  conn_fun = "pg13::local_connect()",
                  sab1,
                  sab2,
+                 to_schema,
+                 to_table_name,
                  crosswalk_schema = "mth_crosswalk",
                  verbose = TRUE,
                  render_sql = TRUE) {
@@ -498,18 +518,40 @@ crosswalk_sabs <-
                 sql_statement <-
                 paste(
                 c(
-                "SELECT DISTINCT",
+                "  SELECT DISTINCT",
                                 paste(
                                 as.character(
                                   c(
-                glue::glue("  sab1.{mrconso_fields} AS {sab1_table}_{mrconso_fields}"),
-                glue::glue("  sab2.{mrconso_fields} AS {sab2_table}_{mrconso_fields}"))),
+                glue::glue("    sab1.{mrconso_fields} AS {sab1_table}_{mrconso_fields}"),
+                glue::glue("    sab2.{mrconso_fields} AS {sab2_table}_{mrconso_fields}"))),
                                 collapse = ",\n"),
-                glue::glue("FROM {crosswalk_schema}.{sab1_table} sab1"),
-                glue::glue("FULL JOIN {crosswalk_schema}.{sab2_table} sab2"),
-                "ON sab1.cui = sab2.cui;"),
+                glue::glue("  FROM {crosswalk_schema}.{sab1_table} sab1"),
+                glue::glue("  FULL JOIN {crosswalk_schema}.{sab2_table} sab2"),
+                "  ON sab1.cui = sab2.cui"),
                 collapse = "\n"
                 )
+
+                if (!missing(to_schema) & !missing(to_table_name)) {
+
+                  create_sql_statement <-
+                    paste(
+                      as.character(
+                      glue::glue(
+                        "DROP TABLE IF EXISTS {to_schema}.{to_table_name};\n",
+                        "CREATE TABLE {to_schema}.{to_table_name} AS (\n",
+                        "{sql_statement}",
+                        "\n);"
+                      )),
+                      collapse = "\n"
+                    )
+
+                  pg13::send(
+                    conn_fun = conn_fun,
+                    sql_statement = create_sql_statement
+                  )
+
+
+                } else {
 
 
                 pg13::query(
@@ -518,6 +560,8 @@ crosswalk_sabs <-
                         verbose = verbose,
                         render_sql = render_sql
                 )
+
+                }
 
 
 

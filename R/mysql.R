@@ -25,128 +25,127 @@
 #' @importFrom progress progress_bar
 
 setup_mysql_mth <-
-        function(conn,
-                 mrconso_only = FALSE,
-                 omop_only = FALSE,
-                 english_only = TRUE,
-                 rrf_dir)
+  function(conn,
+           mrconso_only = FALSE,
+           omop_only = FALSE,
+           english_only = TRUE,
+           rrf_dir) {
+    Tables <- preQL::query(
+      conn = conn,
+      "SHOW TABLES;"
+    )
 
-                {
+    if (nrow(Tables)) {
+      Tables %>%
+        purrr::map(~ preQL::query(
+          conn = conn,
+          sql_statement =
+            SqlRender::render("DROP TABLE IF EXISTS @tableName;",
+              tableName = .
+            )
+        ))
+    }
+
+    tables <-
+      c(
+        "AMBIGLUI",
+        "AMBIGSUI",
+        "DELETEDCUI",
+        "DELETEDLUI",
+        "DELETEDSUI",
+        "MERGEDCUI",
+        "MERGEDLUI",
+        "MRAUI",
+        "MRCOLS",
+        "MRCONSO",
+        "MRCUI",
+        "MRCXT",
+        "MRDEF",
+        "MRDOC",
+        "MRFILES",
+        "MRHIER",
+        "MRHIST",
+        "MRMAP",
+        "MRRANK",
+        "MRREL",
+        "MRSAB",
+        "MRSAT",
+        "MRSMAP",
+        "MRSTY",
+        "MRXNS_ENG",
+        "MRXNW_ENG",
+        "MRXW_BAQ",
+        "MRXW_CHI",
+        "MRXW_CZE",
+        "MRXW_DAN",
+        "MRXW_DUT",
+        "MRXW_ENG",
+        "MRXW_EST",
+        "MRXW_FIN",
+        "MRXW_FRE",
+        "MRXW_GER",
+        "MRXW_GRE",
+        "MRXW_HEB",
+        "MRXW_HUN",
+        "MRXW_ITA",
+        "MRXW_JPN",
+        "MRXW_KOR",
+        "MRXW_LAV",
+        "MRXW_NOR",
+        "MRXW_POL",
+        "MRXW_POR",
+        "MRXW_RUS",
+        "MRXW_SCR",
+        "MRXW_SPA",
+        "MRXW_SWE",
+        "MRXW_TUR"
+      )
+
+    if (mrconso_only) {
+      tables <- "MRCONSO"
+    }
+
+    if (omop_only) {
+      tables <- c("MRCONSO", "MRHIER", "MRMAP", "MRSMAP", "MRSAT", "MRREL")
+    }
+
+    if (english_only) {
+      tables <- tables[!(tables %in% c("MRXW_BAQ", "MRXW_CHI", "MRXW_CZE", "MRXW_DAN", "MRXW_DUT", "MRXW_EST", "MRXW_FIN", "MRXW_FRE", "MRXW_GER", "MRXW_GRE", "MRXW_HEB", "MRXW_HUN", "MRXW_ITA", "MRXW_JPN", "MRXW_KOR", "MRXW_LAV", "MRXW_NOR", "MRXW_POL", "MRXW_POR", "MRXW_RUS", "MRXW_SCR", "MRXW_SPA", "MRXW_SWE", "MRXW_TUR"))]
+    }
 
 
-                Tables <- preQL::query(conn = conn,
-                                       "SHOW TABLES;")
-
-                if (nrow(Tables)) {
-
-                Tables %>%
-                        purrr::map(~preQL::query(conn = conn,
-                                                 sql_statement =
-                                                         SqlRender::render("DROP TABLE IF EXISTS @tableName;",
-                                                                           tableName = .)))
-
-                }
-
-                tables <-
-                        c('AMBIGLUI',
-                          'AMBIGSUI',
-                          'DELETEDCUI',
-                          'DELETEDLUI',
-                          'DELETEDSUI',
-                          'MERGEDCUI',
-                          'MERGEDLUI',
-                          'MRAUI',
-                          'MRCOLS',
-                          'MRCONSO',
-                          'MRCUI',
-                          'MRCXT',
-                          'MRDEF',
-                          'MRDOC',
-                          'MRFILES',
-                          'MRHIER',
-                          'MRHIST',
-                          'MRMAP',
-                          'MRRANK',
-                          'MRREL',
-                          'MRSAB',
-                          'MRSAT',
-                          'MRSMAP',
-                          'MRSTY',
-                          'MRXNS_ENG',
-                          'MRXNW_ENG',
-                          'MRXW_BAQ',
-                          'MRXW_CHI',
-                          'MRXW_CZE',
-                          'MRXW_DAN',
-                          'MRXW_DUT',
-                          'MRXW_ENG',
-                          'MRXW_EST',
-                          'MRXW_FIN',
-                          'MRXW_FRE',
-                          'MRXW_GER',
-                          'MRXW_GRE',
-                          'MRXW_HEB',
-                          'MRXW_HUN',
-                          'MRXW_ITA',
-                          'MRXW_JPN',
-                          'MRXW_KOR',
-                          'MRXW_LAV',
-                          'MRXW_NOR',
-                          'MRXW_POL',
-                          'MRXW_POR',
-                          'MRXW_RUS',
-                          'MRXW_SCR',
-                          'MRXW_SPA',
-                          'MRXW_SWE',
-                          'MRXW_TUR')
-
-                if (mrconso_only) {
-                        tables <- "MRCONSO"
-                }
-
-                if (omop_only) {
-                        tables <- c("MRCONSO", "MRHIER","MRMAP","MRSMAP", "MRSAT","MRREL")
-                }
-
-                if (english_only) {
-
-                        tables <- tables[!(tables %in% c('MRXW_BAQ', 'MRXW_CHI', 'MRXW_CZE', 'MRXW_DAN', 'MRXW_DUT', 'MRXW_EST', 'MRXW_FIN', 'MRXW_FRE', 'MRXW_GER', 'MRXW_GRE', 'MRXW_HEB', 'MRXW_HUN', 'MRXW_ITA', 'MRXW_JPN', 'MRXW_KOR', 'MRXW_LAV', 'MRXW_NOR', 'MRXW_POL', 'MRXW_POR', 'MRXW_RUS', 'MRXW_SCR', 'MRXW_SPA', 'MRXW_SWE', 'MRXW_TUR'))]
-
-                }
-
-
-                sqls <-
-                        list(
-                                AMBIGLUI = 'CREATE TABLE AMBIGLUI (
+    sqls <-
+      list(
+        AMBIGLUI = "CREATE TABLE AMBIGLUI (
                                                     LUI	varchar(10) NOT NULL,
                                                     CUI	char(8) NOT NULL
-                                                ) CHARACTER SET utf8;',
-                                AMBIGSUI = 'CREATE TABLE AMBIGSUI (
+                                                ) CHARACTER SET utf8;",
+        AMBIGSUI = "CREATE TABLE AMBIGSUI (
                                                     SUI	varchar(10) NOT NULL,
                                                     CUI	char(8) NOT NULL
-                                                ) CHARACTER SET utf8;',
-                                DELETEDCUI = 'CREATE TABLE DELETEDCUI (
+                                                ) CHARACTER SET utf8;",
+        DELETEDCUI = "CREATE TABLE DELETEDCUI (
                                                     PCUI	char(8) NOT NULL,
                                                     PSTR	text NOT NULL
-                                                ) CHARACTER SET utf8;',
-                                DELETEDLUI = 'CREATE TABLE DELETEDLUI (
+                                                ) CHARACTER SET utf8;",
+        DELETEDLUI = "CREATE TABLE DELETEDLUI (
                                                         PLUI	varchar(10) NOT NULL,
                                                         PSTR	text NOT NULL
-                                                        ) CHARACTER SET utf8;',
-                                DELETEDSUI = 'CREATE TABLE DELETEDSUI (
+                                                        ) CHARACTER SET utf8;",
+        DELETEDSUI = "CREATE TABLE DELETEDSUI (
                                                    PSUI	varchar(10) NOT NULL,
                                                     LAT	char(3) NOT NULL,
                                                     PSTR	text NOT NULL
-                                                ) CHARACTER SET utf8;',
-                                MERGEDCUI = 'CREATE TABLE MERGEDCUI (
+                                                ) CHARACTER SET utf8;",
+        MERGEDCUI = "CREATE TABLE MERGEDCUI (
                                                 PCUI	char(8) NOT NULL,
                                                 CUI	char(8) NOT NULL
-                                                        ) CHARACTER SET utf8;',
-                                MERGEDLUI = 'CREATE TABLE MERGEDLUI (
+                                                        ) CHARACTER SET utf8;",
+        MERGEDLUI = "CREATE TABLE MERGEDLUI (
                                                                  PLUI	varchar(10),
                                                                  LUI	varchar(10)
-                                                         ) CHARACTER SET utf8;',
-                                MRAUI = 'CREATE TABLE MRAUI (
+                                                         ) CHARACTER SET utf8;",
+        MRAUI = "CREATE TABLE MRAUI (
                                     AUI1	varchar(9) NOT NULL,
                                     CUI1	char(8) NOT NULL,
                                     VER	varchar(10) NOT NULL,
@@ -156,8 +155,8 @@ setup_mysql_mth <-
                                     AUI2	varchar(9) NOT NULL,
                                     CUI2	char(8) NOT NULL,
                                     MAPIN	char(1) NOT NULL
-                                ) CHARACTER SET utf8;',
-                                MRCOLS = 'CREATE TABLE MRCOLS (
+                                ) CHARACTER SET utf8;",
+        MRCOLS = "CREATE TABLE MRCOLS (
                                     COL	varchar(40),
                                     DES	varchar(200),
                                     REF	varchar(40),
@@ -166,8 +165,8 @@ setup_mysql_mth <-
                                     MAX	int unsigned,
                                     FIL	varchar(50),
                                     DTY	varchar(40)
-                                ) CHARACTER SET utf8;',
-                                MRCONSO = 'CREATE TABLE MRCONSO (
+                                ) CHARACTER SET utf8;",
+        MRCONSO = "CREATE TABLE MRCONSO (
                                     CUI	char(8) NOT NULL,
                                     LAT	char(3) NOT NULL,
                                     TS	char(1) NOT NULL,
@@ -186,8 +185,8 @@ setup_mysql_mth <-
                                     SRL	int unsigned NOT NULL,
                                     SUPPRESS	char(1) NOT NULL,
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRCUI = 'CREATE TABLE MRCUI (
+                                ) CHARACTER SET utf8;",
+        MRCUI = "CREATE TABLE MRCUI (
                                     CUI1	char(8) NOT NULL,
                                     VER	varchar(10) NOT NULL,
                                     REL	varchar(4) NOT NULL,
@@ -195,8 +194,8 @@ setup_mysql_mth <-
                                     MAPREASON	text,
                                     CUI2	char(8),
                                     MAPIN	char(1)
-                                ) CHARACTER SET utf8;',
-                                MRCXT = 'CREATE TABLE MRCXT (
+                                ) CHARACTER SET utf8;",
+        MRCXT = "CREATE TABLE MRCXT (
                                     CUI	char(8),
                                     SUI	varchar(10),
                                     AUI	varchar(9),
@@ -212,8 +211,8 @@ setup_mysql_mth <-
                                     RELA	varchar(100),
                                     XC	varchar(1),
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRDEF = 'CREATE TABLE MRDEF (
+                                ) CHARACTER SET utf8;",
+        MRDEF = "CREATE TABLE MRDEF (
                                     CUI	char(8) NOT NULL,
                                     AUI	varchar(9) NOT NULL,
                                     ATUI	varchar(11) NOT NULL,
@@ -222,22 +221,22 @@ setup_mysql_mth <-
                                     DEF	text NOT NULL,
                                     SUPPRESS	char(1) NOT NULL,
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRDOC = 'CREATE TABLE MRDOC (
+                                ) CHARACTER SET utf8;",
+        MRDOC = "CREATE TABLE MRDOC (
                                     DOCKEY	varchar(50) NOT NULL,
                                     VALUE	varchar(200),
                                     TYPE	varchar(50) NOT NULL,
                                     EXPL	text
-                                ) CHARACTER SET utf8;',
-                                MRFILES = 'CREATE TABLE MRFILES (
+                                ) CHARACTER SET utf8;",
+        MRFILES = "CREATE TABLE MRFILES (
                                     FIL	varchar(50),
                                     DES	varchar(200),
                                     FMT	text,
                                     CLS	int unsigned,
                                     RWS	int unsigned,
                                     BTS	bigint
-                                ) CHARACTER SET utf8;',
-                                MRHIER = 'CREATE TABLE MRHIER (
+                                ) CHARACTER SET utf8;",
+        MRHIER = "CREATE TABLE MRHIER (
                                     CUI	char(8) NOT NULL,
                                     AUI	varchar(9) NOT NULL,
                                     CXN	int unsigned NOT NULL,
@@ -247,8 +246,8 @@ setup_mysql_mth <-
                                     PTR	text,
                                     HCD	varchar(100),
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRHIST = 'CREATE TABLE MRHIST (
+                                ) CHARACTER SET utf8;",
+        MRHIST = "CREATE TABLE MRHIST (
                                     CUI	char(8),
                                     SOURCEUI	varchar(100),
                                     SAB	varchar(40),
@@ -258,8 +257,8 @@ setup_mysql_mth <-
                                     CHANGEVAL	text,
                                     REASON	text,
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRMAP = 'CREATE TABLE MRMAP (
+                                ) CHARACTER SET utf8;",
+        MRMAP = "CREATE TABLE MRMAP (
                                     MAPSETCUI	char(8) NOT NULL,
                                     MAPSETSAB	varchar(40) NOT NULL,
                                     MAPSUBSETID	varchar(10),
@@ -286,14 +285,14 @@ setup_mysql_mth <-
                                     MAPATN	varchar(100),
                                     MAPATV	text,
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRRANK = 'CREATE TABLE MRRANK (
+                                ) CHARACTER SET utf8;",
+        MRRANK = "CREATE TABLE MRRANK (
                                     MRRANK_RANK	int unsigned NOT NULL,
                                     SAB	varchar(40) NOT NULL,
                                     TTY	varchar(40) NOT NULL,
                                     SUPPRESS	char(1) NOT NULL
-                                ) CHARACTER SET utf8;',
-                                MRREL = 'CREATE TABLE MRREL (
+                                ) CHARACTER SET utf8;",
+        MRREL = "CREATE TABLE MRREL (
                                     CUI1	char(8) NOT NULL,
                                     AUI1	varchar(9),
                                     STYPE1	varchar(50) NOT NULL,
@@ -310,8 +309,8 @@ setup_mysql_mth <-
                                     DIR	varchar(1),
                                     SUPPRESS	char(1) NOT NULL,
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRSAB = 'CREATE TABLE MRSAB (
+                                ) CHARACTER SET utf8;",
+        MRSAB = "CREATE TABLE MRSAB (
                                     VCUI	char(8),
                                     RCUI	char(8),
                                     VSAB	varchar(40) NOT NULL,
@@ -337,8 +336,8 @@ setup_mysql_mth <-
                                     SABIN	char(1) NOT NULL,
                                     SSN	text NOT NULL,
                                     SCIT	text NOT NULL
-                                ) CHARACTER SET utf8;',
-                                MRSAT = 'CREATE TABLE MRSAT (
+                                ) CHARACTER SET utf8;",
+        MRSAT = "CREATE TABLE MRSAT (
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10),
                                     SUI	varchar(10),
@@ -352,8 +351,8 @@ setup_mysql_mth <-
                                     ATV	text,
                                     SUPPRESS	char(1) NOT NULL,
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRSMAP = 'CREATE TABLE MRSMAP (
+                                ) CHARACTER SET utf8;",
+        MRSMAP = "CREATE TABLE MRSMAP (
                                     MAPSETCUI	char(8) NOT NULL,
                                     MAPSETSAB	varchar(40) NOT NULL,
                                     MAPID	varchar(50) NOT NULL,
@@ -365,111 +364,102 @@ setup_mysql_mth <-
                                     TOEXPR	text,
                                     TOTYPE	varchar(50),
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRSTY = 'CREATE TABLE MRSTY (
+                                ) CHARACTER SET utf8;",
+        MRSTY = "CREATE TABLE MRSTY (
                                     CUI	char(8) NOT NULL,
                                     TUI	char(4) NOT NULL,
                                     STN	varchar(100) NOT NULL,
                                     STY	varchar(50) NOT NULL,
                                     ATUI	varchar(11) NOT NULL,
                                     CVF	int unsigned
-                                ) CHARACTER SET utf8;',
-                                MRXNS_ENG = 'CREATE TABLE MRXNS_ENG (
+                                ) CHARACTER SET utf8;",
+        MRXNS_ENG = "CREATE TABLE MRXNS_ENG (
                                     LAT	char(3) NOT NULL,
                                     NSTR	text NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
-                                ) CHARACTER SET utf8;',
-                                MRXNW_ENG = 'CREATE TABLE MRXNW_ENG (
+                                ) CHARACTER SET utf8;",
+        MRXNW_ENG = "CREATE TABLE MRXNW_ENG (
                                     LAT	char(3) NOT NULL,
                                     NWD	varchar(100) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
-                                ) CHARACTER SET utf8;',
-                                MRXW_BAQ = 'CREATE TABLE MRXW_BAQ (
+                                ) CHARACTER SET utf8;",
+        MRXW_BAQ = "CREATE TABLE MRXW_BAQ (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_CHI = 'CREATE TABLE MRXW_CHI (
+                                ",
+        MRXW_CHI = "CREATE TABLE MRXW_CHI (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_CZE = 'CREATE TABLE MRXW_CZE (
+                                ",
+        MRXW_CZE = "CREATE TABLE MRXW_CZE (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_DAN = 'CREATE TABLE MRXW_DAN (
+                                ",
+        MRXW_DAN = "CREATE TABLE MRXW_DAN (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_DUT = 'CREATE TABLE MRXW_DUT (
+                                ",
+        MRXW_DUT = "CREATE TABLE MRXW_DUT (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_ENG = 'CREATE TABLE MRXW_ENG (
+                                ",
+        MRXW_ENG = "CREATE TABLE MRXW_ENG (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_EST = 'CREATE TABLE MRXW_EST (
+                                ",
+        MRXW_EST = "CREATE TABLE MRXW_EST (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_FIN = 'CREATE TABLE MRXW_FIN (
+                                ",
+        MRXW_FIN = "CREATE TABLE MRXW_FIN (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_FRE = 'CREATE TABLE MRXW_FRE (
+                                ",
+        MRXW_FRE = "CREATE TABLE MRXW_FRE (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                ',
-                                MRXW_GER = 'CREATE TABLE MRXW_GER (
-                                    LAT	char(3) NOT NULL,
-                                    WD	varchar(200) NOT NULL,
-                                    CUI	char(8) NOT NULL,
-                                    LUI	varchar(10) NOT NULL,
-                                    SUI	varchar(10) NOT NULL
-                                ) CHARACTER SET utf8;
-
-                                ',
-                                MRXW_GRE = 'CREATE TABLE MRXW_GRE (
+                                ",
+        MRXW_GER = "CREATE TABLE MRXW_GER (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -477,8 +467,8 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_HEB = 'CREATE TABLE MRXW_HEB (
+                                ",
+        MRXW_GRE = "CREATE TABLE MRXW_GRE (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -486,8 +476,8 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_HUN = 'CREATE TABLE MRXW_HUN (
+                                ",
+        MRXW_HEB = "CREATE TABLE MRXW_HEB (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -495,8 +485,8 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_ITA = 'CREATE TABLE MRXW_ITA (
+                                ",
+        MRXW_HUN = "CREATE TABLE MRXW_HUN (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -504,15 +494,24 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_JPN = 'CREATE TABLE MRXW_JPN (
+                                ",
+        MRXW_ITA = "CREATE TABLE MRXW_ITA (
+                                    LAT	char(3) NOT NULL,
+                                    WD	varchar(200) NOT NULL,
+                                    CUI	char(8) NOT NULL,
+                                    LUI	varchar(10) NOT NULL,
+                                    SUI	varchar(10) NOT NULL
+                                ) CHARACTER SET utf8;
+
+                                ",
+        MRXW_JPN = "CREATE TABLE MRXW_JPN (
                                     LAT char(3) NOT NULL,
                                     WD  varchar(500) NOT NULL,
                                     CUI char(8) NOT NULL,
                                     LUI varchar(10) NOT NULL,
                                     SUI varchar(10) NOT NULL
-                                ) CHARACTER SET utf8;',
-                                MRXW_KOR = 'CREATE TABLE MRXW_KOR (
+                                ) CHARACTER SET utf8;",
+        MRXW_KOR = "CREATE TABLE MRXW_KOR (
                                     LAT char(3) NOT NULL,
                                     WD  varchar(500) NOT NULL,
                                     CUI char(8) NOT NULL,
@@ -520,8 +519,8 @@ setup_mysql_mth <-
                                     SUI varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_LAV = 'CREATE TABLE MRXW_LAV (
+                                ",
+        MRXW_LAV = "CREATE TABLE MRXW_LAV (
                                     LAT char(3) NOT NULL,
                                     WD  varchar(200) NOT NULL,
                                     CUI char(8) NOT NULL,
@@ -529,8 +528,8 @@ setup_mysql_mth <-
                                     SUI varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_NOR = 'CREATE TABLE MRXW_NOR (
+                                ",
+        MRXW_NOR = "CREATE TABLE MRXW_NOR (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -538,8 +537,8 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_POL = 'CREATE TABLE MRXW_POL (
+                                ",
+        MRXW_POL = "CREATE TABLE MRXW_POL (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -547,8 +546,8 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_POR = 'CREATE TABLE MRXW_POR (
+                                ",
+        MRXW_POR = "CREATE TABLE MRXW_POR (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -556,8 +555,8 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_RUS = 'CREATE TABLE MRXW_RUS (
+                                ",
+        MRXW_RUS = "CREATE TABLE MRXW_RUS (
                                     LAT char(3) NOT NULL,
                                     WD  varchar(200) NOT NULL,
                                     CUI char(8) NOT NULL,
@@ -565,8 +564,8 @@ setup_mysql_mth <-
                                     SUI varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_SCR = 'CREATE TABLE MRXW_SCR (
+                                ",
+        MRXW_SCR = "CREATE TABLE MRXW_SCR (
                                     LAT char(3) NOT NULL,
                                     WD  varchar(200) NOT NULL,
                                     CUI char(8) NOT NULL,
@@ -574,8 +573,8 @@ setup_mysql_mth <-
                                     SUI varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_SPA = 'CREATE TABLE MRXW_SPA (
+                                ",
+        MRXW_SPA = "CREATE TABLE MRXW_SPA (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -583,8 +582,8 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_SWE = 'CREATE TABLE MRXW_SWE (
+                                ",
+        MRXW_SWE = "CREATE TABLE MRXW_SWE (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
@@ -592,105 +591,119 @@ setup_mysql_mth <-
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
 
-                                ',
-                                MRXW_TUR = 'CREATE TABLE MRXW_TUR (
+                                ",
+        MRXW_TUR = "CREATE TABLE MRXW_TUR (
                                     LAT	char(3) NOT NULL,
                                     WD	varchar(200) NOT NULL,
                                     CUI	char(8) NOT NULL,
                                     LUI	varchar(10) NOT NULL,
                                     SUI	varchar(10) NOT NULL
                                 ) CHARACTER SET utf8;
-                                '
-                        ) %>%
-                        purrr::map(stringr::str_replace_all,
-                                   "[\r\n\t]", " ")
+                                "
+      ) %>%
+      purrr::map(
+        stringr::str_replace_all,
+        "[\r\n\t]", " "
+      )
 
-                sqls <- sqls[tables]
+    sqls <- sqls[tables]
 
-                errors <- vector()
-                for (i in 1:length(sqls)) {
+    errors <- vector()
+    for (i in 1:length(sqls)) {
+      sql <- sqls[[i]]
 
-                        sql <- sqls[[i]]
+      resultset <-
+        RMySQL::dbSendQuery(
+          conn = conn,
+          statement = sql
+        )
 
-                        resultset <-
-                                RMySQL::dbSendQuery(conn = conn,
-                                                    statement = sql)
+      if (class(resultset) != "MySQLResult") {
+        errors <-
+          c(
+            errors,
+            sql
+          )
+      }
 
-                        if (class(resultset) != "MySQLResult") {
+      RMySQL::dbClearResult(resultset)
+    }
 
-                                errors <-
-                                        c(errors,
-                                          sql)
-                        }
+    # Load data
+    Tables <- preQL::query(
+      conn = conn,
+      "SHOW TABLES;"
+    ) %>%
+      unlist()
 
-                        RMySQL::dbClearResult(resultset)
+    rrfFileNames <- paste0(Tables, ".RRF")
+    rrfFilePaths <-
+      list.files(
+        path = rrf_dir,
+        recursive = TRUE,
+        pattern = "[.]RRF$",
+        full.names = TRUE
+      ) %>%
+      tibble::as_tibble_col("filePaths") %>%
+      dplyr::mutate(baseNames = basename(filePaths)) %>%
+      dplyr::filter(baseNames %in% rrfFileNames) %>%
+      dplyr::select(filePaths) %>%
+      dplyr::distinct() %>%
+      unlist()
+    rrfFileTables <- stringr::str_remove(
+      basename(rrfFilePaths),
+      "[.]{1}RRF"
+    )
 
-                }
+    sqls <-
+      rrfFileTables %>%
+      purrr::map2(
+        rrfFilePaths,
+        function(x, y) {
+          SqlRender::render("load data local infile '@filePath' into table @tableName fields terminated by '|' ESCAPED BY '' lines terminated by '\n';",
+            filePath = y,
+            tableName = x
+          )
+        }
+      )
 
-                # Load data
-                Tables <- preQL::query(conn = conn,
-                                       "SHOW TABLES;") %>%
-                                                unlist()
+    pb <- progress::progress_bar$new(
+      format = "[:bar] :elapsedfull :current/:total (:percent)",
+      total = length(sqls),
+      width = 80,
+      clear = FALSE
+    )
 
-                rrfFileNames <- paste0(Tables, ".RRF")
-                rrfFilePaths <-
-                        list.files(path = rrf_dir,
-                                   recursive = TRUE,
-                                   pattern = "[.]RRF$",
-                                   full.names = TRUE) %>%
-                        tibble::as_tibble_col("filePaths") %>%
-                        dplyr::mutate(baseNames = basename(filePaths)) %>%
-                        dplyr::filter(baseNames %in% rrfFileNames) %>%
-                        dplyr::select(filePaths) %>%
-                        dplyr::distinct() %>%
-                        unlist()
-                rrfFileTables <- stringr::str_remove(basename(rrfFilePaths),
-                                                     "[.]{1}RRF")
+    pb$tick(0)
+    Sys.sleep(0.2)
 
-                sqls <-
-                rrfFileTables %>%
-                        purrr::map2(rrfFilePaths,
-                                    function(x,y)
-                                            SqlRender::render("load data local infile '@filePath' into table @tableName fields terminated by '|' ESCAPED BY '' lines terminated by '\n';",
-                                                              filePath = y,
-                                                              tableName = x)
-                                            )
+    for (i in 1:length(sqls)) {
+      sql <- sqls[[i]]
 
-                pb <- progress::progress_bar$new(
-                        format = "[:bar] :elapsedfull :current/:total (:percent)",
-                        total = length(sqls),
-                        width = 80,
-                        clear = FALSE)
+      resultset <-
+        RMySQL::dbSendQuery(
+          conn = conn,
+          statement = sql
+        )
 
-                pb$tick(0)
-                Sys.sleep(0.2)
+      if (class(resultset) != "MySQLResult") {
+        errors <-
+          c(
+            errors,
+            sql
+          )
+      }
 
-                for (i in 1:length(sqls)) {
-
-                        sql <- sqls[[i]]
-
-                        resultset <-
-                                RMySQL::dbSendQuery(conn = conn,
-                                                    statement = sql)
-
-                        if (class(resultset) != "MySQLResult") {
-
-                                errors <-
-                                        c(errors,
-                                          sql)
-                        }
-
-                        RMySQL::dbClearResult(resultset)
-
-
-                        pb$tick()
-                        Sys.sleep(0.2)
-
-                }
+      RMySQL::dbClearResult(resultset)
 
 
-                indexes <-
-                "
+      pb$tick()
+      Sys.sleep(0.2)
+    }
+
+
+    indexes <-
+      "
                 CREATE INDEX X_MRCONSO_CUI ON MRCONSO(CUI);
 
                 ALTER TABLE MRCONSO ADD CONSTRAINT X_MRCONSO_PK  PRIMARY KEY BTREE (AUI);
@@ -836,54 +849,52 @@ setup_mysql_mth <-
                 CREATE INDEX X_MRCUI_CUI2 ON MRCUI(CUI2);
 
                 CREATE INDEX X_MRMAP_MAPSETCUI ON MRMAP(MAPSETCUI);" %>%
-                       sqlsplit(split = "[;]", type = "after") %>%
-                        unlist() %>%
-                        trimws()
+      sqlsplit(split = "[;]", type = "after") %>%
+      unlist() %>%
+      trimws()
 
-                pb <- progress::progress_bar$new(
-                        format = "[:bar] :elapsedfull :current/:total (:percent)",
-                        total = length(indexes),
-                        width = 80,
-                        clear = FALSE)
-
-
-                pb$tick(0)
-                Sys.sleep(0.2)
+    pb <- progress::progress_bar$new(
+      format = "[:bar] :elapsedfull :current/:total (:percent)",
+      total = length(indexes),
+      width = 80,
+      clear = FALSE
+    )
 
 
-                for (i in 1:length(indexes)) {
-
-                        resultset <-
-                                tryCatch(
-                                        RMySQL::dbSendQuery(conn = conn,
-                                                            statement = indexes[i]),
-                                        error = function(e) "Error"
-                                )
-
-                        if (class(resultset) != "MySQLResult") {
-
-                                errors <-
-                                        c(errors,
-                                          indexes[i])
-                        }  else {
-
-                                RMySQL::dbClearResult(resultset)
-                        }
+    pb$tick(0)
+    Sys.sleep(0.2)
 
 
+    for (i in 1:length(indexes)) {
+      resultset <-
+        tryCatch(
+          RMySQL::dbSendQuery(
+            conn = conn,
+            statement = indexes[i]
+          ),
+          error = function(e) "Error"
+        )
+
+      if (class(resultset) != "MySQLResult") {
+        errors <-
+          c(
+            errors,
+            indexes[i]
+          )
+      } else {
+        RMySQL::dbClearResult(resultset)
+      }
 
 
-                        pb$tick()
-                        Sys.sleep(0.2)
 
 
-                }
+      pb$tick()
+      Sys.sleep(0.2)
+    }
 
-                if (length(errors)) {
-
-                        cat(errors,
-                            sep = "\n")
-
-                }
-
-        }
+    if (length(errors)) {
+      cat(errors,
+        sep = "\n"
+      )
+    }
+  }

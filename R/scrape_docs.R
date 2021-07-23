@@ -19,51 +19,63 @@ NULL
 #' @keywords internal
 
 scrape_field_value_annotations <-
-        function() {
-                origin <- xml2::read_html("https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/abbreviations.html")
+  function() {
+    origin <- xml2::read_html("https://www.nlm.nih.gov/research/umls/knowledge_sources/metathesaurus/release/abbreviations.html")
 
-                tables <-
-                        origin %>%
-                        rvest::html_nodes("table") %>%
-                        rvest::html_table()
+    tables <-
+      origin %>%
+      rvest::html_nodes("table") %>%
+      rvest::html_table()
 
-                names(tables) <-
-                tables %>%
-                        purrr::map(~colnames(.)[1]) %>%
-                        purrr::map(stringr::str_replace_all, "[\r\n\t]", " ") %>%
-                        stringr::str_replace_all(pattern = "(^.*?)( |[(]{1})(.*$)",
-                                                 replacement = "\\1")
-                tables <-
-                        tables %>%
-                        purrr::map(function(x) x %>%
-                                                dplyr::mutate_all(stringr::str_replace_all, "[\r\n\t]", " ")) %>%
-                        purrr::map(function(x) x %>%
-                                           dplyr::mutate_all(stringr::str_replace_all, "[ ]{2,}", " ")) %>%
-                        purrr::map(dplyr::mutate_all, trimws, which = "both")
+    names(tables) <-
+      tables %>%
+      purrr::map(~ colnames(.)[1]) %>%
+      purrr::map(stringr::str_replace_all, "[\r\n\t]", " ") %>%
+      stringr::str_replace_all(
+        pattern = "(^.*?)( |[(]{1})(.*$)",
+        replacement = "\\1"
+      )
+    tables <-
+      tables %>%
+      purrr::map(function(x) {
+        x %>%
+          dplyr::mutate_all(stringr::str_replace_all, "[\r\n\t]", " ")
+      }) %>%
+      purrr::map(function(x) {
+        x %>%
+          dplyr::mutate_all(stringr::str_replace_all, "[ ]{2,}", " ")
+      }) %>%
+      purrr::map(dplyr::mutate_all, trimws, which = "both")
 
-                tribble_part <- list()
-                for (i in 1:length(tables)) {
-                                tribble_part[[i]] <-
-                                       capture.output(broca::make_trbl(tables[[i]]))
-                }
-                names(tribble_part) <- names(tables)
-                tribble_part <-
-                        tribble_part %>%
-                        purrr::map(function(x) c("tibble::tribble(",
-                                                 x,
-                                                 ")")) %>%
-                        purrr::map(~paste(., collapse = "\n"))
-                # Add names
-                output <-
-                tribble_part %>%
-                        purrr::map2(names(tribble_part),
-                                    function(x,y) paste0(y , " = ", x))
+    tribble_part <- list()
+    for (i in 1:length(tables)) {
+      tribble_part[[i]] <-
+        capture.output(broca::make_trbl(tables[[i]]))
+    }
+    names(tribble_part) <- names(tables)
+    tribble_part <-
+      tribble_part %>%
+      purrr::map(function(x) {
+        c(
+          "tibble::tribble(",
+          x,
+          ")"
+        )
+      }) %>%
+      purrr::map(~ paste(., collapse = "\n"))
+    # Add names
+    output <-
+      tribble_part %>%
+      purrr::map2(
+        names(tribble_part),
+        function(x, y) paste0(y, " = ", x)
+      )
 
-                for (i in 1:length(output)) {
-                        cat(output[[i]])
-                        secretary::press_enter()
-                }
-        }
+    for (i in 1:length(output)) {
+      cat(output[[i]])
+      secretary::press_enter()
+    }
+  }
 
 
 #' @title
@@ -72,14 +84,14 @@ scrape_field_value_annotations <-
 #' @keywords internal
 
 scrape_vocabulary_annotations <-
-        function() {
-                origin <- xml2::read_html("https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html")
+  function() {
+    origin <- xml2::read_html("https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html")
 
-                tables <-
-                        origin %>%
-                        rvest::html_nodes("table") %>%
-                        rvest::html_table() %>%
-                        purrr::pluck(1)
+    tables <-
+      origin %>%
+      rvest::html_nodes("table") %>%
+      rvest::html_table() %>%
+      purrr::pluck(1)
 
-                broca::makeTribble(tables)
-        }
+    broca::makeTribble(tables)
+  }
