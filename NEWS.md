@@ -1,3 +1,9 @@
+# metathesaurus 4.0.0  
+
+* Apply tidy style to R files  
+* Incorporate crosswalk table setup as part of standard run  
+
+
 # metathesaurus 3.0.1  
 
 * Add Metadata lookup page    
