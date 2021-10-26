@@ -237,7 +237,9 @@ $$
 -----------------------------------------------------------  
 -- Split SNOMEDCT By Level 2 due to size
 -----------------------------------------------------------    
--- 
+-- The SNOMEDCT_US table is too large to work with downstream 
+-- and it is subset here by the 2nd level concept to make it 
+-- more manageable.
 -----------------------------------------------------------  
 CREATE UNIQUE INDEX idx_snomedct_us_ptr 
 ON umls_mrhier.snomedct_us (ptr_id, ptr_level);
