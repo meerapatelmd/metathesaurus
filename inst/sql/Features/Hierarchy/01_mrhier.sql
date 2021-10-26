@@ -256,7 +256,7 @@ SELECT
 	ptr_aui, 
 	ptr_code, 
 	ptr_str, 
-	CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')) AS updated_hierarchy_table,
+	SUBSTRING(CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 1, 60) AS updated_hierarchy_table, -- Ensure that the tablename is within normal limits
 	COUNT(*) AS level_2_count
 FROM umls_mrhier.snomedct_us 
 WHERE ptr_level = 2 
@@ -317,7 +317,13 @@ begin
 		  CREATE TABLE umls_mrhier.%s AS (
 		  	SELECT * 
 		  	FROM umls_mrhier.snomedct_us 
-		  	WHERE ptr_level = 2 AND ptr_aui = ''%s''
+		  	WHERE ptr_id IN (
+		  		SELECT DISTINCT ptr_id 
+		  		FROM umls_mrhier.snomedct_us 
+		  		WHERE 
+		  			ptr_level = 2 
+		  			AND ptr_aui = ''%s''
+		  			)
 		  )
 		  ;
 		  ',
