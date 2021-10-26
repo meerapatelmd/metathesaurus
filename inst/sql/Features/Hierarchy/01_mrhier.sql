@@ -610,3 +610,102 @@ CREATE TABLE umls_mrhier.lookup AS (
 DROP TABLE umls_mrhier.tmp_lookup;
 SELECT * FROM umls_mrhier.lookup;
 
+
+SELECT * FROM umls_mrhier.snomedct_us_bodystructure LIMIT 5;
+
+
+DROP TABLE IF EXISTS umls_mrhier.pivot_lookup;
+CREATE TABLE  umls_mrhier.pivot_lookup (	
+  hierarchy_table varchar(255),
+  pivot_table varchar(255),
+  crosstab_ddl text
+)
+;
+
+
+do
+$$
+declare
+    f record;
+    h_tbl varchar(255);
+    p_tbl varchar(255);
+    max_level int;
+    ct integer;
+    final_ct integer;
+    start_time timestamp;
+    end_time timestamp;
+    iteration int;
+    total_iterations int;
+    log_datetime timestamp;
+    log_mth_version varchar(25);
+    log_mth_release_dt timestamp;
+begin
+	log_datetime := date_trunc('second', now()::timestamp);  
+	SELECT sm_version 
+	INTO log_mth_version
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+	  
+	SELECT sm_release_date 
+	INTO log_mth_release_dt
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+
+
+    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
+    for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup l    
+    loop 
+      iteration := f.iteration;
+      h_tbl := f.hierarchy_table;
+      p_tbl := f.pivot_table;
+      ct  := f.count;
+      start_time := date_trunc('second', timeofday()::timestamp);
+      
+      raise notice '[%] %/% %', start_time, iteration, total_iterations, h_tbl;
+      
+	  EXECUTE format('SELECT MAX(ptr_level) FROM umls_mrhier.%s', h_tbl)  
+	    INTO max_level;
+	    
+	  
+	  EXECUTE 
+	    format(
+	      '
+	      WITH seq1 AS (SELECT generate_series(1,%s) AS series),
+	      seq2 AS (
+	      	SELECT 
+	      		''%s'' AS hierarchy_table, 
+	      		''%s'' AS pivot_table,
+	      		STRING_AGG(CONCAT(''level_'', series, '' text''), '', '') AS crosstab_ddl
+	      	FROM seq1 
+	      	GROUP BY hierarchy_table, pivot_table),
+	      seq3 AS (
+	      	SELECT
+	      		hierarchy_table,
+	      		pivot_table,
+	      		CONCAT(''ptr_id BIGINT, '', crosstab_ddl) AS crosstab_ddl 
+	      	FROM seq2
+	      )
+	      
+	      INSERT INTO umls_mrhier.pivot_lookup 
+	      SELECT * FROM seq3
+	      ;
+	      ',
+	      max_level,
+	      h_tbl, 
+	      p_tbl
+	      
+	    );
+	
+	  end_time := date_trunc('second', timeofday()::timestamp); 
+      raise notice '% complete (%)', h_tbl, end_time - start_time;
+   
+    end loop;
+end;
+$$
+;
+
+
+SELECT * 
+FROM umls_mrhier.pivot_lookup;
