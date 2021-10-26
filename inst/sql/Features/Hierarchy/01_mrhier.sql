@@ -433,7 +433,7 @@ SELECT * FROM umls_mrhier.lookup;
 SELECT * FROM public.setup_umls_mrhier_log;
 
 /*-----------------------------------------------------------
-/ COLLAPSE LEAFS INTO PTR PATH
+/ EXTEND PTR PATH TO LEAF
 / The leaf of the hierarchy is found within the source concept 
 / (`aui`, `code`, and `str`). These leafs are added at the end 
 / of the path to root.  
@@ -445,7 +445,7 @@ RENAME TO tmp_lookup;
 CREATE TABLE umls_mrhier.lookup AS (
   SELECT 
   	*, 
-  	CONCAT('collapsed_', hierarchy_table) AS collapsed_table
+  	SUBSTRING(CONCAT('ext_', hierarchy_table), 1, 60) AS extended_table
   FROM umls_mrhier.tmp_lookup
 );
 
@@ -487,7 +487,7 @@ begin
     for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup l    
     loop 
       iteration := f.iteration;
-      tbl := f.collapsed_table;
+      tbl := f.extended_table;
       h_tbl := f.hierarchy_table;
       ct  := f.count;
       start_time := date_trunc('second', timeofday()::timestamp);
