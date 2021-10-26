@@ -200,10 +200,18 @@ begin
 		  FROM relatives3  
 		  ORDER BY ptr_id, ptr_level
 		  ;
+		  
+		  CREATE UNIQUE INDEX idx_%s_ptr 
+		  ON umls_mrhier.%s (ptr_id, ptr_level);
+		  CLUSTER umls_mrhier.%s USING idx_%s_ptr;
 		  ',
 		  	tbl, 
 		  	tbl, 
 		  	sab,
+		  	tbl,
+		  	tbl,
+		  	tbl, 
+		  	tbl, 
 		  	tbl);
   
 	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
