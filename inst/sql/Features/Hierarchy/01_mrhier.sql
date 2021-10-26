@@ -1,7 +1,6 @@
 /* 
 Derive entire hierarchies from UMLS Metathesaurus MRHIER Table  
-Clinical Informatics  
-PostgreSQL 
+DBMS: Postgres 
 
 ptr_id is added as an identifier for each unique AUI-RELA-PTR 
 (ptr: Path To Root). Note that unlike the identifiers provided 
@@ -10,9 +9,10 @@ versions.
 */
 
 
------
--- LOG  
------ 
+/*
+The log table is setup if it does not already exist.  
+*/
+ 
 CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
     sum_datetime timestamp without time zone,
     sum_mth_version character varying(255),
@@ -25,9 +25,10 @@ CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
 );
 
                                                              
------------------------------------------------------------
--- 1. Add `ptr_id` field  
------------------------------------------------------------       
+/*
+MRHIER table is copied to the `umls_mrhier` schema with the 
+addition of a `ptr_id` for each row number.
+*/    
 
 DROP SCHEMA umls_mrhier CASCADE;
 CREATE SCHEMA umls_mrhier; 
@@ -57,16 +58,18 @@ ALTER TABLE umls_mrhier.mrhier
 ADD CONSTRAINT xpk_ptr 
 PRIMARY KEY (ptr_id);
 
+CREATE INDEX x_mrhier_aui ON umls_mrhier.mrhier(aui);
+CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
+
 DROP TABLE umls_mrhier.tmp_mrhier; 
 
 
------------------------------------------------------------
--- 2. Subset MRHIER with `ptr_id` by vocabulary  
------------------------------------------------------------    
--- Create lookup table between all the hierarchy vocabularies 
--- and a cleaned up version of their string representation as their 
--- destination table name to loop over. 
------------------------------------------------------------       
+/*
+Create lookup table between all the hierarchy vocabularies 
+and a cleaned up version of their string representation as their 
+destination table name to loop over. 
+*/
+   
 DROP TABLE IF EXISTS umls_mrhier.lookup; 
 
 CREATE TABLE umls_mrhier.lookup (
@@ -205,18 +208,37 @@ begin
 		  ORDER BY ptr_id, ptr_level
 		  ;
 		  
+		  ALTER TABLE umls_mrhier.%s 
+		  ADD CONSTRAINT xpk_%s PRIMARY KEY (ptr_id);
+		  
 		  CREATE UNIQUE INDEX idx_%s_ptr 
 		  ON umls_mrhier.%s (ptr_id, ptr_level);
 		  CLUSTER umls_mrhier.%s USING idx_%s_ptr;
+		  
+		  CREATE INDEX x_%s_aui ON umls_mrhier.%s(aui);
+		  CREATE INDEX x_%s_code ON umls_mrhier.%s(code);
+		  CREATE INDEX x_%s_ptr_aui ON umls_mrhier.%s(ptr_aui);	
+		  CREATE INDEX x_%s_ptr_code ON umls_mrhier.%s(ptr_code);		    
 		  ',
 		  	tbl, 
 		  	tbl, 
 		  	sab,
 		  	tbl,
 		  	tbl,
+		  	tbl,
+		  	tbl,
 		  	tbl, 
 		  	tbl, 
-		  	tbl);
+		  	tbl,
+		  	tbl,
+		  	tbl,
+		  	tbl,
+		  	tbl,
+		  	tbl,
+		  	tbl,
+		  	tbl,
+		  	tbl
+		  	);
   
 	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
 	    INTO final_ct;
@@ -253,6 +275,8 @@ $$
 -- and it is subset here by the 2nd level concept to make it 
 -- more manageable.
 -----------------------------------------------------------  
+ANALYZE;
+
 DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
 CREATE TABLE umls_mrhier.tmp_lookup (
     hierarchy_table text,
