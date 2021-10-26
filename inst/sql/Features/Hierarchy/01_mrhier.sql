@@ -249,10 +249,6 @@ $$
 -- and it is subset here by the 2nd level concept to make it 
 -- more manageable.
 -----------------------------------------------------------  
-CREATE UNIQUE INDEX idx_snomedct_us_ptr 
-ON umls_mrhier.snomedct_us (ptr_id, ptr_level);
-CLUSTER umls_mrhier.snomedct_us USING idx_snomedct_us_ptr;
-
 DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
 CREATE TABLE umls_mrhier.tmp_lookup (
     hierarchy_table text,
