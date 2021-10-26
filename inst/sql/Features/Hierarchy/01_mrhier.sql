@@ -67,11 +67,13 @@ ANALYZE umls_mrhier.mrhier;
 DROP TABLE umls_mrhier.tmp_mrhier; 
 
 
-/*
-Create lookup table between all the hierarchy vocabularies 
-and a cleaned up version of their string representation as their 
-destination table name to loop over. 
-*/
+/*-------------------------------------------------------------- 
+CREATE INITIAL LOOKUP TABLE
+Create lookup table between all the hierarchy vocabularies (`sab` 
+in MRHIER) and a cleaned up version of the `sab` value 
+to be used as its tablename (some `sab` values could have 
+punctuation that is forbidden in table names). 
+--------------------------------------------------------------*/
    
 DROP TABLE IF EXISTS umls_mrhier.lookup; 
 
@@ -109,9 +111,11 @@ SELECT * FROM umls_mrhier.lookup;
 
 
 /*-----------------------------------------------------------    
-Parse the decimal-separated `ptr` string along with 
-ordinality as `ptr_level` and join the resulting `ptr_aui` 
-to MRCONSO to include the `ptr_code` and `ptr_str`. 
+PROCESS PTR
+For each unique `sab` in the MRHIER table, 
+the decimal-separated `ptr` string is parsed along with its 
+ordinality as `ptr_level`. The parsed individual `ptr_aui` 
+is joined to MRCONSO to add the `ptr_code` and `ptr_str`. 
 -----------------------------------------------------------*/
   
 do
@@ -274,10 +278,8 @@ end;
 $$
 ;
 
--- ANALYZE;
-
 /*-----------------------------------------------------------    
-Split SNOMEDCT By Level 2  
+SPLIT SNOMEDCT AT LEVEL 2  
 The SNOMEDCT_US table is too large to work with downstream 
 and it is subset here by the 2nd level concept to make it 
 more manageable.
@@ -421,7 +423,11 @@ end;
 $$
 ;
 
-SELECT * FROM public.setup_umls_mrhier_log;
+/*----------------------------------------------------------- 
+REFRESH LOOKUP
+The lookup is updated with the SNOMEDCT subset tables 
+and counts.
+-----------------------------------------------------------*/
 
 DROP TABLE IF EXISTS umls_mrhier.tmp_lookup2;
 CREATE TABLE umls_mrhier.tmp_lookup2 AS (
@@ -443,7 +449,6 @@ DROP TABLE umls_mrhier.tmp_lookup;
 ALTER TABLE umls_mrhier.tmp_lookup2 RENAME TO lookup;
 
 SELECT * FROM umls_mrhier.lookup;
-SELECT * FROM public.setup_umls_mrhier_log;
 
 /*-----------------------------------------------------------
 / EXTEND PTR PATH TO LEAF
@@ -463,7 +468,6 @@ CREATE TABLE umls_mrhier.lookup AS (
 );
 
 DROP TABLE umls_mrhier.tmp_lookup;
-
 SELECT * FROM umls_mrhier.lookup;
 
 do
@@ -587,23 +591,22 @@ $$
 ;
 
 
+/*-----------------------------------------------------------
+/ PIVOT 
+/ Each table is pivoted on ptr_id and its attributes to 
+/ compile classifications in at the row level.
+/-----------------------------------------------------------*/
 
+ALTER TABLE umls_mrhier.lookup 
+RENAME TO tmp_lookup;
 
+CREATE TABLE umls_mrhier.lookup AS (
+  SELECT 
+  	*, 
+  	SUBSTRING(CONCAT('pivot_', hierarchy_table), 1, 60) AS pivot_table
+  FROM umls_mrhier.tmp_lookup
+);
 
-
-select * from umls_mrhier.lookup;
-from umls_mrhier.lookup;
-
-
-
-
-
-SELECT DISTINCT
-  ptr_level, 
-  ptr_aui,
-  ptr_code,
-  ptr_str 
-FROM umls_mrhier.MED_RT 
-WHERE ptr_level = 2;
-
+DROP TABLE umls_mrhier.tmp_lookup;
+SELECT * FROM umls_mrhier.lookup;
 
