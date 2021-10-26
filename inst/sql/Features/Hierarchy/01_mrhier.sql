@@ -53,6 +53,10 @@ CREATE TABLE umls_mrhier.mrhier AS (
 )
 ;
 
+ALTER TABLE umls_mrhier.mrhier 
+ADD CONSTRAINT xpk_ptr 
+PRIMARY KEY (ptr_id);
+
 DROP TABLE umls_mrhier.tmp_mrhier; 
 
 
@@ -265,7 +269,7 @@ SELECT
 	ptr_aui, 
 	ptr_code, 
 	ptr_str, 
-	SUBSTRING(CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 1, 60) AS updated_hierarchy_table, -- Ensure that the tablename is within normal limits
+	SUBSTRING(CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 1, 60) AS updated_hierarchy_table, -- Ensure that the tablename character count is within normal limits
 	COUNT(*) AS level_2_count
 FROM umls_mrhier.snomedct_us 
 WHERE ptr_level = 2 
