@@ -234,6 +234,113 @@ $$
 ;
 
 
+-----------------------------------------------------------  
+-- Split SNOMEDCT By Level 2 due to size
+-----------------------------------------------------------    
+-- 
+-----------------------------------------------------------  
+DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
+
+CREATE TABLE umls_mrhier.tmp_lookup (
+    hierarchy_table text,
+    ptr_aui varchar(12), 
+    ptr_code varchar(255), 
+    ptr_str varchar(255),
+    updated_hierarchy_table varchar(255),
+    level_2_count bigint
+);
+
+INSERT INTO umls_mrhier.tmp_lookup 
+SELECT 
+	'SNOMEDCT_US' AS hierarchy_table,
+	ptr_aui, 
+	ptr_code, 
+	ptr_str, 
+	CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')) AS updated_hierarchy_table,
+	COUNT(*) AS level_2_count
+FROM umls_mrhier.snomedct_us 
+WHERE ptr_level = 2 
+GROUP BY ptr_aui, ptr_code, ptr_str 
+ORDER BY COUNT(*)
+;
+
+SELECT * FROM umls_mrhier.tmp_lookup;
+
+
+
+do
+$$
+declare
+    f record;
+    aui varchar(255);
+    h_tbl varchar(255);
+    ct integer;
+    final_ct integer;
+    start_time timestamp;
+    end_time timestamp;
+    iteration int;
+    total_iterations int;
+    log_datetime timestamp;
+    log_mth_version varchar(25);
+    log_mth_release_dt timestamp;
+begin
+	log_datetime := date_trunc('second', now()::timestamp);  
+	SELECT sm_version 
+	INTO log_mth_version
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+	  
+	SELECT sm_release_date 
+	INTO log_mth_release_dt
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+
+
+    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.tmp_lookup;
+    for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.tmp_lookup l    
+    loop 
+      iteration := f.iteration;
+      aui := f.ptr_aui;
+      h_tbl := f.updated_hierarchy_table;
+      ct  := f.level_2_count;
+      start_time := date_trunc('second', timeofday()::timestamp);
+      
+      
+      
+	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, h_tbl, ct;
+	  EXECUTE
+	   format(
+		  '
+		  DROP TABLE IF EXISTS umls_mrhier.%s;
+		  CREATE TABLE umls_mrhier.%s AS (
+		  	SELECT * 
+		  	FROM umls_mrhier.snomedct_us 
+		  	WHERE ptr_level = 2 AND ptr_aui = ''%s''
+		  )
+		  ;
+		  ',
+		  h_tbl,
+		  h_tbl,
+		  aui
+		  );
+
+  
+   	  end_time := date_trunc('second', timeofday()::timestamp);
+   
+      raise notice '% complete (%)', h_tbl, end_time - start_time;
+   
+    end loop;
+end;
+$$
+;
+
+
+
+
+-----------------------------------------------------------  
+-- COLLAPSE LEAFS INTO PTR PATH
 -----------------------------------------------------------    
 -- Add the leaf (`aui`, `code`, and `str` as the last level
 -- in the `ptr_*` fields)
@@ -250,6 +357,8 @@ CREATE TABLE umls_mrhier.lookup AS (
 );
 
 DROP TABLE umls_mrhier.tmp_lookup;
+
+SELECT * FROM umls_mrhier.lookup;
 
 do
 $$
