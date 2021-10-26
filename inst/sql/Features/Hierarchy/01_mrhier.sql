@@ -733,6 +733,9 @@ $$
 SELECT * 
 FROM umls_mrhier.pivot_lookup;
 
+select * 
+from umls_mrhier.aot;
+
 
 do 
 $$
@@ -777,6 +780,32 @@ begin
     sql_statement := f.sql_statement;
     EXECUTE sql_statement;
     
+    
+    EXECUTE 
+      format(
+      	'
+      	ALTER TABLE umls_mrhier.%s RENAME TO tmp_%s; 
+      	CREATE TABLE umls_mrhier.%s AS (
+	      	SELECT DISTINCT
+	      	  h.aui,
+	      	  h.code,
+	      	  h.str, 
+	      	  h.ptr_id AS source_ptr_id,
+	      	  h.ptr AS source_ptr,
+	      	  t.*
+	      	FROM umls_mrhier.%s h 
+	      	LEFT JOIN umls_mrhier.tmp_%s t 
+	      	ON t.ptr_id = h.ptr_id
+      	);
+      	DROP TABLE umls_mrhier.tmp_%s;
+      	',
+      		p_tbl, 
+      		p_tbl, 
+      		p_tbl,
+      		h_tbl, 
+      		p_tbl,
+      		p_tbl);
+    
     EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', h_tbl)  
 	    INTO ct;
     EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', p_tbl)  
@@ -803,3 +832,7 @@ begin
 END;
 $$
 ;
+
+select * 
+from umls_mrhier.pivot_lookup;
+
