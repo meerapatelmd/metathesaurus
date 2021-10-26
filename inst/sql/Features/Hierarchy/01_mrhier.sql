@@ -220,7 +220,9 @@ begin
 		  CREATE INDEX x_%s_aui ON umls_mrhier.%s(aui);
 		  CREATE INDEX x_%s_code ON umls_mrhier.%s(code);
 		  CREATE INDEX x_%s_ptr_aui ON umls_mrhier.%s(ptr_aui);	
-		  CREATE INDEX x_%s_ptr_code ON umls_mrhier.%s(ptr_code);		    
+		  CREATE INDEX x_%s_ptr_code ON umls_mrhier.%s(ptr_code);  
+		  
+		  ANALYZE VERBOSE umls_mrhier.%s;		    
 		  ',
 		  	tbl, 
 		  	tbl, 
@@ -231,6 +233,7 @@ begin
 		  	tbl,
 		  	tbl, 
 		  	tbl, 
+		  	tbl,
 		  	tbl,
 		  	tbl,
 		  	tbl,
