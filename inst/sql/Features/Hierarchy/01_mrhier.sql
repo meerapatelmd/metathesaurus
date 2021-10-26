@@ -610,10 +610,10 @@ CREATE TABLE umls_mrhier.lookup AS (
 DROP TABLE umls_mrhier.tmp_lookup;
 SELECT * FROM umls_mrhier.lookup;
 
-
-SELECT * FROM umls_mrhier.snomedct_us_bodystructure LIMIT 5;
-
-
+/*-----------------------------------------------------------
+/ A second pivot lookup is made to construct the crosstab function 
+/ call
+/-----------------------------------------------------------*/
 DROP TABLE IF EXISTS umls_mrhier.pivot_lookup;
 CREATE TABLE  umls_mrhier.pivot_lookup (	
   hierarchy_table varchar(255),
@@ -623,6 +623,12 @@ CREATE TABLE  umls_mrhier.pivot_lookup (
 ;
 
 
+/*-----------------------------------------------------------
+/ A crosstab function call is created to pivot each table 
+/ based on the maximum `ptr_level` in that table. This is 
+/ required to pass the subsequent column names as the 
+/ argument to the crosstab function.
+/-----------------------------------------------------------*/
 do
 $$
 declare
@@ -691,8 +697,8 @@ begin
 	        SELECT 
 	          hierarchy_table,
 	          pivot_table, 
-	          '''' || CONCAT(''SELECT ptr_id, ptr_level, ptr_str FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1,2'') || '''' AS crosstab_arg1,
-	          '''' || CONCAT(''SELECT DISTINCT ptr_level FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1'') || '''' AS crosstab_arg2, 
+	          '''''''' || CONCAT(''SELECT ptr_id, ptr_level, ptr_str FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1,2'') || '''''''' AS crosstab_arg1,
+	          '''''''' || CONCAT(''SELECT DISTINCT ptr_level FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1'') || '''''''' AS crosstab_arg2, 
 	          crosstab_ddl
 	         FROM seq3
 	      ),
@@ -726,3 +732,51 @@ $$
 
 SELECT * 
 FROM umls_mrhier.pivot_lookup;
+
+
+do 
+$$
+declare 
+  	sql_statement text; 
+  	f record; 
+  	p_tbl varchar(255);
+	start_time timestamp;
+	end_time timestamp;
+	iteration int;
+	total_iterations int;
+	log_datetime timestamp;
+	log_mth_version varchar(25);
+	log_mth_release_dt timestamp;
+begin  
+	log_datetime := date_trunc('second', now()::timestamp);  
+	SELECT sm_version 
+	INTO log_mth_version
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+	  
+	SELECT sm_release_date 
+	INTO log_mth_release_dt
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+
+
+    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
+  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.pivot_lookup pl
+ LOOP  
+      iteration := f.iteration;
+      p_tbl := f.pivot_table;
+      start_time := date_trunc('second', timeofday()::timestamp);
+      
+      raise notice '[%] %/% %', start_time, iteration, total_iterations, p_tbl;
+    sql_statement := f.sql_statement;
+    EXECUTE sql_statement;
+    
+    	  end_time := date_trunc('second', timeofday()::timestamp); 
+      raise notice '% complete (%)', h_tbl, end_time - start_time;
+    
+    end loop;
+END;
+$$
+;
