@@ -58,6 +58,7 @@ ALTER TABLE umls_mrhier.mrhier
 ADD CONSTRAINT xpk_ptr 
 PRIMARY KEY (ptr_id);
 
+CREATE INDEX x_mrhier_sab ON umls_mrhier.mrhier(sab);
 CREATE INDEX x_mrhier_aui ON umls_mrhier.mrhier(aui);
 CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
 
