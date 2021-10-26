@@ -410,14 +410,34 @@ $$
 
 SELECT * FROM public.setup_umls_mrhier_log;
 
+DROP TABLE IF EXISTS umls_mrhier.tmp_lookup2;
+CREATE TABLE umls_mrhier.tmp_lookup2 AS (
+	SELECT 
+	  lu.hierarchy_sab, 
+	  tmp.ptr_aui, 
+	  tmp.ptr_code, 
+	  tmp.ptr_str, 
+	  COALESCE(tmp.updated_hierarchy_table, lu.hierarchy_table) AS hierarchy_table, 
+	  COALESCE(tmp.level_2_count, lu.count) AS count  
+	FROM umls_mrhier.lookup lu  
+	LEFT JOIN umls_mrhier.tmp_lookup tmp 
+	ON lu.hierarchy_table = tmp.hierarchy_table
+)
+;
 
+DROP TABLE umls_mrhier.lookup; 
+DROP TABLE umls_mrhier.tmp_lookup;
+ALTER TABLE umls_mrhier.tmp_lookup2 RENAME TO lookup;
 
------------------------------------------------------------  
--- COLLAPSE LEAFS INTO PTR PATH
------------------------------------------------------------    
--- Add the leaf (`aui`, `code`, and `str` as the last level
--- in the `ptr_*` fields)
------------------------------------------------------------   
+SELECT * FROM umls_mrhier.lookup;
+SELECT * FROM public.setup_umls_mrhier_log;
+
+/*-----------------------------------------------------------
+/ COLLAPSE LEAFS INTO PTR PATH
+/ The leaf of the hierarchy is found within the source concept 
+/ (`aui`, `code`, and `str`). These leafs are added at the end 
+/ of the path to root.  
+/-----------------------------------------------------------*/
 
 ALTER TABLE umls_mrhier.lookup 
 RENAME TO tmp_lookup;
