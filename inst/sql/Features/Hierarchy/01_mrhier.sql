@@ -618,7 +618,7 @@ DROP TABLE IF EXISTS umls_mrhier.pivot_lookup;
 CREATE TABLE  umls_mrhier.pivot_lookup (	
   hierarchy_table varchar(255),
   pivot_table varchar(255),
-  crosstab_ddl text
+  sql_statement text
 )
 ;
 
@@ -686,10 +686,27 @@ begin
 	      		pivot_table,
 	      		CONCAT(''ptr_id BIGINT, '', crosstab_ddl) AS crosstab_ddl 
 	      	FROM seq2
+	      ), 
+	      seq4 AS (
+	        SELECT 
+	          hierarchy_table,
+	          pivot_table, 
+	          '''' || CONCAT(''SELECT ptr_id, ptr_level, ptr_str FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1,2'') || '''' AS crosstab_arg1,
+	          '''' || CONCAT(''SELECT DISTINCT ptr_level FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1'') || '''' AS crosstab_arg2, 
+	          crosstab_ddl
+	         FROM seq3
+	      ),
+	      seq5 AS (
+	      	SELECT 
+	      	  hierarchy_table,
+	      	  pivot_table,
+	      	  ''DROP TABLE IF EXISTS umls_mrhier.'' || pivot_table || '';'' || '' CREATE TABLE umls_mrhier.'' || pivot_table || '' AS (SELECT * FROM CROSSTAB('' || crosstab_arg1 || '','' || crosstab_arg2 || '') AS ('' || crosstab_ddl || ''));'' AS sql_statement
+	      	  FROM seq4
+	      
 	      )
 	      
 	      INSERT INTO umls_mrhier.pivot_lookup 
-	      SELECT * FROM seq3
+	      SELECT * FROM seq5
 	      ;
 	      ',
 	      max_level,
