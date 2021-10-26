@@ -267,7 +267,7 @@ end;
 $$
 ;
 
-ANALYZE;
+-- ANALYZE;
 
 -----------------------------------------------------------  
 -- Split SNOMEDCT By Level 2 due to size
@@ -303,7 +303,6 @@ ORDER BY COUNT(*)
 
 SELECT * FROM umls_mrhier.tmp_lookup;
 
-SELECT * FROM umls_mrhier.snomedct_us LIMIT 5;
 
 do
 $$
@@ -385,7 +384,23 @@ begin
 
   
    	  end_time := date_trunc('second', timeofday()::timestamp);
-   
+   	  
+   	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', h_tbl)  
+	    INTO final_ct;
+   	  
+  	  EXECUTE 
+  	format(
+  		'
+  		INSERT INTO public.setup_umls_mrhier_log  
+  		VALUES (''%s'', ''%s'', ''%s'', ''SNOMEDCT_US'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
+  		',
+  			log_datetime, 
+  			log_mth_version, 
+  			log_mth_release_dt, 
+  			h_tbl, 
+  			ct, 
+  			final_ct);
+
       raise notice '% complete (%)', h_tbl, end_time - start_time;
    
     end loop;
@@ -393,6 +408,7 @@ end;
 $$
 ;
 
+SELECT * FROM public.setup_umls_mrhier_log;
 
 
 
