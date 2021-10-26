@@ -267,6 +267,7 @@ end;
 $$
 ;
 
+ANALYZE;
 
 -----------------------------------------------------------  
 -- Split SNOMEDCT By Level 2 due to size
@@ -275,7 +276,6 @@ $$
 -- and it is subset here by the 2nd level concept to make it 
 -- more manageable.
 -----------------------------------------------------------  
-ANALYZE;
 
 DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
 CREATE TABLE umls_mrhier.tmp_lookup (
