@@ -98,6 +98,11 @@ SELECT * FROM umls_mrhier.lookup;
 
 
 
+-----------------------------------------------------------    
+-- Parse the decimal-separated `ptr` string along with 
+-- ordinality as `ptr_level` and join the resulting `ptr_aui` 
+-- to MRCONSO
+-----------------------------------------------------------   
 do
 $$
 declare
@@ -229,6 +234,11 @@ $$
 ;
 
 
+-----------------------------------------------------------    
+-- Add the leaf (`aui`, `code`, and `str` as the last level
+-- in the `ptr_*` fields)
+-----------------------------------------------------------   
+
 ALTER TABLE umls_mrhier.lookup 
 RENAME TO tmp_lookup;
 
@@ -285,69 +295,77 @@ begin
 	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, h_tbl, f.count;
 	  EXECUTE
 	   format(
-  '
-  DROP TABLE IF EXISTS umls_mrhier.%s; 
-  CREATE TABLE  umls_mrhier.%s (
-    ptr_id INTEGER NOT NULL,
-    ptr text NOT NULL,
-  	aui varchar(12), 
-  	code varchar(100), 
-  	str text, 
-  	rela varchar(100), 
-  	ptr_level INTEGER NOT NULL,
-  	ptr_aui varchar(12) NOT NULL,
-  	ptr_code varchar(100),
-  	ptr_str text
-  );
+		  '
+		  DROP TABLE IF EXISTS umls_mrhier.%s; 
+		  CREATE TABLE  umls_mrhier.%s (
+		    ptr_id INTEGER NOT NULL,
+		    ptr text NOT NULL,
+		  	aui varchar(12), 
+		  	code varchar(100), 
+		  	str text, 
+		  	rela varchar(100), 
+		  	ptr_level INTEGER NOT NULL,
+		  	ptr_aui varchar(12) NOT NULL,
+		  	ptr_code varchar(100),
+		  	ptr_str text
+		  );
+		  
+		  WITH leafs AS (
+			SELECT 
+			  ptr_id, 
+			  ptr, 
+			  aui, 
+			  code, 
+			  str, 
+			  rela, 
+			  max(ptr_level)+1 AS ptr_level, 
+			  aui AS ptr_aui, 
+			  code AS ptr_code, 
+			  str AS ptr_str 
+			FROM umls_mrhier.%s 
+			GROUP BY ptr_id, ptr, aui, code, str, rela
+		  ),
+		  with_leafs AS (
+		  	SELECT * 
+		  	FROM leafs 
+		  	UNION 
+		  	SELECT * 
+		  	FROM umls_mrhier.%s
+		  )
+		  
+		  INSERT INTO umls_mrhier.%s  
+		  SELECT * 
+		  FROM with_leafs
+		  ORDER BY ptr_id, ptr_level
+		  ;
+		  ',
+		  	tbl, 
+		  	tbl, 
+		  	h_tbl, 
+		  	h_tbl, 
+		  	tbl);
   
-  WITH leafs AS (
-	SELECT 
-	  ptr_id, 
-	  ptr, 
-	  aui, 
-	  code, 
-	  str, 
-	  rela, 
-	  max(ptr_level)+1 AS ptr_level, 
-	  aui AS ptr_aui, 
-	  code AS ptr_code, 
-	  str AS ptr_str 
-	FROM umls_mrhier.%s 
-	GROUP BY ptr_id, ptr, aui, code, str, rela
-  ),
-  with_leafs AS (
-  	SELECT * 
-  	FROM leafs 
-  	UNION 
-  	SELECT * 
-  	FROM umls_mrhier.%s
-  )
+	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
+	    INTO final_ct;
   
-  INSERT INTO umls_mrhier.%s  
-  SELECT * 
-  FROM with_leafs
-  ORDER BY ptr_id, ptr_level
-  ;
-  ',tbl, tbl, h_tbl, h_tbl, tbl);
+	  EXECUTE 
+	  	format(
+	  		'
+	  		INSERT INTO public.setup_umls_mrhier_log  
+	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
+	  		',
+	  			log_datetime, 
+	  			log_mth_version, 
+	  			log_mth_release_dt, 
+	  			h_tbl, 
+	  			tbl, 
+	  			ct, 
+	  			final_ct);
   
-  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
-    INTO final_ct;
-  
-  EXECUTE 
-  	format(
-  		'
-  		INSERT INTO public.setup_umls_mrhier_log  
-  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
-  		',
-  			log_datetime, 
-  			log_mth_version, log_mth_release_dt, h_tbl, tbl, ct, final_ct);
-  
-   end_time := date_trunc('second', timeofday()::timestamp);
+   	  end_time := date_trunc('second', timeofday()::timestamp);
    
-   raise notice '% complete (%)', tbl, end_time - start_time;
+      raise notice '% complete (%)', tbl, end_time - start_time;
    
-   
-  
     end loop;
 end;
 $$
