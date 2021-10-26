@@ -60,7 +60,7 @@ DROP TABLE umls_mrhier.tmp_mrhier;
 -- 2. Subset MRHIER with `ptr_id` by vocabulary  
 -----------------------------------------------------------    
 -- Create lookup table between all the hierarchy vocabularies 
--- and a cleaned up version if their string representation as their 
+-- and a cleaned up version of their string representation as their 
 -- destination table name to loop over. 
 -----------------------------------------------------------       
 DROP TABLE IF EXISTS umls_mrhier.lookup; 
@@ -142,79 +142,87 @@ begin
 	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, sab, f.count;
 	  EXECUTE
 	   format(
-  '
-  DROP TABLE IF EXISTS umls_mrhier.%s; 
-  CREATE TABLE  umls_mrhier.%s (
-    ptr_id INTEGER NOT NULL,
-    ptr text NOT NULL,
-  	aui varchar(12), 
-  	code varchar(100), 
-  	str text, 
-  	rela varchar(100), 
-  	ptr_level INTEGER NOT NULL,
-  	ptr_aui varchar(12) NOT NULL,
-  	ptr_code varchar(100),
-  	ptr_str text
-  );
+		  '
+		  DROP TABLE IF EXISTS umls_mrhier.%s; 
+		  CREATE TABLE  umls_mrhier.%s (
+		    ptr_id INTEGER NOT NULL,
+		    ptr text NOT NULL,
+		  	aui varchar(12), 
+		  	code varchar(100), 
+		  	str text, 
+		  	rela varchar(100), 
+		  	ptr_level INTEGER NOT NULL,
+		  	ptr_aui varchar(12) NOT NULL,
+		  	ptr_code varchar(100),
+		  	ptr_str text
+		  );
+		  
+		  WITH relatives0 AS (
+			SELECT DISTINCT m.ptr_id, s1.aui, s1.code, s1.str, m.rela, m.ptr 
+			FROM umls_mrhier.mrhier m
+			INNER JOIN mth.mrconso s1 
+			ON s1.aui = m.aui 
+			WHERE m.sab = ''%s''  
+		  ),
+		  relatives1 AS (
+		  	SELECT ptr_id, ptr, aui, code, str, rela, unnest(string_to_array(ptr, ''.'')) AS ptr_aui
+		  	FROM relatives0 r0 
+		  	ORDER BY ptr_id
+		  ),
+		  relatives2 AS (
+		  	SELECT r1.*, ROW_NUMBER() OVER (PARTITION BY ptr_id) AS ptr_level
+		  	FROM relatives1 r1 
+		  ),
+		  relatives3 AS (
+		  	SELECT r2.*, m.code AS ptr_code, m.str AS ptr_str 
+		  	FROM relatives2 r2
+		  	LEFT JOIN mth.mrconso m 
+		  	ON m.aui = r2.ptr_aui
+		  )
+		  
+		  INSERT INTO umls_mrhier.%s  
+		  SELECT DISTINCT
+		    ptr_id,
+		    ptr,
+		  	aui, 
+		  	code, 
+		  	str, 
+		  	rela, 
+		  	ptr_level,
+		  	ptr_aui,
+		  	ptr_code,
+		  	ptr_str 
+		  FROM relatives3  
+		  ORDER BY ptr_id, ptr_level
+		  ;
+		  ',
+		  	tbl, 
+		  	tbl, 
+		  	sab,
+		  	tbl);
   
-  WITH relatives0 AS (
-	SELECT DISTINCT m.ptr_id, s1.aui, s1.code, s1.str, m.rela, m.ptr 
-	FROM umls_mrhier.mrhier m
-	INNER JOIN mth.mrconso s1 
-	ON s1.aui = m.aui 
-	WHERE m.sab = ''%s''  
-  ),
-  relatives1 AS (
-  	SELECT ptr_id, ptr, aui, code, str, rela, unnest(string_to_array(ptr, ''.'')) AS ptr_aui
-  	FROM relatives0 r0 
-  	ORDER BY ptr_id
-  ),
-  relatives2 AS (
-  	SELECT r1.*, ROW_NUMBER() OVER (PARTITION BY ptr_id) AS ptr_level
-  	FROM relatives1 r1 
-  ),
-  relatives3 AS (
-  	SELECT r2.*, m.code AS ptr_code, m.str AS ptr_str 
-  	FROM relatives2 r2
-  	LEFT JOIN mth.mrconso m 
-  	ON m.aui = r2.ptr_aui
-  )
+	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
+	    INTO final_ct;
   
-  INSERT INTO umls_mrhier.%s  
-  SELECT DISTINCT
-    ptr_id,
-    ptr,
-  	aui, 
-  	code, 
-  	str, 
-  	rela, 
-  	ptr_level,
-  	ptr_aui,
-  	ptr_code,
-  	ptr_str 
-  FROM relatives3  
-  ORDER BY ptr_id, ptr_level
-  ;
-  ',tbl, tbl, sab,tbl);
   
-  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
-    INTO final_ct;
+	  EXECUTE 
+	  	format(
+	  		'
+	  		INSERT INTO public.setup_umls_mrhier_log  
+	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
+	  		',
+	  			log_datetime, 
+	  			log_mth_version, 
+	  			log_mth_release_dt, 
+	  			sab, 
+	  			tbl, 
+	  			ct, 
+	  			final_ct);
   
-  EXECUTE 
-  	format(
-  		'
-  		INSERT INTO public.setup_umls_mrhier_log  
-  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
-  		',
-  			log_datetime, 
-  			log_mth_version, log_mth_release_dt, sab, tbl, ct, final_ct);
-  
-   end_time := date_trunc('second', timeofday()::timestamp);
+   	  end_time := date_trunc('second', timeofday()::timestamp);
    
-   raise notice '% complete (%)', tbl, end_time - start_time;
+   	  raise notice '% complete (%)', tbl, end_time - start_time;
    
-   
-  
     end loop;
 end;
 $$
