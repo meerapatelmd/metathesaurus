@@ -106,11 +106,12 @@ SELECT * FROM umls_mrhier.lookup;
 
 
 
------------------------------------------------------------    
--- Parse the decimal-separated `ptr` string along with 
--- ordinality as `ptr_level` and join the resulting `ptr_aui` 
--- to MRCONSO
------------------------------------------------------------   
+/*-----------------------------------------------------------    
+Parse the decimal-separated `ptr` string along with 
+ordinality as `ptr_level` and join the resulting `ptr_aui` 
+to MRCONSO to include the `ptr_code` and `ptr_str`. 
+-----------------------------------------------------------*/
+  
 do
 $$
 declare
@@ -270,13 +271,12 @@ $$
 
 -- ANALYZE;
 
------------------------------------------------------------  
--- Split SNOMEDCT By Level 2 due to size
------------------------------------------------------------    
--- The SNOMEDCT_US table is too large to work with downstream 
--- and it is subset here by the 2nd level concept to make it 
--- more manageable.
------------------------------------------------------------  
+/*-----------------------------------------------------------    
+Split SNOMEDCT By Level 2  
+The SNOMEDCT_US table is too large to work with downstream 
+and it is subset here by the 2nd level concept to make it 
+more manageable.
+-----------------------------------------------------------*/  
 
 DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
 CREATE TABLE umls_mrhier.tmp_lookup (
@@ -294,7 +294,14 @@ SELECT
 	ptr_aui, 
 	ptr_code, 
 	ptr_str, 
-	SUBSTRING(CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 1, 60) AS updated_hierarchy_table, -- Ensure that the tablename character count is within normal limits
+	SUBSTRING(
+	  CONCAT(
+	    'SNOMEDCT_US_', 
+	    REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 
+	  1, 
+	  -- Ensure that the tablename character count is 
+	  -- within normal limits
+	  60) AS updated_hierarchy_table, 
 	COUNT(*) AS level_2_count
 FROM umls_mrhier.snomedct_us 
 WHERE ptr_level = 2 
@@ -305,7 +312,7 @@ ORDER BY COUNT(*)
 SELECT * FROM umls_mrhier.tmp_lookup;
 
 
-do
+DO
 $$
 declare
     f record;
