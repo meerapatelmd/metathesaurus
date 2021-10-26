@@ -62,6 +62,8 @@ CREATE INDEX x_mrhier_sab ON umls_mrhier.mrhier(sab);
 CREATE INDEX x_mrhier_aui ON umls_mrhier.mrhier(aui);
 CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
 
+ANALYZE umls_mrhier.mrhier;
+
 DROP TABLE umls_mrhier.tmp_mrhier; 
 
 
