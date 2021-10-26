@@ -239,8 +239,11 @@ $$
 -----------------------------------------------------------    
 -- 
 -----------------------------------------------------------  
-DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
+CREATE UNIQUE INDEX idx_snomedct_us_ptr 
+ON umls_mrhier.snomedct_us (ptr_id, ptr_level);
+CLUSTER umls_mrhier.snomedct_us USING idx_snomedct_us_ptr;
 
+DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
 CREATE TABLE umls_mrhier.tmp_lookup (
     hierarchy_table text,
     ptr_aui varchar(12), 
@@ -266,7 +269,7 @@ ORDER BY COUNT(*)
 
 SELECT * FROM umls_mrhier.tmp_lookup;
 
-
+SELECT * FROM umls_mrhier.snomedct_us LIMIT 5;
 
 do
 $$
@@ -314,7 +317,21 @@ begin
 	   format(
 		  '
 		  DROP TABLE IF EXISTS umls_mrhier.%s;
-		  CREATE TABLE umls_mrhier.%s AS (
+		  CREATE TABLE umls_mrhier.%s (
+		  	ptr_id BIGINT NOT NULL, 
+		  	ptr text NOT NULL, 
+		  	aui VARCHAR(12) NOT NULL,
+		  	code VARCHAR(255), 
+		  	str VARCHAR(255), 
+		  	rela VARCHAR(10), 
+		  	ptr_level INT NOT NULL, 
+		  	ptr_aui VARCHAR(12) NOT NULL, 
+		  	ptr_code VARCHAR(255) NOT NULL, 
+		  	ptr_str VARCHAR(255) NOT NULL
+		  )
+		  ;
+		  
+		  INSERT INTO umls_mrhier.%s 
 		  	SELECT * 
 		  	FROM umls_mrhier.snomedct_us 
 		  	WHERE ptr_id IN (
@@ -324,9 +341,9 @@ begin
 		  			ptr_level = 2 
 		  			AND ptr_aui = ''%s''
 		  			)
-		  )
 		  ;
 		  ',
+		  h_tbl,
 		  h_tbl,
 		  h_tbl,
 		  aui
