@@ -740,6 +740,9 @@ declare
   	sql_statement text; 
   	f record; 
   	p_tbl varchar(255);
+  	h_tbl varchar(255);
+  	ct integer;
+  	final_ct integer;
 	start_time timestamp;
 	end_time timestamp;
 	iteration int;
@@ -762,19 +765,39 @@ begin
 	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
 
 
-    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
-  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.pivot_lookup pl
- LOOP  
+  	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.pivot_lookup;
+  	for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.pivot_lookup pl
+ 	LOOP  
       iteration := f.iteration;
       p_tbl := f.pivot_table;
+      h_tbl := f.hierarchy_table;
       start_time := date_trunc('second', timeofday()::timestamp);
       
       raise notice '[%] %/% %', start_time, iteration, total_iterations, p_tbl;
     sql_statement := f.sql_statement;
     EXECUTE sql_statement;
     
+    EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', h_tbl)  
+	    INTO ct;
+    EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', p_tbl)  
+	    INTO final_ct;
+  
+	  EXECUTE 
+	  	format(
+	  		'
+	  		INSERT INTO public.setup_umls_mrhier_log  
+	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
+	  		',
+	  			log_datetime, 
+	  			log_mth_version, 
+	  			log_mth_release_dt, 
+	  			h_tbl, 
+	  			p_tbl, 
+	  			ct, 
+	  			final_ct);
+    
     	  end_time := date_trunc('second', timeofday()::timestamp); 
-      raise notice '% complete (%)', h_tbl, end_time - start_time;
+      raise notice '% complete (%)', p_tbl, end_time - start_time;
     
     end loop;
 END;
