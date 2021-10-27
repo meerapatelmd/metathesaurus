@@ -834,8 +834,6 @@ $$
 SELECT * 
 FROM umls_mrhier.pivot_lookup;
 
-select * 
-from umls_mrhier.aot;
 
 
 do 
@@ -931,3 +929,171 @@ begin
 END;
 $$
 ;
+
+
+DROP TABLE IF EXISTS umls_mrhier.ext_lookup;
+CREATE TABLE umls_mrhier.ext_lookup (
+  extended_table varchar(255), 
+  max_ptr_level int
+);
+
+do 
+$$
+declare 
+  	sql_statement text; 
+  	f record; 
+  	e_tbl varchar(255);
+  	h_tbl varchar(255);
+  	ct integer;
+  	final_ct integer;
+	start_time timestamp;
+	end_time timestamp;
+	iteration int;
+	total_iterations int;
+	log_datetime timestamp;
+	log_mth_version varchar(25);
+	log_mth_release_dt timestamp;
+begin  
+	log_datetime := date_trunc('second', now()::timestamp);  
+	SELECT sm_version 
+	INTO log_mth_version
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+	  
+	SELECT sm_release_date 
+	INTO log_mth_release_dt
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN 
+	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+
+
+  	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
+  	for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup pl
+ 	LOOP  
+      iteration := f.iteration;
+      e_tbl := f.extended_table;
+      h_tbl := f.hierarchy_table;
+      start_time := date_trunc('second', timeofday()::timestamp);
+      
+      raise notice '[%] %/% %', start_time, iteration, total_iterations, e_tbl;
+
+    
+    
+    EXECUTE 
+      format(
+      	'
+      	INSERT INTO umls_mrhier.ext_lookup 
+      	SELECT 
+      	 ''%s'' AS extended_table, 
+      	 MAX(ptr_level) AS max_ptr_level 
+      	 FROM umls_mrhier.%s
+      	 ;
+      	',
+      		e_tbl, 
+      		e_tbl);
+    
+    	  end_time := date_trunc('second', timeofday()::timestamp); 
+      raise notice '% complete (%)', e_tbl, end_time - start_time;
+    
+    end loop;
+END;
+$$
+;
+
+DO 
+$$
+DECLARE 
+  abs_max_ptr_level int;
+  processed_mrhier_ddl text;
+  pivot_table text;
+  f record;
+  	start_time timestamp;
+	end_time timestamp;
+	iteration int;
+	total_iterations int;
+	log_datetime timestamp;
+	log_mth_version varchar(25);
+	log_mth_release_dt timestamp;
+BEGIN 
+  SELECT max(max_ptr_level) 
+  INTO abs_max_ptr_level
+  FROM umls_mrhier.ext_lookup;
+  
+  EXECUTE 
+  format('
+  DROP TABLE IF EXISTS umls_mrhier.ddl_lookup;
+  CREATE TABLE umls_mrhier.ddl_lookup (
+     ddl text
+  );
+  
+  WITH seq1 AS (SELECT generate_series(1, %s) AS series), 
+  seq2 AS (
+    SELECT 
+      STRING_AGG(CONCAT(''level_'', series, '' text''), '', '') AS ddl 
+      FROM seq1 
+  )
+   
+  INSERT INTO umls_mrhier.ddl_lookup
+  SELECT ddl 
+  FROM seq2
+  ;',
+  abs_max_ptr_level);
+  
+  SELECT ddl
+  INTO processed_mrhier_ddl
+  FROM umls_mrhier.ddl_lookup;
+  
+  EXECUTE 
+    format(
+    '
+    DROP TABLE IF EXISTS umls_mrhier.mrhier_str;
+    CREATE TABLE umls_mrhier.mrhier_str (
+      aui varchar(12),
+      code text,
+      str text,
+      ptr_id bigint,
+      %s
+    );
+    ',
+    processed_mrhier_ddl
+    );
+    
+  DROP TABLE umls_mrhier.ddl_lookup;
+  
+  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.pivot_lookup;
+  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.pivot_lookup pl
+  loop 
+    iteration := f.iteration;
+    pivot_table := f.pivot_table; 
+    
+          start_time := date_trunc('second', timeofday()::timestamp);
+      
+      raise notice '[%] %/% %', start_time, iteration, total_iterations, pivot_table;
+      
+    EXECUTE 
+      format('
+      INSERT INTO umls_mrhier.mrhier_str 
+      SELECT * FROM umls_mrhier.%s
+      ',
+      pivot_table
+      ); 
+      
+          	  end_time := date_trunc('second', timeofday()::timestamp); 
+      raise notice '% complete (%)', pivot_table, end_time - start_time;
+   END loop;
+  
+  
+END;
+$$
+;
+
+ALTER TABLE umls_mrhier.mrhier_str
+ADD CONSTRAINT xpk_ptr 
+PRIMARY KEY (ptr_id);
+
+CREATE INDEX x_mrhier_str_aui ON umls_mrhier.mrhier_str(aui);
+CREATE INDEX x_mrhier_str_code ON umls_mrhier.mrhier_str(code);
+
+ANALYZE umls_mrhier.mrhier_str;
+
