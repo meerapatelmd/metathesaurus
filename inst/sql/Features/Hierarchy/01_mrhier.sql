@@ -258,6 +258,9 @@ DECLARE
 	source_rows bigint;
 	target_rows bigint;
 BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
 	SELECT check_if_requires_processing('2021AA', 'MRHIER', 'MRHIER') 
 	INTO requires_processing;
 	
@@ -338,7 +341,7 @@ BEGIN
 			  ''MRHIER'', 
 			  ''MRHIER'', 
 			  ''%s'',
-			  ''%s''
+			  ''%s'');
 			',
 			  start_timestamp, 
 			  stop_timestamp,
