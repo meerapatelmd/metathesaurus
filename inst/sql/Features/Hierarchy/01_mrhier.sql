@@ -13,7 +13,6 @@ versions.
 The log table is setup if it does not already exist.  
 */
 
-SELECT * FROM setup_umls_mrhier_log;
  
 CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
     sum_datetime timestamp without time zone,
@@ -110,6 +109,8 @@ DO
 $$
 DECLARE 
 	requires_update boolean;
+	log_timestamp timestamp;
+	
 BEGIN  
 	SELECT check_if_requires_update('2021AA', 'MRHIER', 'MRHIER') 
 	INTO requires_update;
@@ -148,6 +149,20 @@ BEGIN
 		ANALYZE umls_mrhier.mrhier;
 		
 		DROP TABLE umls_mrhier.tmp_mrhier; 
+		
+		SELECT get_log_timestamp() 
+		INTO log_timestamp
+		; 
+		
+		EXECUTE 
+		  format(
+		    '
+			INSERT INTO public.setup_umls_mrhier_log 
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			',
+			  log_timestamp)
 	END IF;
 end;
 $$
@@ -876,8 +891,6 @@ begin
 	      	  h.aui,
 	      	  h.code,
 	      	  h.str, 
-	      	  h.ptr_id AS source_ptr_id,
-	      	  h.ptr AS source_ptr,
 	      	  t.*
 	      	FROM umls_mrhier.%s h 
 	      	LEFT JOIN umls_mrhier.tmp_%s t 
@@ -918,9 +931,3 @@ begin
 END;
 $$
 ;
-
-select * 
-from umls_mrhier.pivot_lookup;
-
-SELECT * 
-FROM public.setup_umls_mrhier_log;
