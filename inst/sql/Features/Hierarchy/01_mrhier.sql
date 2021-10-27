@@ -1095,5 +1095,42 @@ PRIMARY KEY (ptr_id);
 CREATE INDEX x_mrhier_str_aui ON umls_mrhier.mrhier_str(aui);
 CREATE INDEX x_mrhier_str_code ON umls_mrhier.mrhier_str(code);
 
-ANALYZE umls_mrhier.mrhier_str;
 
+
+/*
+MRHIER_EXCL Table  
+Table that includes any source MRHIER `ptr` that did not make it 
+to the `MRHIER_STR` table.
+
+- Only vocabularies where `LAT = 'ENG'` and not 'SRC' in MRCONSO table 
+*/
+
+WITH a AS (
+	SELECT m1.sab,m1.ptr_id, CASE WHEN m1.ptr IS NULL THEN TRUE ELSE FALSE END ptr_is_null  
+	FROM umls_mrhier.mrhier m1 
+	LEFT JOIN umls_mrhier.mrhier_str m2 
+	ON m1.ptr_id = m2.ptr_id 
+	WHERE 
+	  m2.ptr_id IS NULL AND 
+	  m1.sab IN (SELECT DISTINCT sab FROM mth.mrconso WHERE lat = 'ENG' AND sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values
+)
+
+SELECT a.sab, a.ptr_is_null, COUNT(*)
+FROM a 
+GROUP BY a.sab, a.ptr_is_null
+;
+
+
+DROP TABLE IF EXISTS umls_mrhier.mrhier_str_excl; 
+CREATE TABLE umls_mrhier.mrhier_str_excl AS (
+	SELECT m1.*
+	FROM umls_mrhier.mrhier m1 
+	LEFT JOIN umls_mrhier.mrhier_str m2 
+	ON m1.ptr_id = m2.ptr_id 
+	WHERE 
+	  m2.ptr_id IS NULL AND 
+	  m1.ptr IS NOT NULL AND
+	  m1.sab IN (SELECT DISTINCT sab FROM mth.mrconso WHERE lat = 'ENG' AND sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values 
+	ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
+)
+;
