@@ -356,7 +356,7 @@ SELECT *
 FROM public.process_umls_mrhier_log;
 
 /*-------------------------------------------------------------- 
-CREATE INITIAL LOOKUP TABLEs
+CREATE INITIAL LOOKUP TABLES
 Create lookup table between all the hierarchy vocabularies (`sab` 
 in MRHIER) and a cleaned up version of the `sab` value 
 to be used as its tablename (some `sab` values could have 
@@ -380,16 +380,14 @@ CREATE TABLE umls_mrhier.lookup (
     count bigint
 );
 
-
-
 WITH df as (                                                 
       SELECT 
 	    h.sab AS hierarchy_sab, 
 	    sab_to_tablename(h.sab) AS hierarchy_table,
 	    COUNT(*) 
-	  FROM mth.mrhier h
+	  FROM umls_mrhier.mrhier h
 	  INNER JOIN umls_mrhier.lookup_eng eng 
-	  ON eng.aui = h.aui 
+	  ON eng.sab = h.sab
 	  GROUP BY h.sab
 	  HAVING COUNT(*) > 1 
 	  ORDER BY COUNT(*) 
