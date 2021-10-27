@@ -1,12 +1,24 @@
-/* 
-Derive entire hierarchies from UMLS Metathesaurus MRHIER Table  
-DBMS: Postgres 
-
-ptr_id is added as an identifier for each unique AUI-RELA-PTR 
-(ptr: Path To Root). Note that unlike the identifiers provided 
-by the UMLS, this one cannot be used across different Metathesaurus 
-versions. 
-*/
+/**************************************************************************
+* Derive entire hierarchies from UMLS Metathesaurus MRHIER Table  
+* Authors: Meera Patel  
+* Date: 2021-10-27 
+*					
+*					
+* | MRHIER | --> | MRHIER | --> | MRHIER_STR | + | MRHIER_STR_EXCL |
+*
+*
+* | MRHIER | --> | MRHIER |
+* ptr_id is added to the source table. ptr_id is the source MRHIER's row number. 
+* It is added as an identifier for each unique AUI-RELA-PTR (ptr: Path To Root). 
+* Note that unlike the identifiers provided 
+* by the UMLS, this one cannot be used across different Metathesaurus 
+* versions. 
+*
+* | MRHIER | --> | MRHIER_STR | + | MRHIER_STR_EXCL |
+* MRHIER is then processed to replace the decimal-separated `ptr` string into 
+* individual atoms (`aui`) and mapped to the atom's `str` value. Any missing 
+* `ptr` values in `MRHIER_STR` are accounted for in the `MR_HIER_STR_EXCL` table.
+**************************************************************************/
 
 
 /*
