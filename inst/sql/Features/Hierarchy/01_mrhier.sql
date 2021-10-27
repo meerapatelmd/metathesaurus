@@ -12,6 +12,8 @@ versions.
 /*
 The log table is setup if it does not already exist.  
 */
+
+SELECT * FROM setup_umls_mrhier_log;
  
 CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
     sum_datetime timestamp without time zone,
@@ -19,53 +21,137 @@ CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
     sum_mth_release_dt character varying(255),
     sab character varying(255),
     mrhier_schema character varying(255),
-    mrhier_table character varying(255),
+    source_table character varying(255),
+    target_table character varying(255),
     source_row_ct numeric,
-    table_row_ct numeric
+    target_row_ct numeric
 );
 
-                                                             
 /*
-MRHIER table is copied to the `umls_mrhier` schema with the 
-addition of a `ptr_id` for each row number.
+Logging Functions
+*/
+
+create or replace function get_log_timestamp() 
+returns timestamp without time zone 
+language plpgsql
+as
+$$
+declare 
+  log_timestamp timestamp without time zone; 
+begin 
+  SELECT date_trunc('second', now()::timestamp) 
+  INTO log_timestamp;
+  
+  RETURN log_timestamp;
+END;  
+$$;
+
+create or replace function get_umls_mth_version() 
+returns varchar 
+language plpgsql
+as
+$$
+declare 
+	umls_mth_version varchar; 
+begin 
+	SELECT sm_version 
+	INTO umls_mth_version
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+  
+  	RETURN umls_mth_version;
+END;  
+$$;
+
+create or replace function check_if_requires_update(umls_mth_version varchar, source_table varchar, target_table varchar) 
+returns boolean 
+language plpgsql
+as
+$$
+declare 
+    row_count integer;
+	requires_update boolean; 
+begin 
+	EXECUTE 
+	  format(
+	    '
+		SELECT COUNT(*) 
+		FROM public.setup_umls_mrhier_log l 
+		WHERE 
+		  l.sum_mth_version = ''%s'' AND 
+		  l.source_table = ''%s'' AND 
+		  l.target_table = ''%s'';		
+	    ',
+	    umls_mth_version,
+	    source_table, 
+	    target_table
+	  )
+	  INTO row_count;
+
+	  
+	IF row_count = 0 
+	  THEN requires_update := TRUE;
+	  ELSE requires_update := FALSE;
+	END IF;
+  
+  	RETURN requires_update;
+END;  
+$$;
+
+                                                           
+/*
+If the current UMLS Metathesaurus version is not logged for 
+the transfer of the MIRHIER table, it is copied to the 
+`umls_mrhier` schema with the addition of a `ptr_id` for 
+each row number.
 */    
 
-DROP SCHEMA umls_mrhier CASCADE;
-CREATE SCHEMA umls_mrhier; 
-DROP TABLE IF EXISTS umls_mrhier.tmp_mrhier; 
-CREATE TABLE umls_mrhier.tmp_mrhier AS (
-	SELECT DISTINCT 
-	  m.AUI,
-	  c.CODE, 
-	  c.SAB,
-	  c.STR,
-	  m.RELA, 
-	  m.PTR
-	 FROM mth.mrhier m 
-	 INNER JOIN mth.mrconso c 
-	 ON c.aui = m.aui 
-);
-
-
-DROP TABLE IF EXISTS umls_mrhier.mrhier; 
-CREATE TABLE umls_mrhier.mrhier AS (
-   SELECT ROW_NUMBER() OVER() AS ptr_id, m.* 
-   FROM umls_mrhier.tmp_mrhier m 
-)
+DO
+$$
+DECLARE 
+	requires_update boolean;
+BEGIN  
+	SELECT check_if_requires_update('2021AA', 'MRHIER', 'MRHIER') 
+	INTO requires_update;
+	
+  	IF requires_update THEN 
+		DROP TABLE IF EXISTS umls_mrhier.tmp_mrhier; 
+		CREATE TABLE umls_mrhier.tmp_mrhier AS (
+			SELECT DISTINCT 
+			  m.AUI,
+			  c.CODE, 
+			  c.SAB,
+			  c.STR,
+			  m.RELA, 
+			  m.PTR
+			 FROM mth.mrhier m 
+			 INNER JOIN mth.mrconso c 
+			 ON c.aui = m.aui 
+		);
+		
+		
+		DROP TABLE IF EXISTS umls_mrhier.mrhier; 
+		CREATE TABLE umls_mrhier.mrhier AS (
+		   SELECT ROW_NUMBER() OVER() AS ptr_id, m.* 
+		   FROM umls_mrhier.tmp_mrhier m 
+		)
+		;
+		
+		ALTER TABLE umls_mrhier.mrhier 
+		ADD CONSTRAINT xpk_ptr 
+		PRIMARY KEY (ptr_id);
+		
+		CREATE INDEX x_mrhier_sab ON umls_mrhier.mrhier(sab);
+		CREATE INDEX x_mrhier_aui ON umls_mrhier.mrhier(aui);
+		CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
+		
+		ANALYZE umls_mrhier.mrhier;
+		
+		DROP TABLE umls_mrhier.tmp_mrhier; 
+	END IF;
+end;
+$$
 ;
-
-ALTER TABLE umls_mrhier.mrhier 
-ADD CONSTRAINT xpk_ptr 
-PRIMARY KEY (ptr_id);
-
-CREATE INDEX x_mrhier_sab ON umls_mrhier.mrhier(sab);
-CREATE INDEX x_mrhier_aui ON umls_mrhier.mrhier(aui);
-CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
-
-ANALYZE umls_mrhier.mrhier;
-
-DROP TABLE umls_mrhier.tmp_mrhier; 
-
 
 /*-------------------------------------------------------------- 
 CREATE INITIAL LOOKUP TABLE
@@ -836,3 +922,5 @@ $$
 select * 
 from umls_mrhier.pivot_lookup;
 
+SELECT * 
+FROM public.setup_umls_mrhier_log;
