@@ -17,30 +17,43 @@
 * | MRHIER | --> | MRHIER_STR | + | MRHIER_STR_EXCL |
 * MRHIER is then processed to replace the decimal-separated `ptr` string into 
 * individual atoms (`aui`) and mapped to the atom's `str` value. Any missing 
-* `ptr` values in `MRHIER_STR` are accounted for in the `MR_HIER_STR_EXCL` table.
+* `ptr` values in `MRHIER_STR` are accounted for in the `MRHIER_STR_EXCL` table.
 **************************************************************************/
 
 
-/*
-The log table is setup if it does not already exist.  
-*/
+/**************************************************************************
+LOG TABLES
+Process log table logs the processing. 
+Setup log table logs the final `MRHIER`, `MRHIER_STR`, and `MRHIER_STR_EXCL` tables.  
+Both are setup if it does not already exist.  
+**************************************************************************/
 
- 
+
 CREATE TABLE IF NOT EXISTS public.process_umls_mrhier_log (
-    sum_datetime timestamp without time zone,
-    sum_mth_version character varying(255),
-    sum_mth_release_dt character varying(255),
+    process_start_datetime timestamp without time zone,
+    process_stop_datetime timestamp without time zone,
+    mth_version character varying(255),
+    mth_release_dt character varying(255),
     sab character varying(255),
-    mrhier_schema character varying(255),
+    target_schema character varying(255),
     source_table character varying(255),
     target_table character varying(255),
     source_row_ct numeric,
     target_row_ct numeric
 );
 
-/*
+CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
+    sum_datetime timestamp without time zone,
+    mth_version character varying(255),
+    mth_release_dt character varying(255),
+    target_schema character varying(255),
+    target_table character varying(255),
+    target_row_ct numeric
+);
+
+/**************************************************************************
 Logging Functions
-*/
+**************************************************************************/
 
 create or replace function get_log_timestamp() 
 returns timestamp without time zone 
@@ -74,14 +87,54 @@ begin
 END;  
 $$;
 
-create or replace function check_if_requires_update(umls_mth_version varchar, source_table varchar, target_table varchar) 
+create or replace function get_umls_mth_dt() 
+returns varchar 
+language plpgsql
+as
+$$
+declare 
+	umls_mth_dt varchar; 
+begin 
+	SELECT sm_release_date 
+	INTO umls_mth_dt
+	FROM public.setup_mth_log 
+	WHERE sm_datetime IN (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+  
+  	RETURN umls_mth_dt;
+END;  
+$$;
+
+
+create or replace function get_row_count(_tbl varchar) 
+returns bigint 
+language plpgsql 
+AS 
+$$
+DECLARE 
+  row_count bigint;
+BEGIN 
+  EXECUTE 
+    format('
+	  SELECT COUNT(*) 
+	  FROM %s;
+	 ',
+	 _tbl)
+  INTO row_count; 
+  
+  RETURN row_count;
+END;
+$$;
+
+
+
+create or replace function check_if_requires_processing(umls_mth_version varchar, source_table varchar, target_table varchar) 
 returns boolean 
 language plpgsql
 as
 $$
 declare 
     row_count integer;
-	requires_update boolean; 
+	requires_processing boolean; 
 begin 
 	EXECUTE 
 	  format(
@@ -89,9 +142,11 @@ begin
 		SELECT COUNT(*) 
 		FROM public.process_umls_mrhier_log l 
 		WHERE 
-		  l.sum_mth_version = ''%s'' AND 
+		  l.mth_version = ''%s'' AND 
 		  l.source_table = ''%s'' AND 
-		  l.target_table = ''%s'';		
+		  l.target_table = ''%s'' AND 
+		  l.process_stop_datetime IS NOT NULL
+		  ;		
 	    ',
 	    umls_mth_version,
 	    source_table, 
@@ -101,33 +156,43 @@ begin
 
 	  
 	IF row_count = 0 
-	  THEN requires_update := TRUE;
-	  ELSE requires_update := FALSE;
+	  THEN requires_processing := TRUE;
+	  ELSE requires_processing := FALSE;
 	END IF;
   
-  	RETURN requires_update;
+  	RETURN requires_processing;
 END;  
 $$;
 
                                                            
-/*
+/**************************************************************************
 If the current UMLS Metathesaurus version is not logged for 
 the transfer of the MIRHIER table, it is copied to the 
 `umls_mrhier` schema with the addition of a `ptr_id` for 
 each row number.
-*/    
+**************************************************************************/  
 
 DO
 $$
 DECLARE 
-	requires_update boolean;
-	log_timestamp timestamp;
-	
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
 BEGIN  
-	SELECT check_if_requires_update('2021AA', 'MRHIER', 'MRHIER') 
-	INTO requires_update;
+	SELECT check_if_requires_processing('2021AA', 'MRHIER', 'MRHIER') 
+	INTO requires_processing;
 	
-  	IF requires_update THEN 
+  	IF requires_processing THEN 
+  	
+  		SELECT get_log_timestamp() 
+  		INTO start_timestamp
+  		;
+  		
+  		
 		DROP TABLE IF EXISTS umls_mrhier.tmp_mrhier; 
 		CREATE TABLE umls_mrhier.tmp_mrhier AS (
 			SELECT DISTINCT 
@@ -163,8 +228,24 @@ BEGIN
 		DROP TABLE umls_mrhier.tmp_mrhier; 
 		
 		SELECT get_log_timestamp() 
-		INTO log_timestamp
+		INTO stop_timestamp
 		; 
+		
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+		
+		SELECT get_umls_mth_dt() 
+		INTO mth_date
+		;
+		
+		SELECT get_row_count('mth.mrhier') 
+		INTO source_rows
+		;
+		
+		SELECT get_row_count('umls_mrhier.mrhier') 
+		INTO target_rows
+		;
 		
 		EXECUTE 
 		  format(
@@ -173,12 +254,29 @@ BEGIN
 			VALUES (
 			  ''%s'',
 			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL, 
+			  ''umls_mrhier'', 
+			  ''MRHIER'', 
+			  ''MRHIER'', 
+			  ''%s'',
+			  ''%s''
 			',
-			  log_timestamp)
+			  start_timestamp, 
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_rows,
+			  target_rows);
 	END IF;
 end;
 $$
 ;
+
+
+SELECT * 
+FROM public.process_umls_mrhier_log;
 
 /*-------------------------------------------------------------- 
 CREATE INITIAL LOOKUP TABLE
