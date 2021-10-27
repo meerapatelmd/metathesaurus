@@ -63,7 +63,7 @@ $$
 declare 
   log_timestamp timestamp without time zone; 
 begin 
-  SELECT date_trunc('second', now()::timestamp) 
+  SELECT date_trunc('second', timeofday()::timestamp) 
   INTO log_timestamp;
   
   RETURN log_timestamp;
@@ -355,6 +355,8 @@ $$
 ;
 
 
+
+
 SELECT * 
 FROM public.process_umls_mrhier_log;
 
@@ -430,7 +432,7 @@ declare
     log_mth_version varchar(25);
     log_mth_release_dt timestamp;
 begin
-	log_datetime := date_trunc('second', now()::timestamp);  
+	log_datetime := date_trunc('second', timeofday()::timestamp);  
 	SELECT sm_version 
 	INTO log_mth_version
 	FROM public.setup_mth_log 
@@ -631,7 +633,7 @@ declare
     log_mth_version varchar(25);
     log_mth_release_dt timestamp;
 begin
-	log_datetime := date_trunc('second', now()::timestamp);  
+	log_datetime := date_trunc('second', timeofday()::timestamp);  
 	SELECT sm_version 
 	INTO log_mth_version
 	FROM public.setup_mth_log 
@@ -782,7 +784,7 @@ declare
     log_mth_version varchar(25);
     log_mth_release_dt timestamp;
 begin
-	log_datetime := date_trunc('second', now()::timestamp);  
+	log_datetime := date_trunc('second', timeofday()::timestamp);  
 	SELECT sm_version 
 	INTO log_mth_version
 	FROM public.setup_mth_log 
@@ -942,7 +944,7 @@ declare
     log_mth_version varchar(25);
     log_mth_release_dt timestamp;
 begin
-	log_datetime := date_trunc('second', now()::timestamp);  
+	log_datetime := date_trunc('second', timeofday()::timestamp);  
 	SELECT sm_version 
 	INTO log_mth_version
 	FROM public.setup_mth_log 
@@ -1048,7 +1050,7 @@ declare
 	log_mth_version varchar(25);
 	log_mth_release_dt timestamp;
 begin  
-	log_datetime := date_trunc('second', now()::timestamp);  
+	log_datetime := date_trunc('second', timeofday()::timestamp);  
 	SELECT sm_version 
 	INTO log_mth_version
 	FROM public.setup_mth_log 
@@ -1149,7 +1151,7 @@ declare
 	log_mth_version varchar(25);
 	log_mth_release_dt timestamp;
 begin  
-	log_datetime := date_trunc('second', now()::timestamp);  
+	log_datetime := date_trunc('second', timeofday()::timestamp);  
 	SELECT sm_version 
 	INTO log_mth_version
 	FROM public.setup_mth_log 
