@@ -261,7 +261,7 @@ BEGIN
 	SELECT get_umls_mth_version() 
 	INTO mth_version;
 	
-	SELECT check_if_requires_processing('2021AA', 'MRHIER', 'MRHIER') 
+	SELECT check_if_requires_processing(mth_version, 'MRHIER', 'MRHIER') 
 	INTO requires_processing;
 	
   	IF requires_processing THEN 
@@ -367,45 +367,195 @@ in MRHIER) and a cleaned up version of the `sab` value
 to be used as its tablename (some `sab` values could have 
 punctuation that is forbidden in table names). 
 --------------------------------------------------------------*/
-DROP TABLE IF EXISTS umls_mrhier.lookup_eng; 
-CREATE TABLE umls_mrhier.lookup_eng (
-    sab character varying(40)
-);
+DO
+$$
+DECLARE 
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
+BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT check_if_requires_processing(mth_version, 'MRCONSO', 'LOOKUP_ENG') 
+	INTO requires_processing;
+	
+  	IF requires_processing THEN  	
+  	
+  		SELECT get_log_timestamp() 
+  		INTO start_timestamp
+  		;
+  	
+  		PERFORM notify_start('processing LOOKUP_ENG');  
+  		
+		DROP TABLE IF EXISTS umls_mrhier.lookup_eng; 
+		CREATE TABLE umls_mrhier.lookup_eng (
+		    sab character varying(40)
+		);
+		
+		INSERT INTO umls_mrhier.lookup_eng 
+		SELECT DISTINCT sab 
+		FROM mth.mrconso 
+		WHERE lat = 'ENG' ORDER BY sab;
+		
+		PERFORM notify_completion('processing LOOKUP_ENG'); 
+		
+		SELECT get_log_timestamp() 
+		INTO stop_timestamp
+		; 
+		
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+		
+		SELECT get_umls_mth_dt() 
+		INTO mth_date
+		;
+		
+		SELECT get_row_count('mth.mrconso') 
+		INTO source_rows
+		;
+		
+		SELECT get_row_count('umls_mrhier.lookup_eng') 
+		INTO target_rows
+		;
+		
+		EXECUTE 
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log 
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL, 
+			  ''umls_mrhier'', 
+			  ''MRCONSO'', 
+			  ''LOOKUP_ENG'', 
+			  ''%s'',
+			  ''%s'');
+			',
+			  start_timestamp, 
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_rows,
+			  target_rows);
 
-INSERT INTO umls_mrhier.lookup_eng 
-SELECT DISTINCT sab FROM mth.mrconso WHERE lat = 'ENG' ORDER BY sab;
-
-
-   
-DROP TABLE IF EXISTS umls_mrhier.lookup; 
-
-CREATE TABLE umls_mrhier.lookup (
-    hierarchy_sab character varying(40),
-    hierarchy_table text,
-    count bigint
-);
-
-WITH df as (                                                 
-      SELECT 
-	    h.sab AS hierarchy_sab, 
-	    sab_to_tablename(h.sab) AS hierarchy_table,
-	    COUNT(*) 
-	  FROM umls_mrhier.mrhier h
-	  INNER JOIN umls_mrhier.lookup_eng eng 
-	  ON eng.sab = h.sab
-	  GROUP BY h.sab
-	  HAVING COUNT(*) > 1 
-	  ORDER BY COUNT(*) 
-)
-
-INSERT INTO umls_mrhier.lookup 
-SELECT * 
-FROM df
-ORDER BY count -- ordered so that when writing tables later on, can see that the script is working fine over multiple small tables at first
+	END IF;
+end;
+$$
 ;
 
-SELECT * FROM umls_mrhier.lookup;
 
+DO
+$$
+DECLARE 
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
+BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT check_if_requires_processing(mth_version, 'MRHIER', 'LOOKUP') 
+	INTO requires_processing;
+	
+  	IF requires_processing THEN  	
+  		SELECT get_log_timestamp() 
+  		INTO start_timestamp
+  		;
+  	
+  		PERFORM notify_start('processing LOOKUP');  
+
+   
+		DROP TABLE IF EXISTS umls_mrhier.lookup; 
+		CREATE TABLE umls_mrhier.lookup (
+		    hierarchy_sab character varying(40),
+		    hierarchy_table text,
+		    count bigint
+		);
+		
+		WITH df as (                                                 
+		      SELECT 
+			    h.sab AS hierarchy_sab, 
+			    sab_to_tablename(h.sab) AS hierarchy_table,
+			    COUNT(*) 
+			  FROM umls_mrhier.mrhier h
+			  INNER JOIN umls_mrhier.lookup_eng eng 
+			  ON eng.sab = h.sab
+			  GROUP BY h.sab
+			  HAVING COUNT(*) > 1 
+			  ORDER BY COUNT(*) 
+		)
+		
+		INSERT INTO umls_mrhier.lookup 
+		SELECT * 
+		FROM df
+		ORDER BY count -- ordered so that when writing tables later on, can see that the script is working fine over multiple small tables at first
+		;
+
+		PERFORM notify_completion('processing LOOKUP'); 
+		
+		SELECT get_log_timestamp() 
+		INTO stop_timestamp
+		; 
+		
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+		
+		SELECT get_umls_mth_dt() 
+		INTO mth_date
+		;
+		
+		SELECT get_row_count('umls_mrhier.mrhier') 
+		INTO source_rows
+		;
+		
+		SELECT get_row_count('umls_mrhier.lookup') 
+		INTO target_rows
+		;
+		
+		EXECUTE 
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log 
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL, 
+			  ''umls_mrhier'', 
+			  ''MRHIER'', 
+			  ''LOOKUP'', 
+			  ''%s'',
+			  ''%s'');
+			',
+			  start_timestamp, 
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_rows,
+			  target_rows);
+
+	END IF;
+end;
+$$
+;
+
+
+select * from public.process_umls_mrhier_log;
 
 
 /*-----------------------------------------------------------    
@@ -420,10 +570,10 @@ do
 $$
 declare
     f record;
-    tbl varchar(255);
-    sab varchar(255);
-    ct integer;
-    final_ct integer;
+    target_table varchar(255);
+    source_sab varchar(255);
+    source_rows integer;
+    target_rows integer;
     start_time timestamp;
     end_time timestamp;
     iteration int;
