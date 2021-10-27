@@ -266,14 +266,12 @@ BEGIN
 		;
 		
 		ALTER TABLE umls_mrhier.mrhier 
-		ADD CONSTRAINT xpk_ptr 
+		ADD CONSTRAINT xpk_mrhier 
 		PRIMARY KEY (ptr_id);
 		
 		CREATE INDEX x_mrhier_sab ON umls_mrhier.mrhier(sab);
 		CREATE INDEX x_mrhier_aui ON umls_mrhier.mrhier(aui);
 		CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
-		
-		ANALYZE umls_mrhier.mrhier;
 		
 		DROP TABLE umls_mrhier.tmp_mrhier; 
 		
@@ -1251,7 +1249,7 @@ $$
 ;
 
 ALTER TABLE umls_mrhier.mrhier_str
-ADD CONSTRAINT xpk_ptr 
+ADD CONSTRAINT xpk_mrhier_str 
 PRIMARY KEY (ptr_id);
 
 CREATE INDEX x_mrhier_str_aui ON umls_mrhier.mrhier_str(aui);
@@ -1296,3 +1294,12 @@ CREATE TABLE umls_mrhier.mrhier_str_excl AS (
 	ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
 )
 ;
+
+
+ALTER TABLE umls_mrhier.mrhier_str_excl
+ADD CONSTRAINT xpk_mrhier_str_excl
+PRIMARY KEY (ptr_id);
+
+CREATE INDEX x_mrhier_str_excl_aui ON umls_mrhier.mrhier_str_excl(aui);
+CREATE INDEX x_mrhier_str_excl_code ON umls_mrhier.mrhier_str_excl(code);
+CREATE INDEX x_mrhier_str_excl_sab ON umls_mrhier.mrhier_str_excl(sab);
