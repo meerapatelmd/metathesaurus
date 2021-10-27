@@ -1306,7 +1306,8 @@ WITH a AS (
 	ON m1.ptr_id = m2.ptr_id 
 	WHERE 
 	  m2.ptr_id IS NULL AND 
-	  m1.sab IN (SELECT DISTINCT sab FROM mth.mrconso WHERE lat = 'ENG' AND sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values
+	  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND 
+	  m1.sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values
 )
 
 SELECT a.sab, a.ptr_is_null, COUNT(*)
@@ -1324,7 +1325,8 @@ CREATE TABLE umls_mrhier.mrhier_str_excl AS (
 	WHERE 
 	  m2.ptr_id IS NULL AND 
 	  m1.ptr IS NOT NULL AND
-	  m1.sab IN (SELECT DISTINCT sab FROM mth.mrconso WHERE lat = 'ENG' AND sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values 
+	  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND 
+	  m1.sab <> 'SRC') 
 	ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
 )
 ;
