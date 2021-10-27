@@ -26,7 +26,7 @@ The log table is setup if it does not already exist.
 */
 
  
-CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
+CREATE TABLE IF NOT EXISTS public.process_umls_mrhier_log (
     sum_datetime timestamp without time zone,
     sum_mth_version character varying(255),
     sum_mth_release_dt character varying(255),
@@ -87,7 +87,7 @@ begin
 	  format(
 	    '
 		SELECT COUNT(*) 
-		FROM public.setup_umls_mrhier_log l 
+		FROM public.process_umls_mrhier_log l 
 		WHERE 
 		  l.sum_mth_version = ''%s'' AND 
 		  l.source_table = ''%s'' AND 
@@ -169,7 +169,7 @@ BEGIN
 		EXECUTE 
 		  format(
 		    '
-			INSERT INTO public.setup_umls_mrhier_log 
+			INSERT INTO public.process_umls_mrhier_log 
 			VALUES (
 			  ''%s'',
 			  ''%s'',
@@ -371,7 +371,7 @@ begin
 	  EXECUTE 
 	  	format(
 	  		'
-	  		INSERT INTO public.setup_umls_mrhier_log  
+	  		INSERT INTO public.process_umls_mrhier_log  
 	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
 	  		',
 	  			log_datetime, 
@@ -519,7 +519,7 @@ begin
   	  EXECUTE 
   	format(
   		'
-  		INSERT INTO public.setup_umls_mrhier_log  
+  		INSERT INTO public.process_umls_mrhier_log  
   		VALUES (''%s'', ''%s'', ''%s'', ''SNOMEDCT_US'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
   		',
   			log_datetime, 
@@ -683,7 +683,7 @@ begin
 	  EXECUTE 
 	  	format(
 	  		'
-	  		INSERT INTO public.setup_umls_mrhier_log  
+	  		INSERT INTO public.process_umls_mrhier_log  
 	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
 	  		',
 	  			log_datetime, 
@@ -923,7 +923,7 @@ begin
 	  EXECUTE 
 	  	format(
 	  		'
-	  		INSERT INTO public.setup_umls_mrhier_log  
+	  		INSERT INTO public.process_umls_mrhier_log  
 	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
 	  		',
 	  			log_datetime, 
