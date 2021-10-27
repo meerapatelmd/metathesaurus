@@ -164,7 +164,55 @@ begin
 END;  
 $$;
 
-                                                           
+-- 	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, sab, f.count;
+create or replace function notify_iteration(iteration int, total_iterations int, report varchar, report_size int, report_size_units varchar) 
+returns void
+language plpgsql
+as
+$$
+declare 
+  notice_timestamp timestamp;
+begin 
+  SELECT get_log_timestamp() 
+  INTO notice_timestamp
+  ;
+  
+  RAISE NOTICE '[%] %/% % (% %)', notice_timestamp, iteration, total_iterations, report, report_size, report_size_units;
+END;  
+$$;
+
+create or replace function notify_start(report varchar) 
+returns void
+language plpgsql
+as
+$$
+declare 
+  notice_timestamp timestamp;
+begin 
+  SELECT get_log_timestamp() 
+  INTO notice_timestamp
+  ;
+  
+  RAISE NOTICE '[%] Started %', notice_timestamp, report;
+END;  
+$$;
+
+create or replace function notify_completion(report varchar) 
+returns void
+language plpgsql
+as
+$$
+declare 
+  notice_timestamp timestamp;
+begin 
+  SELECT get_log_timestamp() 
+  INTO notice_timestamp
+  ;
+  
+  RAISE NOTICE '[%] Completed %', notice_timestamp, report;
+END;  
+$$;
+                                                        
 /**************************************************************************
 If the current UMLS Metathesaurus version is not logged for 
 the transfer of the MIRHIER table, it is copied to the 
@@ -191,6 +239,8 @@ BEGIN
   		SELECT get_log_timestamp() 
   		INTO start_timestamp
   		;
+  		
+  		PERFORM notify_start('processing MRHIER'); 
   		
   		
 		DROP TABLE IF EXISTS umls_mrhier.tmp_mrhier; 
@@ -226,6 +276,8 @@ BEGIN
 		ANALYZE umls_mrhier.mrhier;
 		
 		DROP TABLE umls_mrhier.tmp_mrhier; 
+		
+		PERFORM notify_completion('processing MRHIER'); 
 		
 		SELECT get_log_timestamp() 
 		INTO stop_timestamp
