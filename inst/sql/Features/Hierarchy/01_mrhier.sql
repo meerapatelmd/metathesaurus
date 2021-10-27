@@ -212,7 +212,34 @@ begin
   RAISE NOTICE '[%] Completed %', notice_timestamp, report;
 END;  
 $$;
-                                                        
+
+
+create or replace function notify_timediff(report varchar, start_timestamp timestamp, stop_timestamp timestamp) 
+returns void 
+language plpgsql 
+as 
+$$
+begin 
+	RAISE NOTICE '% required %s to complete.', report, stop_timestamp - start_timestamp;
+end;
+$$
+;
+
+create or replace function sab_to_tablename(sab varchar) 
+returns varchar 
+language plpgsql 
+as 
+$$
+declare 
+  tablename varchar;
+begin 
+	SELECT REGEXP_REPLACE(sab, '[[:punct:]]', '_', 'g') INTO tablename;
+	
+	RETURN tablename;
+end;
+$$
+;
+                                        
 /**************************************************************************
 If the current UMLS Metathesaurus version is not logged for 
 the transfer of the MIRHIER table, it is copied to the 
@@ -329,12 +356,21 @@ SELECT *
 FROM public.process_umls_mrhier_log;
 
 /*-------------------------------------------------------------- 
-CREATE INITIAL LOOKUP TABLE
+CREATE INITIAL LOOKUP TABLEs
 Create lookup table between all the hierarchy vocabularies (`sab` 
 in MRHIER) and a cleaned up version of the `sab` value 
 to be used as its tablename (some `sab` values could have 
 punctuation that is forbidden in table names). 
 --------------------------------------------------------------*/
+DROP TABLE IF EXISTS umls_mrhier.lookup_eng; 
+CREATE TABLE umls_mrhier.lookup_eng (
+    sab character varying(40)
+);
+
+INSERT INTO umls_mrhier.lookup_eng 
+SELECT DISTINCT sab FROM mth.mrconso WHERE lat = 'ENG' ORDER BY sab;
+
+
    
 DROP TABLE IF EXISTS umls_mrhier.lookup; 
 
@@ -349,22 +385,20 @@ CREATE TABLE umls_mrhier.lookup (
 WITH df as (                                                 
       SELECT 
 	    h.sab AS hierarchy_sab, 
-	    REGEXP_REPLACE(h.sab, '[[:punct:]]', '_', 'g') AS hierarchy_table,
+	    sab_to_tablename(h.sab) AS hierarchy_table,
 	    COUNT(*) 
 	  FROM mth.mrhier h
-	  INNER JOIN mth.mrconso c 
-	  ON c.aui = h.aui 
-	  WHERE 
-	    c.lat = 'ENG' 
+	  INNER JOIN umls_mrhier.lookup_eng eng 
+	  ON eng.aui = h.aui 
 	  GROUP BY h.sab
 	  HAVING COUNT(*) > 1 
 	  ORDER BY COUNT(*) 
 )
 
-INSERT INTO umls_mrhier.lookup (hierarchy_sab, hierarchy_table, count)
+INSERT INTO umls_mrhier.lookup 
 SELECT * 
 FROM df
-ORDER BY count
+ORDER BY count -- ordered so that when writing tables later on, can see that the script is working fine over multiple small tables at first
 ;
 
 SELECT * FROM umls_mrhier.lookup;
