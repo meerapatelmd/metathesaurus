@@ -565,166 +565,197 @@ the decimal-separated `ptr` string is parsed along with its
 ordinality as `ptr_level`. The parsed individual `ptr_aui` 
 is joined to MRCONSO to add the `ptr_code` and `ptr_str`. 
 -----------------------------------------------------------*/
+
+select * 
+from umls_mrhier.lookup;
   
-do
+DO
 $$
-declare
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
     f record;
     target_table varchar(255);
     source_sab varchar(255);
-    source_rows integer;
-    target_rows integer;
-    start_time timestamp;
-    end_time timestamp;
-    iteration int;
+	iteration int;
     total_iterations int;
-    log_datetime timestamp;
-    log_mth_version varchar(25);
-    log_mth_release_dt timestamp;
-begin
-	log_datetime := date_trunc('second', timeofday()::timestamp);  
-	SELECT sm_version 
-	INTO log_mth_version
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
-	  
-	SELECT sm_release_date 
-	INTO log_mth_release_dt
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup l    
+    LOOP
+		iteration := f.iteration;
+		target_table := f.hierarchy_table;
+		source_sab := f.hierarchy_sab;     
+	
+		SELECT check_if_requires_processing(mth_version, 'MRHIER', target_table) 
+		INTO requires_processing;
+	
+  		IF requires_processing THEN  
+  		
+  			SELECT get_log_timestamp() 
+  			INTO start_timestamp
+  			;
+  	
+  			PERFORM notify_start(CONCAT('processing', ' ', source_sab, ' into table: ', target_table));  
+
+			EXECUTE
+			format(
+			  '
+			  DROP TABLE IF EXISTS umls_mrhier.%s; 
+			  CREATE TABLE  umls_mrhier.%s (
+			    ptr_id INTEGER NOT NULL,
+			    ptr text NOT NULL,
+			  	aui varchar(12), 
+			  	code varchar(100), 
+			  	str text, 
+			  	rela varchar(100), 
+			  	ptr_level INTEGER NOT NULL,
+			  	ptr_aui varchar(12) NOT NULL,
+			  	ptr_code varchar(100),
+			  	ptr_str text
+			  );
+			  
+			  WITH relatives0 AS (
+				SELECT DISTINCT m.ptr_id, s1.aui, s1.code, s1.str, m.rela, m.ptr 
+				FROM umls_mrhier.mrhier m
+				INNER JOIN mth.mrconso s1 
+				ON s1.aui = m.aui 
+				WHERE m.sab = ''%s''  
+			  ),
+			  relatives1 AS (
+			  	SELECT ptr_id, ptr, aui, code, str, rela, unnest(string_to_array(ptr, ''.'')) AS ptr_aui
+			  	FROM relatives0 r0 
+			  	ORDER BY ptr_id
+			  ),
+			  relatives2 AS (
+			  	SELECT r1.*, ROW_NUMBER() OVER (PARTITION BY ptr_id) AS ptr_level
+			  	FROM relatives1 r1 
+			  ),
+			  relatives3 AS (
+			  	SELECT r2.*, m.code AS ptr_code, m.str AS ptr_str 
+			  	FROM relatives2 r2
+			  	LEFT JOIN mth.mrconso m 
+			  	ON m.aui = r2.ptr_aui
+			  )
+			  
+			  INSERT INTO umls_mrhier.%s  
+			  SELECT DISTINCT
+			    ptr_id,
+			    ptr,
+			  	aui, 
+			  	code, 
+			  	str, 
+			  	rela, 
+			  	ptr_level,
+			  	ptr_aui,
+			  	ptr_code,
+			  	ptr_str 
+			  FROM relatives3  
+			  ORDER BY ptr_id, ptr_level
+			  ;
+			  
+			  CREATE UNIQUE INDEX idx_%s_ptr 
+			  ON umls_mrhier.%s (ptr_id, ptr_level);
+			  CLUSTER umls_mrhier.%s USING idx_%s_ptr;
+			  
+			  CREATE INDEX x_%s_aui ON umls_mrhier.%s(aui);
+			  CREATE INDEX x_%s_code ON umls_mrhier.%s(code);
+			  CREATE INDEX x_%s_ptr_aui ON umls_mrhier.%s(ptr_aui);	
+			  CREATE INDEX x_%s_ptr_code ON umls_mrhier.%s(ptr_code);  	    
+			  ',
+			  	target_table, 
+			  	target_table, 
+			  	source_sab,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table, 
+			  	target_table, 
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table,
+			  	target_table
+			  	);
+			  	
+	
+  		PERFORM notify_completion(CONCAT('processing', ' ', source_sab, ' into table: ', target_table));  
+  			
+  			
+  		SELECT get_log_timestamp() 
+		INTO stop_timestamp
+		; 
+		
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+		
+		SELECT get_umls_mth_dt() 
+		INTO mth_date
+		;
 
 
-    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
-    for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup l    
-    loop 
-      iteration := f.iteration;
-      tbl := f.hierarchy_table;
-      sab := f.hierarchy_sab;
-      ct  := f.count;
-      start_time := date_trunc('second', timeofday()::timestamp);
-      
-      
-      
-	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, sab, f.count;
-	  EXECUTE
-	   format(
-		  '
-		  DROP TABLE IF EXISTS umls_mrhier.%s; 
-		  CREATE TABLE  umls_mrhier.%s (
-		    ptr_id INTEGER NOT NULL,
-		    ptr text NOT NULL,
-		  	aui varchar(12), 
-		  	code varchar(100), 
-		  	str text, 
-		  	rela varchar(100), 
-		  	ptr_level INTEGER NOT NULL,
-		  	ptr_aui varchar(12) NOT NULL,
-		  	ptr_code varchar(100),
-		  	ptr_str text
-		  );
-		  
-		  WITH relatives0 AS (
-			SELECT DISTINCT m.ptr_id, s1.aui, s1.code, s1.str, m.rela, m.ptr 
-			FROM umls_mrhier.mrhier m
-			INNER JOIN mth.mrconso s1 
-			ON s1.aui = m.aui 
-			WHERE m.sab = ''%s''  
-		  ),
-		  relatives1 AS (
-		  	SELECT ptr_id, ptr, aui, code, str, rela, unnest(string_to_array(ptr, ''.'')) AS ptr_aui
-		  	FROM relatives0 r0 
-		  	ORDER BY ptr_id
-		  ),
-		  relatives2 AS (
-		  	SELECT r1.*, ROW_NUMBER() OVER (PARTITION BY ptr_id) AS ptr_level
-		  	FROM relatives1 r1 
-		  ),
-		  relatives3 AS (
-		  	SELECT r2.*, m.code AS ptr_code, m.str AS ptr_str 
-		  	FROM relatives2 r2
-		  	LEFT JOIN mth.mrconso m 
-		  	ON m.aui = r2.ptr_aui
-		  )
-		  
-		  INSERT INTO umls_mrhier.%s  
-		  SELECT DISTINCT
-		    ptr_id,
-		    ptr,
-		  	aui, 
-		  	code, 
-		  	str, 
-		  	rela, 
-		  	ptr_level,
-		  	ptr_aui,
-		  	ptr_code,
-		  	ptr_str 
-		  FROM relatives3  
-		  ORDER BY ptr_id, ptr_level
-		  ;
-		  
-		  ALTER TABLE umls_mrhier.%s 
-		  ADD CONSTRAINT xpk_%s PRIMARY KEY (ptr_id);
-		  
-		  CREATE UNIQUE INDEX idx_%s_ptr 
-		  ON umls_mrhier.%s (ptr_id, ptr_level);
-		  CLUSTER umls_mrhier.%s USING idx_%s_ptr;
-		  
-		  CREATE INDEX x_%s_aui ON umls_mrhier.%s(aui);
-		  CREATE INDEX x_%s_code ON umls_mrhier.%s(code);
-		  CREATE INDEX x_%s_ptr_aui ON umls_mrhier.%s(ptr_aui);	
-		  CREATE INDEX x_%s_ptr_code ON umls_mrhier.%s(ptr_code);  
-		  
-		  ANALYZE VERBOSE umls_mrhier.%s;		    
-		  ',
-		  	tbl, 
-		  	tbl, 
-		  	sab,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl, 
-		  	tbl, 
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl,
-		  	tbl
-		  	);
-  
-	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
-	    INTO final_ct;
-  
-  
-	  EXECUTE 
-	  	format(
-	  		'
-	  		INSERT INTO public.process_umls_mrhier_log  
-	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
-	  		',
-	  			log_datetime, 
-	  			log_mth_version, 
-	  			log_mth_release_dt, 
-	  			sab, 
-	  			tbl, 
-	  			ct, 
-	  			final_ct);
-  
-   	  end_time := date_trunc('second', timeofday()::timestamp);
-   
-   	  raise notice '% complete (%)', tbl, end_time - start_time;
-   
-    end loop;
+		EXECUTE 
+			format(
+			'
+			SELECT COUNT(*) 
+			FROM umls_mrhier.mrhier 
+			WHERE sab = ''%s'';
+			',
+			source_sab
+			)
+		INTO source_rows
+		;
+		
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table) 
+		INTO target_rows
+		;
+		
+		EXECUTE 
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log 
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'', 
+			  ''umls_mrhier'', 
+			  ''MRHIER'', 
+			  ''%s'', 
+			  ''%s'',
+			  ''%s'');
+			',
+			  start_timestamp, 
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_sab,
+			  target_table,
+			  source_rows,
+			  target_rows);
+	END IF;
+	END LOOP;
 end;
 $$
 ;
+
+
 
 /*-----------------------------------------------------------    
 SPLIT SNOMEDCT AT LEVEL 2  
