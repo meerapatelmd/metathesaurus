@@ -18,6 +18,10 @@
 * MRHIER is then processed to replace the decimal-separated `ptr` string into 
 * individual atoms (`aui`) and mapped to the atom's `str` value. Any missing 
 * `ptr` values in `MRHIER_STR` are accounted for in the `MRHIER_STR_EXCL` table.
+*
+* To Do:  
+* [ ] Cleanup scripts with functions from 1387 onward, including logging to 
+*     the progress log and annotations
 **************************************************************************/
 
 
