@@ -997,7 +997,6 @@ end;
 $$
 ;
 
-SELECT ptr_str,count(*) FROM umls_mrhier.snomedct_us WHERE ptr_level = 2 GROUP BY ptr_str;
 
 /*----------------------------------------------------------- 
 REFRESH LOOKUP
