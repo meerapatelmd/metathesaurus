@@ -1666,13 +1666,6 @@ END;
 $$
 ;
 
-ALTER TABLE umls_mrhier.mrhier_str
-ADD CONSTRAINT xpk_mrhier_str 
-PRIMARY KEY (ptr_id);
-
-CREATE INDEX x_mrhier_str_aui ON umls_mrhier.mrhier_str(aui);
-CREATE INDEX x_mrhier_str_code ON umls_mrhier.mrhier_str(code);
-
 
 
 /*
@@ -1692,7 +1685,6 @@ WITH a AS (
 	  m2.ptr_id IS NULL AND 
 	  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND 
 	  m1.sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values
-)
 
 SELECT a.sab, a.ptr_is_null, COUNT(*)
 FROM a 
@@ -1710,10 +1702,19 @@ CREATE TABLE umls_mrhier.mrhier_str_excl AS (
 	  m2.ptr_id IS NULL AND 
 	  m1.ptr IS NOT NULL AND
 	  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND 
-	  m1.sab <> 'SRC') 
+	  m1.sab <> 'SRC'
 	ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
-)
+	) 
 ;
+
+
+
+ALTER TABLE umls_mrhier.mrhier_str
+ADD CONSTRAINT xpk_mrhier_str 
+PRIMARY KEY (ptr_id);
+
+CREATE INDEX x_mrhier_str_aui ON umls_mrhier.mrhier_str(aui);
+CREATE INDEX x_mrhier_str_code ON umls_mrhier.mrhier_str(code);
 
 
 ALTER TABLE umls_mrhier.mrhier_str_excl
