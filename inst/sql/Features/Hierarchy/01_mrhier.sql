@@ -865,6 +865,7 @@ end;
 $$
 ;
 
+
 DO
 $$
 DECLARE
@@ -893,6 +894,7 @@ BEGIN
 		target_table := f.updated_hierarchy_table;     
 		source_rows  := f.root_count;
 		root_str     := f.root_str;
+		root_aui     := f.root_aui;
 	
 		SELECT check_if_requires_processing(mth_version, 'SNOMEDCT_US', target_table) 
 		INTO requires_processing;
@@ -995,14 +997,16 @@ end;
 $$
 ;
 
+SELECT ptr_str,count(*) FROM umls_mrhier.snomedct_us WHERE ptr_level = 2 GROUP BY ptr_str;
+
 /*----------------------------------------------------------- 
 REFRESH LOOKUP
 The lookup is updated with the SNOMEDCT subset tables 
 and counts.
 -----------------------------------------------------------*/
 
-DROP TABLE IF EXISTS umls_mrhier.tmp_lookup;
-CREATE TABLE umls_mrhier.tmp_lookup AS (
+DROP TABLE IF EXISTS umls_mrhier.lookup;
+CREATE TABLE umls_mrhier.lookup AS (
 	SELECT 
 	  lu.hierarchy_sab, 
 	  tmp.root_aui, 
@@ -1015,10 +1019,6 @@ CREATE TABLE umls_mrhier.tmp_lookup AS (
 	ON lu.hierarchy_table = tmp.hierarchy_table
 )
 ;
-
-DROP TABLE umls_mrhier.lookup; 
-DROP TABLE umls_mrhier.lookup_snomed;
-ALTER TABLE umls_mrhier.tmp_lookup RENAME TO lookup;
 
 SELECT * FROM umls_mrhier.lookup;
 
