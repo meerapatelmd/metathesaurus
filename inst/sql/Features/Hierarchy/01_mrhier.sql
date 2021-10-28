@@ -804,102 +804,127 @@ FROM umls_mrhier.lookup_snomed;
 
 DO
 $$
-declare
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
     f record;
-    aui varchar(255);
-    h_tbl varchar(255);
-    ct integer;
-    final_ct integer;
-    start_time timestamp;
-    end_time timestamp;
-    iteration int;
+    source_table varchar(255) := 'SNOMEDCT_US';
+    target_table varchar(255);
+    root_aui varchar(20);
+    root_str text;
+	iteration int;
     total_iterations int;
-    log_datetime timestamp;
-    log_mth_version varchar(25);
-    log_mth_release_dt timestamp;
-begin
-	log_datetime := date_trunc('second', timeofday()::timestamp);  
-	SELECT sm_version 
-	INTO log_mth_version
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
-	  
-	SELECT sm_release_date 
-	INTO log_mth_release_dt
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_snomed;
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_snomed l    
+    LOOP
+		iteration    := f.iteration;
+		target_table := f.updated_hierarchy_table;     
+		source_rows  := f.root_count;
+		root_str     := f.root_str;
+	
+		SELECT check_if_requires_processing(mth_version, 'SNOMEDCT_US', target_table) 
+		INTO requires_processing;
+	
+  		IF requires_processing THEN  
+  		
+   			PERFORM notify_start(CONCAT('processing table ', source_table, ' into table ', target_table));  
+   			
+  			SELECT get_log_timestamp() 
+  			INTO start_timestamp
+  			;
+  			
+  			PERFORM notify_iteration(iteration, total_iterations, root_str || ' (' || source_rows || ' rows)');
+  			
+			EXECUTE
+			format(
+			  '
+			  DROP TABLE IF EXISTS umls_mrhier.%s;
+			  CREATE TABLE umls_mrhier.%s (
+			  	ptr_id BIGINT NOT NULL, 
+			  	ptr text NOT NULL, 
+			  	aui VARCHAR(12) NOT NULL,
+			  	code VARCHAR(255), 
+			  	str VARCHAR(255), 
+			  	rela VARCHAR(10), 
+			  	ptr_level INT NOT NULL, 
+			  	ptr_aui VARCHAR(12) NOT NULL, 
+			  	ptr_code VARCHAR(255) NOT NULL, 
+			  	ptr_str VARCHAR(255) NOT NULL
+			  )
+			  ;
+			  
+			  INSERT INTO umls_mrhier.%s 
+			  	SELECT * 
+			  	FROM umls_mrhier.snomedct_us 
+			  	WHERE ptr_id IN (
+			  		SELECT DISTINCT ptr_id 
+			  		FROM umls_mrhier.snomedct_us 
+			  		WHERE 
+			  			ptr_level = 2 
+			  			AND ptr_aui = ''%s''
+			  			)
+			  ;
+			  ',
+				  target_table,
+				  target_table,
+				  target_table,
+				  root_aui
+				  );
+				  
+				  
+			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
+			
+			
+			SELECT get_log_timestamp() 
+			INTO stop_timestamp
+			; 
+			
+			SELECT get_umls_mth_version()
+			INTO mth_version
+			;
+			
+			SELECT get_umls_mth_dt() 
+			INTO mth_date
+			;
+	
+			
+			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table) 
+			INTO target_rows
+			;
+	
+			EXECUTE 
+			  format(
+			    '
+				INSERT INTO public.process_umls_mrhier_log 
+				VALUES (
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  ''SNOMEDCT_US'', 
+				  ''umls_mrhier'', 
+				  ''SNOMEDCT_US'', 
+				  ''%s'', 
+				  ''%s'',
+				  ''%s'');
+				',
+				  start_timestamp, 
+				  stop_timestamp,
+				  mth_version,
+				  mth_date,
+				  target_table,
+				  source_rows,
+				  target_rows);
 
-
-    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_snomed;
-    for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup_snomed l    
-    loop 
-      iteration := f.iteration;
-      aui := f.ptr_aui;
-      h_tbl := f.updated_hierarchy_table;
-      ct  := f.level_2_count;
-      start_time := date_trunc('second', timeofday()::timestamp);
-      
-      
-      
-	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, h_tbl, ct;
-	  EXECUTE
-	   format(
-		  '
-		  DROP TABLE IF EXISTS umls_mrhier.%s;
-		  CREATE TABLE umls_mrhier.%s (
-		  	ptr_id BIGINT NOT NULL, 
-		  	ptr text NOT NULL, 
-		  	aui VARCHAR(12) NOT NULL,
-		  	code VARCHAR(255), 
-		  	str VARCHAR(255), 
-		  	rela VARCHAR(10), 
-		  	ptr_level INT NOT NULL, 
-		  	ptr_aui VARCHAR(12) NOT NULL, 
-		  	ptr_code VARCHAR(255) NOT NULL, 
-		  	ptr_str VARCHAR(255) NOT NULL
-		  )
-		  ;
-		  
-		  INSERT INTO umls_mrhier.%s 
-		  	SELECT * 
-		  	FROM umls_mrhier.snomedct_us 
-		  	WHERE ptr_id IN (
-		  		SELECT DISTINCT ptr_id 
-		  		FROM umls_mrhier.snomedct_us 
-		  		WHERE 
-		  			ptr_level = 2 
-		  			AND ptr_aui = ''%s''
-		  			)
-		  ;
-		  ',
-		  h_tbl,
-		  h_tbl,
-		  h_tbl,
-		  aui
-		  );
-
-  
-   	  end_time := date_trunc('second', timeofday()::timestamp);
-   	  
-   	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', h_tbl)  
-	    INTO final_ct;
-   	  
-  	  EXECUTE 
-  	format(
-  		'
-  		INSERT INTO public.process_umls_mrhier_log  
-  		VALUES (''%s'', ''%s'', ''%s'', ''SNOMEDCT_US'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
-  		',
-  			log_datetime, 
-  			log_mth_version, 
-  			log_mth_release_dt, 
-  			h_tbl, 
-  			ct, 
-  			final_ct);
-
-      raise notice '% complete (%)', h_tbl, end_time - start_time;
    
     end loop;
 end;
