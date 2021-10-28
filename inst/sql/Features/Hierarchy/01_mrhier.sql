@@ -1212,8 +1212,8 @@ SELECT * FROM umls_mrhier.lookup;
 / A second pivot lookup is made to construct the crosstab function 
 / call
 /-----------------------------------------------------------*/
-DROP TABLE IF EXISTS umls_mrhier.pivot_lookup;
-CREATE TABLE  umls_mrhier.pivot_lookup (	
+DROP TABLE IF EXISTS umls_mrhier.lookup_crosstab_statement;
+CREATE TABLE  umls_mrhier.lookup_crosstab_statement (	
   hierarchy_table varchar(255),
   pivot_table varchar(255),
   sql_statement text
@@ -1309,7 +1309,7 @@ begin
 	      
 	      )
 	      
-	      INSERT INTO umls_mrhier.pivot_lookup 
+	      INSERT INTO umls_mrhier.lookup_crosstab_statement 
 	      SELECT * FROM seq5
 	      ;
 	      ',
@@ -1329,7 +1329,7 @@ $$
 
 
 SELECT * 
-FROM umls_mrhier.pivot_lookup;
+FROM umls_mrhier.lookup_crosstab_statement;
 
 
 
@@ -1364,8 +1364,8 @@ begin
 	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
 
 
-  	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.pivot_lookup;
-  	for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.pivot_lookup pl
+  	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
+  	for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_crosstab_statement pl
  	LOOP  
       iteration := f.iteration;
       p_tbl := f.pivot_table;
@@ -1558,8 +1558,8 @@ BEGIN
     
   DROP TABLE umls_mrhier.ddl_lookup;
   
-  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.pivot_lookup;
-  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.pivot_lookup pl
+  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
+  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_crosstab_statement pl
   loop 
     iteration := f.iteration;
     pivot_table := f.pivot_table; 
