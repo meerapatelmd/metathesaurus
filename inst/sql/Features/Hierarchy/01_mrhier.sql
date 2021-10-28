@@ -864,7 +864,6 @@ end;
 $$
 ;
 
-
 DO
 $$
 DECLARE
@@ -988,7 +987,7 @@ BEGIN
 				  source_rows,
 				  target_rows);
 
-   
+    end if;
     end loop;
 end;
 $$
@@ -1004,11 +1003,11 @@ DROP TABLE IF EXISTS umls_mrhier.tmp_lookup;
 CREATE TABLE umls_mrhier.tmp_lookup AS (
 	SELECT 
 	  lu.hierarchy_sab, 
-	  tmp.ptr_aui, 
-	  tmp.ptr_code, 
-	  tmp.ptr_str, 
+	  tmp.root_aui, 
+	  tmp.root_code, 
+	  tmp.root_str, 
 	  COALESCE(tmp.updated_hierarchy_table, lu.hierarchy_table) AS hierarchy_table, 
-	  COALESCE(tmp.level_2_count, lu.count) AS count  
+	  COALESCE(tmp.root_count, lu.count) AS count  
 	FROM umls_mrhier.lookup lu  
 	LEFT JOIN umls_mrhier.lookup_snomed tmp 
 	ON lu.hierarchy_table = tmp.hierarchy_table
@@ -1041,125 +1040,153 @@ CREATE TABLE umls_mrhier.lookup AS (
 DROP TABLE umls_mrhier.tmp_lookup;
 SELECT * FROM umls_mrhier.lookup;
 
-do
+DO
 $$
-declare
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
     f record;
-    tbl varchar(255);
-    h_tbl varchar(255);
-    ct integer;
-    final_ct integer;
-    start_time timestamp;
-    end_time timestamp;
-    iteration int;
+    sab varchar(100);
+    source_table varchar(255);
+    target_table varchar(255);
+	iteration int;
     total_iterations int;
-    log_datetime timestamp;
-    log_mth_version varchar(25);
-    log_mth_release_dt timestamp;
-begin
-	log_datetime := date_trunc('second', timeofday()::timestamp);  
-	SELECT sm_version 
-	INTO log_mth_version
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
-	  
-	SELECT sm_release_date 
-	INTO log_mth_release_dt
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup l    
+    LOOP
+		iteration    := f.iteration;
+		source_table := f.hierarchy_table;
+		target_table := f.extended_table;     
+		source_rows  := f.count;
+		sab          := f.hierarchy_sab;
+	
+		SELECT check_if_requires_processing(mth_version, source_table, target_table) 
+		INTO requires_processing;
+	
+  		IF requires_processing THEN  
 
 
-    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
-    for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup l    
-    loop 
-      iteration := f.iteration;
-      tbl := f.extended_table;
-      h_tbl := f.hierarchy_table;
-      ct  := f.count;
-      start_time := date_trunc('second', timeofday()::timestamp);
-      
-      
-      
-	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, h_tbl, f.count;
-	  EXECUTE
-	   format(
-		  '
-		  DROP TABLE IF EXISTS umls_mrhier.%s; 
-		  CREATE TABLE  umls_mrhier.%s (
-		    ptr_id INTEGER NOT NULL,
-		    ptr text NOT NULL,
-		  	aui varchar(12), 
-		  	code varchar(100), 
-		  	str text, 
-		  	rela varchar(100), 
-		  	ptr_level INTEGER NOT NULL,
-		  	ptr_aui varchar(12) NOT NULL,
-		  	ptr_code varchar(100),
-		  	ptr_str text
-		  );
-		  
-		  WITH leafs AS (
-			SELECT 
-			  ptr_id, 
-			  ptr, 
-			  aui, 
-			  code, 
-			  str, 
-			  rela, 
-			  max(ptr_level)+1 AS ptr_level, 
-			  aui AS ptr_aui, 
-			  code AS ptr_code, 
-			  str AS ptr_str 
-			FROM umls_mrhier.%s 
-			GROUP BY ptr_id, ptr, aui, code, str, rela
-		  ),
-		  with_leafs AS (
-		  	SELECT * 
-		  	FROM leafs 
-		  	UNION 
-		  	SELECT * 
-		  	FROM umls_mrhier.%s
-		  )
-		  
-		  INSERT INTO umls_mrhier.%s  
-		  SELECT * 
-		  FROM with_leafs
-		  ORDER BY ptr_id, ptr_level
-		  ;
-		  ',
-		  	tbl, 
-		  	tbl, 
-		  	h_tbl, 
-		  	h_tbl, 
-		  	tbl);
-  
-	  EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', tbl)  
-	    INTO final_ct;
-  
-	  EXECUTE 
-	  	format(
-	  		'
-	  		INSERT INTO public.process_umls_mrhier_log  
-	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
-	  		',
-	  			log_datetime, 
-	  			log_mth_version, 
-	  			log_mth_release_dt, 
-	  			h_tbl, 
-	  			tbl, 
-	  			ct, 
-	  			final_ct);
-  
-   	  end_time := date_trunc('second', timeofday()::timestamp);
-   
-      raise notice '% complete (%)', tbl, end_time - start_time;
-   
+		PERFORM notify_start(CONCAT('processing table ', source_table, ' into table ', target_table));  
+   			
+  			SELECT get_log_timestamp() 
+  			INTO start_timestamp
+  			;
+  			
+  			PERFORM notify_iteration(iteration, total_iterations, source_table || ' (' || source_rows || ' rows)');
+  			
+			EXECUTE
+			format(
+			  '
+			  DROP TABLE IF EXISTS umls_mrhier.%s; 
+			  CREATE TABLE  umls_mrhier.%s (
+			    ptr_id INTEGER NOT NULL,
+			    ptr text NOT NULL,
+			  	aui varchar(12), 
+			  	code varchar(100), 
+			  	str text, 
+			  	rela varchar(100), 
+			  	ptr_level INTEGER NOT NULL,
+			  	ptr_aui varchar(12) NOT NULL,
+			  	ptr_code varchar(100),
+			  	ptr_str text
+			  );
+			  
+			  WITH leafs AS (
+				SELECT 
+				  ptr_id, 
+				  ptr, 
+				  aui, 
+				  code, 
+				  str, 
+				  rela, 
+				  max(ptr_level)+1 AS ptr_level, 
+				  aui AS ptr_aui, 
+				  code AS ptr_code, 
+				  str AS ptr_str 
+				FROM umls_mrhier.%s 
+				GROUP BY ptr_id, ptr, aui, code, str, rela
+			  ),
+			  with_leafs AS (
+			  	SELECT * 
+			  	FROM leafs 
+			  	UNION 
+			  	SELECT * 
+			  	FROM umls_mrhier.%s
+			  )
+			  
+			  INSERT INTO umls_mrhier.%s  
+			  SELECT * 
+			  FROM with_leafs
+			  ORDER BY ptr_id, ptr_level
+			  ;
+			  ',
+			  	target_table, 
+			  	target_table, 
+			  	source_table, 
+			  	source_table, 
+			  	target_table);
+				  
+			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
+			
+			
+			SELECT get_log_timestamp() 
+			INTO stop_timestamp
+			; 
+			
+			SELECT get_umls_mth_version()
+			INTO mth_version
+			;
+			
+			SELECT get_umls_mth_dt() 
+			INTO mth_date
+			;
+	
+			
+			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table) 
+			INTO target_rows
+			;
+	
+			EXECUTE 
+			  format(
+			    '
+				INSERT INTO public.process_umls_mrhier_log 
+				VALUES (
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  ''%s'', 
+				  ''umls_mrhier'', 
+				  ''%s'', 
+				  ''%s'', 
+				  ''%s'',
+				  ''%s'');
+				',
+				  start_timestamp, 
+				  stop_timestamp,
+				  mth_version,
+				  mth_date,
+				  sab,
+				  source_table,
+				  target_table,
+				  source_rows,
+				  target_rows);
+
+    end if;
     end loop;
 end;
 $$
 ;
+
 
 
 /*-----------------------------------------------------------
