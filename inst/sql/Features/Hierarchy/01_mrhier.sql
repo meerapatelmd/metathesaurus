@@ -165,7 +165,7 @@ END;
 $$;
 
 
-create or replace function notify_iteration(iteration int, total_iterations int, report varchar, report_size int, report_size_units varchar) 
+create or replace function notify_iteration(iteration int, total_iterations int, objectname varchar) 
 returns void
 language plpgsql
 as
@@ -177,7 +177,7 @@ begin
   INTO notice_timestamp
   ;
   
-  RAISE NOTICE '[%] %/% % (% %)', notice_timestamp, iteration, total_iterations, report, report_size, report_size_units;
+  RAISE NOTICE '[%] %/% %', notice_timestamp, iteration, total_iterations, objectname;
 END;  
 $$;
 
@@ -595,11 +595,23 @@ BEGIN
 	
   		IF requires_processing THEN  
   		
+   			PERFORM notify_start(CONCAT('processing', ' ', source_sab, ' into table ', target_table));  
   			SELECT get_log_timestamp() 
   			INTO start_timestamp
   			;
+  			
+  			EXECUTE 
+			format(
+				'
+				SELECT COUNT(*) 
+				FROM umls_mrhier.mrhier 
+				WHERE sab = ''%s'';
+				',
+					source_sab
+			)
+			INTO source_rows;
   	
-  			PERFORM notify_start(CONCAT('processing', ' ', source_sab, ' into table: ', target_table));  
+  	  		PERFORM notify_iteration(iteration, total_iterations, source_sab || ' (' || source_rows || ' source rows)');
 
 			EXECUTE
 			format(
@@ -688,7 +700,7 @@ BEGIN
 			  	);
 			  	
 	
-  		PERFORM notify_completion(CONCAT('processing', ' ', source_sab, ' into table: ', target_table));  
+  		PERFORM notify_completion(CONCAT('processing', ' ', source_sab, ' into table ', target_table));  
   			
   			
   		SELECT get_log_timestamp() 
@@ -703,18 +715,6 @@ BEGIN
 		INTO mth_date
 		;
 
-
-		EXECUTE 
-			format(
-			'
-			SELECT COUNT(*) 
-			FROM umls_mrhier.mrhier 
-			WHERE sab = ''%s'';
-			',
-			source_sab
-			)
-		INTO source_rows
-		;
 		
 		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table) 
 		INTO target_rows
