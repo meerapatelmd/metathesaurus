@@ -875,42 +875,6 @@ $$
 ;
 
 
-
-
-
-DROP TABLE IF EXISTS umls_mrhier.lookup_snomed; 
-CREATE TABLE umls_mrhier.lookup_snomed (
-    hierarchy_table text,
-    root_aui varchar(12), 
-    root_code varchar(255), 
-    root_str varchar(255),
-    updated_hierarchy_table varchar(255),
-    root_count bigint
-);
-
-INSERT INTO umls_mrhier.lookup_snomed 
-SELECT 
-	'SNOMEDCT_US' AS hierarchy_table,
-	ptr_aui AS root_aui, 
-	ptr_code AS root_code, 
-	ptr_str AS root_str, 
-	-- Ensure that the tablename character count is 
-	-- within normal limits
-	SUBSTRING(
-	  CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 
-	  1, 
-	  60) AS updated_hierarchy_table, 
-	COUNT(*) AS root_count
-FROM umls_mrhier.snomedct_us 
-WHERE ptr_level = 2 
-GROUP BY ptr_aui, ptr_code, ptr_str 
-ORDER BY COUNT(*)
-;
-
-SELECT * 
-FROM umls_mrhier.lookup_snomed;
-
-
 DO
 $$
 DECLARE
