@@ -769,6 +769,115 @@ and it is subset here by the 2nd level root concept to make it
 more manageable.
 -----------------------------------------------------------*/  
 
+DO
+$$
+DECLARE 
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
+BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT check_if_requires_processing(mth_version, 'SNOMEDCT_US', 'LOOKUP_SNOMED') 
+	INTO requires_processing;
+	
+  	IF requires_processing THEN  	
+  	
+  		SELECT get_log_timestamp() 
+  		INTO start_timestamp
+  		;
+  	
+  		PERFORM notify_start('processing LOOKUP_SNOMED');  
+  		
+  		DROP TABLE IF EXISTS umls_mrhier.lookup_snomed; 
+		CREATE TABLE umls_mrhier.lookup_snomed (
+		    hierarchy_table text,
+		    root_aui varchar(12), 
+		    root_code varchar(255), 
+		    root_str varchar(255),
+		    updated_hierarchy_table varchar(255),
+		    root_count bigint
+		);
+		
+		INSERT INTO umls_mrhier.lookup_snomed 
+		SELECT 
+			'SNOMEDCT_US' AS hierarchy_table,
+			ptr_aui AS root_aui, 
+			ptr_code AS root_code, 
+			ptr_str AS root_str, 
+			-- Ensure that the tablename character count is 
+			-- within normal limits
+			SUBSTRING(
+			  CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 
+			  1, 
+			  60) AS updated_hierarchy_table, 
+			COUNT(*) AS root_count
+		FROM umls_mrhier.snomedct_us 
+		WHERE ptr_level = 2 
+		GROUP BY ptr_aui, ptr_code, ptr_str 
+		ORDER BY COUNT(*)
+		;
+		
+		SELECT get_log_timestamp() 
+		INTO stop_timestamp
+		; 
+		
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+		
+		SELECT get_umls_mth_dt() 
+		INTO mth_date
+		;
+		
+		SELECT get_row_count('umls_mrhier.snomedct_us') 
+		INTO source_rows
+		;
+		
+		SELECT get_row_count('umls_mrhier.lookup_snomed') 
+		INTO target_rows
+		;
+		
+		EXECUTE 
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log 
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL, 
+			  ''umls_mrhier'', 
+			  ''SNOMEDCT_US'', 
+			  ''SNOMED'', 
+			  ''%s'',
+			  ''%s'');
+			',
+			  start_timestamp, 
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_rows,
+			  target_rows);
+			  
+			  
+		PERFORM notify_completion('processing LOOKUP_SNOMED'); 
+
+	END IF;
+end;
+$$
+;
+
+
+
+
+
 DROP TABLE IF EXISTS umls_mrhier.lookup_snomed; 
 CREATE TABLE umls_mrhier.lookup_snomed (
     hierarchy_table text,
