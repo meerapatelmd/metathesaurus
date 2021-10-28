@@ -1027,8 +1027,6 @@ CREATE TABLE umls_mrhier.tmp_lookup AS (
 / (`aui`, `code`, and `str`). These leafs are added at the end 
 / of the path to root.  
 /-----------------------------------------------------------*/
-DROP TABLE IF EXISTS umls_mrhier.lookup;
-
 DROP TABLE IF EXISTS umls_mrhier.lookup_ext;
 CREATE TABLE umls_mrhier.lookup_ext AS (
   SELECT 
@@ -1038,6 +1036,7 @@ CREATE TABLE umls_mrhier.lookup_ext AS (
 );
 
 DROP TABLE umls_mrhier.tmp_lookup;
+
 
 DO
 $$
@@ -1059,8 +1058,8 @@ BEGIN
 	SELECT get_umls_mth_version() 
 	INTO mth_version;
 	
-	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
-    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup l    
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_ext;
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_ext l    
     LOOP
 		iteration    := f.iteration;
 		source_table := f.hierarchy_table;
@@ -1195,7 +1194,7 @@ $$
 / compile classifications in at the row level.
 /-----------------------------------------------------------*/
 
-ALTER TABLE umls_mrhier.lookup 
+ALTER TABLE umls_mrhier.lookup_ext 
 RENAME TO tmp_lookup;
 
 CREATE TABLE umls_mrhier.lookup AS (
@@ -1207,7 +1206,6 @@ CREATE TABLE umls_mrhier.lookup AS (
 );
 
 DROP TABLE umls_mrhier.tmp_lookup;
-SELECT * FROM umls_mrhier.lookup;
 
 /*-----------------------------------------------------------
 / A second pivot lookup is made to construct the crosstab function 
@@ -1215,12 +1213,15 @@ SELECT * FROM umls_mrhier.lookup;
 /-----------------------------------------------------------*/
 DROP TABLE IF EXISTS umls_mrhier.lookup_crosstab_statement;
 CREATE TABLE  umls_mrhier.lookup_crosstab_statement (	
-  hierarchy_table varchar(255),
+  extended_table varchar(255),
+  tmp_pivot_table varchar(255),
   pivot_table varchar(255),
   sql_statement text
 )
 ;
 
+
+SELECT * FROM umls_mrhier.lookup;
 
 /*-----------------------------------------------------------
 / A crosstab function call is created to pivot each table 
@@ -1245,28 +1246,30 @@ DECLARE
     sab varchar(100);
     source_table varchar(255);
     target_table varchar(255);
+    pivot_table varchar(255);
 	iteration int;
     total_iterations int;
 BEGIN  
 	SELECT get_umls_mth_version() 
 	INTO mth_version;
 	
-	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
-    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup l    
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup WHERE hierarchy_sab <> 'SRC';
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup l WHERE l.hierarchy_sab <> 'SRC'     
     LOOP
 		iteration    := f.iteration;
 		source_table := f.extended_table;
-		target_table := f.tmp_pivot_table;     
+		target_table := f.tmp_pivot_table;   
+		pivot_table  := f.pivot_table;  
 		source_rows  := f.count;
 		sab          := f.hierarchy_sab;
 	
-		SELECT check_if_requires_processing(mth_version, source_table, target_table) 
+		SELECT check_if_requires_processing(mth_version, source_table, 'LOOKUP_CROSSTAB_STATEMENT') 
 		INTO requires_processing;
 	
   		IF requires_processing THEN  
 
 
-		PERFORM notify_start(CONCAT('processing table ', source_table, ' into table ', target_table));  
+		PERFORM notify_start(CONCAT('processing sql statement for ', source_table, ' into table ', target_table));  
    			
 		SELECT get_log_timestamp() 
 		INTO start_timestamp
@@ -1284,31 +1287,35 @@ BEGIN
 	      WITH seq1 AS (SELECT generate_series(1,%s) AS series),
 	      seq2 AS (
 	      	SELECT 
-	      		''%s'' AS hierarchy_table, 
+	      		''%s'' AS extended_table, 
 	      		''%s'' AS tmp_pivot_table,
+	      		''%s'' AS pivot_table,
 	      		STRING_AGG(CONCAT(''level_'', series, '' text''), '', '') AS crosstab_ddl
 	      	FROM seq1 
-	      	GROUP BY hierarchy_table, tmp_pivot_table),
+	      	GROUP BY extended_table, tmp_pivot_table),
 	      seq3 AS (
 	      	SELECT
-	      		hierarchy_table,
+	      		extended_table,
 	      		tmp_pivot_table,
+	      		pivot_table,
 	      		CONCAT(''ptr_id BIGINT, '', crosstab_ddl) AS crosstab_ddl 
 	      	FROM seq2
 	      ), 
 	      seq4 AS (
 	        SELECT 
-	          hierarchy_table,
+	          extended_table,
 	          tmp_pivot_table, 
-	          '''''''' || CONCAT(''SELECT ptr_id, ptr_level, ptr_str FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1,2'') || '''''''' AS crosstab_arg1,
-	          '''''''' || CONCAT(''SELECT DISTINCT ptr_level FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1'') || '''''''' AS crosstab_arg2, 
+	          pivot_table,
+	          '''''''' || CONCAT(''SELECT ptr_id, ptr_level, ptr_str FROM umls_mrhier.'', extended_table, '' ORDER BY 1,2'') || '''''''' AS crosstab_arg1,
+	          '''''''' || CONCAT(''SELECT DISTINCT ptr_level FROM umls_mrhier.'', extended_table, '' ORDER BY 1'') || '''''''' AS crosstab_arg2, 
 	          crosstab_ddl
 	         FROM seq3
 	      ),
 	      seq5 AS (
 	      	SELECT 
-	      	  hierarchy_table,
+	      	  extended_table,
 	      	  tmp_pivot_table,
+	      	  pivot_table,
 	      	  ''DROP TABLE IF EXISTS umls_mrhier.'' || tmp_pivot_table || '';'' || '' CREATE TABLE umls_mrhier.'' || tmp_pivot_table || '' AS (SELECT * FROM CROSSTAB('' || crosstab_arg1 || '','' || crosstab_arg2 || '') AS ('' || crosstab_ddl || ''));'' AS sql_statement
 	      	  FROM seq4
 	      
@@ -1320,9 +1327,10 @@ BEGIN
 	      ',
 	      max_level,
 	      source_table, 
-	      target_table);
+	      target_table, 
+	      pivot_table);
 	
-		PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
+		PERFORM notify_completion(CONCAT('processing sql statement for ', source_table, ' into table ', target_table));
 		
 		
 		SELECT get_log_timestamp() 
@@ -1337,10 +1345,6 @@ BEGIN
 		INTO mth_date
 		;
 
-		
-		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table) 
-		INTO target_rows
-		;
 
 		EXECUTE 
 		  format(
@@ -1354,9 +1358,9 @@ BEGIN
 			  ''%s'', 
 			  ''umls_mrhier'', 
 			  ''%s'', 
-			  ''%s'', 
+			  ''LOOKUP_CROSSTAB_STATEMENT'', 
 			  ''%s'',
-			  ''%s'');
+			   NULL);
 			',
 			  start_timestamp, 
 			  stop_timestamp,
@@ -1364,10 +1368,9 @@ BEGIN
 			  mth_date,
 			  sab,
 			  source_table,
-			  target_table,
-			  source_rows,
-			  target_rows);
+			  source_rows);
 		COMMIT;
+		
 
     end if;
     end loop;
@@ -1376,103 +1379,131 @@ $$
 ;
 
 
-SELECT * 
-FROM umls_mrhier.lookup_crosstab_statement;
-
-
-
-do 
+DO
 $$
-declare 
-  	sql_statement text; 
-  	f record; 
-  	p_tbl varchar(255);
-  	h_tbl varchar(255);
-  	ct integer;
-  	final_ct integer;
-	start_time timestamp;
-	end_time timestamp;
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
+    f record;
+    sab varchar(100);
+    source_table varchar(255);
+    tmp_table varchar(255);
+    target_table varchar(255);
 	iteration int;
-	total_iterations int;
-	log_datetime timestamp;
-	log_mth_version varchar(25);
-	log_mth_release_dt timestamp;
-begin  
-	log_datetime := date_trunc('second', timeofday()::timestamp);  
-	SELECT sm_version 
-	INTO log_mth_version
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
-	  
-	SELECT sm_release_date 
-	INTO log_mth_release_dt
-	FROM public.setup_mth_log 
-	WHERE sm_datetime IN 
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
+    total_iterations int;
+    sql_statement text;
+BEGIN  
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_crosstab_statement    
+    LOOP
+		iteration    := f.iteration;
+		source_table := f.extended_table;
+		tmp_table    := f.tmp_pivot_table;
+		target_table := f.pivot_table;   
+	
+		SELECT check_if_requires_processing(mth_version, source_table, target_table) 
+		INTO requires_processing;
+	
+  		IF requires_processing THEN  
+  		
+  		SELECT get_log_timestamp() 
+		INTO start_timestamp
+		;
+  		
+  		    
+		PERFORM notify_start(CONCAT('processing ', source_table, ' into table ', target_table));
+
+		    sql_statement := f.sql_statement;
+		    EXECUTE sql_statement;
+    
+    
+	    EXECUTE 
+	      format(
+	      	'
+	      	DROP TABLE IF EXISTS umls_mrhier.%s;
+	      	CREATE TABLE umls_mrhier.%s AS (
+		      	SELECT DISTINCT
+		      	  h.aui,
+		      	  h.code,
+		      	  h.str, 
+		      	  t.*
+		      	FROM umls_mrhier.%s h 
+		      	LEFT JOIN umls_mrhier.%s t 
+		      	ON t.ptr_id = h.ptr_id
+	      	);
+	      	DROP TABLE umls_mrhier.%s;
+	      	',
+	      		target_table,
+	      		target_table, 
+	      		source_table, 
+	      		tmp_table,
+	      		tmp_table);
+    
+		PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
+		
+		
+		SELECT get_log_timestamp() 
+		INTO stop_timestamp
+		; 
+		
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+		
+		SELECT get_umls_mth_dt() 
+		INTO mth_date
+		;
+		
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table) 
+		INTO target_rows;
+			
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', source_table) 
+		INTO source_rows;
 
 
-  	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
-  	for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_crosstab_statement pl
- 	LOOP  
-      iteration := f.iteration;
-      p_tbl := f.pivot_table;
-      h_tbl := f.hierarchy_table;
-      start_time := date_trunc('second', timeofday()::timestamp);
-      
-      raise notice '[%] %/% %', start_time, iteration, total_iterations, p_tbl;
-    sql_statement := f.sql_statement;
-    EXECUTE sql_statement;
-    
-    
-    EXECUTE 
-      format(
-      	'
-      	CREATE TABLE umls_mrhier.%s AS (
-	      	SELECT DISTINCT
-	      	  h.aui,
-	      	  h.code,
-	      	  h.str, 
-	      	  t.*
-	      	FROM umls_mrhier.%s h 
-	      	LEFT JOIN umls_mrhier.tmp_%s t 
-	      	ON t.ptr_id = h.ptr_id
-      	);
-      	DROP TABLE umls_mrhier.tmp_%s;
-      	',
-      		p_tbl, 
-      		p_tbl, 
-      		p_tbl,
-      		h_tbl, 
-      		p_tbl,
-      		p_tbl);
-    
-    EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', h_tbl)  
-	    INTO ct;
-    EXECUTE format('SELECT count(*) FROM umls_mrhier.%s', p_tbl)  
-	    INTO final_ct;
-  
-	  EXECUTE 
-	  	format(
-	  		'
-	  		INSERT INTO public.process_umls_mrhier_log  
-	  		VALUES (''%s'', ''%s'', ''%s'', ''%s'', ''umls_mrhier'', ''%s'', ''%s'', %s); 
-	  		',
-	  			log_datetime, 
-	  			log_mth_version, 
-	  			log_mth_release_dt, 
-	  			h_tbl, 
-	  			p_tbl, 
-	  			ct, 
-	  			final_ct);
-    
-    	  end_time := date_trunc('second', timeofday()::timestamp); 
-      raise notice '% complete (%)', p_tbl, end_time - start_time;
-    
+		EXECUTE 
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log 
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL, 
+			  ''umls_mrhier'', 
+			  ''%s'', 
+			  ''%s'', 
+			  ''%s'',
+			   NULL);
+			',
+			  start_timestamp, 
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_table,
+			  target_table,
+			  source_rows, 
+			  target_rows);
+		COMMIT;
+		
+
+    end if;
     end loop;
-END;
+end;
 $$
 ;
+
+SELECT * FROM public.process_umls_mrhier_log;
+
 
 
 DROP TABLE IF EXISTS umls_mrhier.ext_lookup;
