@@ -677,7 +677,8 @@ BEGIN
 			  CREATE INDEX x_%s_aui ON umls_mrhier.%s(aui);
 			  CREATE INDEX x_%s_code ON umls_mrhier.%s(code);
 			  CREATE INDEX x_%s_ptr_aui ON umls_mrhier.%s(ptr_aui);	
-			  CREATE INDEX x_%s_ptr_code ON umls_mrhier.%s(ptr_code);  	    
+			  CREATE INDEX x_%s_ptr_code ON umls_mrhier.%s(ptr_code);
+			  CREATE INDEX x_%s_ptr_level ON umls_mrhier.%s(ptr_level);  	   	    
 			  ',
 			  	target_table, 
 			  	target_table, 
@@ -697,6 +698,7 @@ BEGIN
 			  	target_table,
 			  	target_table,
 			  	target_table,
+			  	target_table, 
 			  	target_table
 			  	);
 			  	
@@ -1004,8 +1006,8 @@ The lookup is updated with the SNOMEDCT subset tables
 and counts.
 -----------------------------------------------------------*/
 
-DROP TABLE IF EXISTS umls_mrhier.lookup;
-CREATE TABLE umls_mrhier.lookup AS (
+DROP TABLE IF EXISTS umls_mrhier.tmp_lookup;
+CREATE TABLE umls_mrhier.tmp_lookup AS (
 	SELECT 
 	  lu.hierarchy_sab, 
 	  tmp.root_aui, 
@@ -1019,19 +1021,16 @@ CREATE TABLE umls_mrhier.lookup AS (
 )
 ;
 
-SELECT * FROM umls_mrhier.lookup;
-
 /*-----------------------------------------------------------
 / EXTEND PTR PATH TO LEAF
 / The leaf of the hierarchy is found within the source concept 
 / (`aui`, `code`, and `str`). These leafs are added at the end 
 / of the path to root.  
 /-----------------------------------------------------------*/
+DROP TABLE IF EXISTS umls_mrhier.lookup;
 
-ALTER TABLE umls_mrhier.lookup 
-RENAME TO tmp_lookup;
-
-CREATE TABLE umls_mrhier.lookup AS (
+DROP TABLE IF EXISTS umls_mrhier.lookup_ext;
+CREATE TABLE umls_mrhier.lookup_ext AS (
   SELECT 
   	*, 
   	SUBSTRING(CONCAT('ext_', hierarchy_table), 1, 60) AS extended_table
@@ -1039,7 +1038,6 @@ CREATE TABLE umls_mrhier.lookup AS (
 );
 
 DROP TABLE umls_mrhier.tmp_lookup;
-SELECT * FROM umls_mrhier.lookup;
 
 DO
 $$
