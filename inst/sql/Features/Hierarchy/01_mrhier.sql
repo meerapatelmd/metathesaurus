@@ -42,13 +42,15 @@ CREATE TABLE IF NOT EXISTS public.process_umls_mrhier_log (
     target_row_ct numeric
 );
 
-CREATE TABLE IF NOT EXISTS public.setup_umls_mrhier_log (
-    sum_datetime timestamp without time zone,
+
+CREATE TABLE IF NOT EXISTS public.setup_umls_class_log (
+    suc_datetime timestamp without time zone,
     mth_version character varying(255),
     mth_release_dt character varying(255),
     target_schema character varying(255),
-    target_table character varying(255),
-    target_row_ct numeric
+    mrhier bigint,
+    mrhier_str bigint, 
+    mrhier_str_excl bigint
 );
 
 /**************************************************************************
@@ -1709,18 +1711,148 @@ CREATE TABLE umls_mrhier.mrhier_str_excl AS (
 
 
 
-ALTER TABLE umls_mrhier.mrhier_str
+
+
+SELECT * 
+FROM public.setup_umls_class_log;
+
+DO
+$$
+DECLARE 
+	log_timestamp timestamp;
+	mth_version varchar;
+	mth_release_dt varchar;
+	target_schema varchar := 'umls_class';
+BEGIN 
+	SELECT get_log_timestamp() 
+	INTO log_timestamp;
+	
+	SELECT get_umls_mth_version() 
+	INTO mth_version;
+	
+	SELECT get_umls_mth_dt() 
+	INTO mth_release_dt;
+	
+	EXECUTE 
+	 format('
+	 INSERT INTO public.setup_umls_class_log(suc_datetime, mth_version, mth_release_dt, target_schema)
+	 VALUES (''%s'', ''%s'', ''%s'', ''%s'')
+	 ;
+	 ', 
+	 	log_timestamp, 
+	 	mth_version,
+	 	mth_release_dt, 
+	 	target_schema
+	 	);
+END;
+$$
+;
+
+
+DROP TABLE IF EXISTS umls_class.mrhier;
+CREATE TABLE umls_class.mrhier AS (
+SELECT * 
+FROM umls_mrhier.mrhier
+)
+;
+
+DO
+$$
+DECLARE 
+  mrhier_rows bigint;
+BEGIN 
+  SELECT COUNT(*) 
+  INTO mrhier_rows 
+  FROM umls_class.mrhier;
+  
+  EXECUTE
+    format(
+    '
+    UPDATE public.setup_umls_class_log 
+    SET mrhier = %s 
+    WHERE suc_datetime IN (SELECT MAX(suc_datetime) FROM public.setup_umls_class_log);
+    ', 
+    mrhier_rows
+    )
+    ;
+END;
+$$
+;
+
+DROP TABLE IF EXISTS umls_class.mrhier_str; 
+CREATE TABLE umls_class.mrhier_str AS (
+SELECT * 
+FROM umls_mrhier.mrhier_str
+)
+;
+
+DO
+$$
+DECLARE 
+  mrhier_str_rows bigint;
+BEGIN 
+  SELECT COUNT(*) 
+  INTO mrhier_str_rows 
+  FROM umls_class.mrhier_str;
+  
+  EXECUTE
+    format(
+    '
+    UPDATE public.setup_umls_class_log 
+    SET mrhier_str = %s 
+    WHERE suc_datetime IN (SELECT MAX(suc_datetime) FROM public.setup_umls_class_log);
+    ', 
+    mrhier_str_rows
+    )
+    ;
+END;
+$$
+;
+
+DROP TABLE IF EXISTS umls_class.mrhier_str_excl; 
+CREATE TABLE umls_class.mrhier_str_excl AS (
+SELECT * 
+FROM umls_mrhier.mrhier_str_excl
+)
+;
+
+DO
+$$
+DECLARE 
+  mrhier_str_excl_rows bigint;
+BEGIN 
+  SELECT COUNT(*) 
+  INTO mrhier_str_excl_rows 
+  FROM umls_class.mrhier_str_excl;
+  
+  EXECUTE
+    format(
+    '
+    UPDATE public.setup_umls_class_log 
+    SET mrhier_str_excl = %s 
+    WHERE suc_datetime IN (SELECT MAX(suc_datetime) FROM public.setup_umls_class_log);
+    ', 
+    mrhier_str_excl_rows
+    )
+    ;
+END;
+$$
+;
+
+
+ALTER TABLE umls_class.mrhier_str
 ADD CONSTRAINT xpk_mrhier_str 
 PRIMARY KEY (ptr_id);
 
-CREATE INDEX x_mrhier_str_aui ON umls_mrhier.mrhier_str(aui);
-CREATE INDEX x_mrhier_str_code ON umls_mrhier.mrhier_str(code);
+CREATE INDEX x_mrhier_str_aui ON umls_class.mrhier_str(aui);
+CREATE INDEX x_mrhier_str_code ON umls_class.mrhier_str(code);
 
 
-ALTER TABLE umls_mrhier.mrhier_str_excl
+ALTER TABLE umls_class.mrhier_str_excl
 ADD CONSTRAINT xpk_mrhier_str_excl
 PRIMARY KEY (ptr_id);
 
-CREATE INDEX x_mrhier_str_excl_aui ON umls_mrhier.mrhier_str_excl(aui);
-CREATE INDEX x_mrhier_str_excl_code ON umls_mrhier.mrhier_str_excl(code);
-CREATE INDEX x_mrhier_str_excl_sab ON umls_mrhier.mrhier_str_excl(sab);
+CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
+CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
+CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
+
