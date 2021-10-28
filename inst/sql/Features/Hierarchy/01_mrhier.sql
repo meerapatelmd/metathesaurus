@@ -749,6 +749,7 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
+		COMMIT;
 	END IF;
 	END LOOP;
 end;
