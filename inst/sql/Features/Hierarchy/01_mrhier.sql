@@ -555,8 +555,6 @@ $$
 ;
 
 
-select * from public.process_umls_mrhier_log;
-
 
 /*-----------------------------------------------------------    
 PROCESS PTR
@@ -565,9 +563,6 @@ the decimal-separated `ptr` string is parsed along with its
 ordinality as `ptr_level`. The parsed individual `ptr_aui` 
 is joined to MRCONSO to add the `ptr_code` and `ptr_str`. 
 -----------------------------------------------------------*/
-
-select * 
-from umls_mrhier.lookup;
   
 DO
 $$
@@ -758,38 +753,45 @@ $$
 
 
 
+
+select 
+  source_table, 
+  target_table,
+  target_row_ct,
+  process_stop_datetime - process_start_datetime AS time_req
+from public.process_umls_mrhier_log;
+
+
 /*-----------------------------------------------------------    
-SPLIT SNOMEDCT AT LEVEL 2  
+SPLIT SNOMEDCT AT ROOT  
 The SNOMEDCT_US table is too large to work with downstream 
-and it is subset here by the 2nd level concept to make it 
+and it is subset here by the 2nd level root concept to make it 
 more manageable.
 -----------------------------------------------------------*/  
 
 DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
 CREATE TABLE umls_mrhier.tmp_lookup (
     hierarchy_table text,
-    ptr_aui varchar(12), 
-    ptr_code varchar(255), 
-    ptr_str varchar(255),
+    root_aui varchar(12), 
+    root_code varchar(255), 
+    root_str varchar(255),
     updated_hierarchy_table varchar(255),
-    level_2_count bigint
+    root_count bigint
 );
 
 INSERT INTO umls_mrhier.tmp_lookup 
 SELECT 
 	'SNOMEDCT_US' AS hierarchy_table,
-	ptr_aui, 
-	ptr_code, 
-	ptr_str, 
+	ptr_aui AS root_aui, 
+	ptr_code AS root_code, 
+	ptr_str AS root_str, 
+	-- Ensure that the tablename character count is 
+	-- within normal limits
 	SUBSTRING(
-	  CONCAT(
-	    'SNOMEDCT_US_', 
-	    REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 
+	  CONCAT('SNOMEDCT_US_', REGEXP_REPLACE(ptr_str, '[[:punct:]]| or | ', '', 'g')), 
 	  1, 
-	  -- Ensure that the tablename character count is 
-	  -- within normal limits
 	  60) AS updated_hierarchy_table, 
-	COUNT(*) AS level_2_count
+	COUNT(*) AS root_count
 FROM umls_mrhier.snomedct_us 
 WHERE ptr_level = 2 
 GROUP BY ptr_aui, ptr_code, ptr_str 
