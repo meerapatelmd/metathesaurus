@@ -1202,6 +1202,7 @@ RENAME TO tmp_lookup;
 CREATE TABLE umls_mrhier.lookup AS (
   SELECT 
   	*, 
+  	SUBSTRING(CONCAT('tmp_pivot_', hierarchy_table), 1, 60) AS tmp_pivot_table, 
   	SUBSTRING(CONCAT('pivot_', hierarchy_table), 1, 60) AS pivot_table
   FROM umls_mrhier.tmp_lookup
 );
@@ -1232,8 +1233,8 @@ do
 $$
 declare
     f record;
-    h_tbl varchar(255);
-    p_tbl varchar(255);
+    source_table varchar(255);
+    tmp_pivot_table varchar(255);
     max_level int;
     ct integer;
     final_ct integer;
@@ -1263,8 +1264,8 @@ begin
     for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup l    
     loop 
       iteration := f.iteration;
-      h_tbl := f.hierarchy_table;
-      p_tbl := f.pivot_table;
+      source_table := f.hierarchy_table;
+      tmp_pivot_table := f.tmp_pivot_table;
       ct  := f.count;
       start_time := date_trunc('second', timeofday()::timestamp);
       
@@ -1281,21 +1282,21 @@ begin
 	      seq2 AS (
 	      	SELECT 
 	      		''%s'' AS hierarchy_table, 
-	      		''%s'' AS pivot_table,
+	      		''%s'' AS tmp_pivot_table,
 	      		STRING_AGG(CONCAT(''level_'', series, '' text''), '', '') AS crosstab_ddl
 	      	FROM seq1 
-	      	GROUP BY hierarchy_table, pivot_table),
+	      	GROUP BY hierarchy_table, tmp_pivot_table),
 	      seq3 AS (
 	      	SELECT
 	      		hierarchy_table,
-	      		pivot_table,
+	      		tmp_pivot_table,
 	      		CONCAT(''ptr_id BIGINT, '', crosstab_ddl) AS crosstab_ddl 
 	      	FROM seq2
 	      ), 
 	      seq4 AS (
 	        SELECT 
 	          hierarchy_table,
-	          pivot_table, 
+	          tmp_pivot_table, 
 	          '''''''' || CONCAT(''SELECT ptr_id, ptr_level, ptr_str FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1,2'') || '''''''' AS crosstab_arg1,
 	          '''''''' || CONCAT(''SELECT DISTINCT ptr_level FROM umls_mrhier.'', hierarchy_table, '' ORDER BY 1'') || '''''''' AS crosstab_arg2, 
 	          crosstab_ddl
@@ -1304,8 +1305,8 @@ begin
 	      seq5 AS (
 	      	SELECT 
 	      	  hierarchy_table,
-	      	  pivot_table,
-	      	  ''DROP TABLE IF EXISTS umls_mrhier.'' || pivot_table || '';'' || '' CREATE TABLE umls_mrhier.'' || pivot_table || '' AS (SELECT * FROM CROSSTAB('' || crosstab_arg1 || '','' || crosstab_arg2 || '') AS ('' || crosstab_ddl || ''));'' AS sql_statement
+	      	  tmp_pivot_table,
+	      	  ''DROP TABLE IF EXISTS umls_mrhier.'' || tmp_pivot_table || '';'' || '' CREATE TABLE umls_mrhier.'' || tmp_pivot_table || '' AS (SELECT * FROM CROSSTAB('' || crosstab_arg1 || '','' || crosstab_arg2 || '') AS ('' || crosstab_ddl || ''));'' AS sql_statement
 	      	  FROM seq4
 	      
 	      )
@@ -1315,8 +1316,8 @@ begin
 	      ;
 	      ',
 	      max_level,
-	      h_tbl, 
-	      p_tbl
+	      source_table, 
+	      tmp_pivot_table,
 	      
 	    );
 	
@@ -1381,7 +1382,6 @@ begin
     EXECUTE 
       format(
       	'
-      	ALTER TABLE umls_mrhier.%s RENAME TO tmp_%s; 
       	CREATE TABLE umls_mrhier.%s AS (
 	      	SELECT DISTINCT
 	      	  h.aui,
