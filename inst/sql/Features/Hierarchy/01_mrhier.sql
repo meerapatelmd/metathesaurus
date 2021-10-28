@@ -752,16 +752,6 @@ $$
 ;
 
 
-
-
-select 
-  source_table, 
-  target_table,
-  target_row_ct,
-  process_stop_datetime - process_start_datetime AS time_req
-from public.process_umls_mrhier_log;
-
-
 /*-----------------------------------------------------------    
 SPLIT SNOMEDCT AT ROOT  
 The SNOMEDCT_US table is too large to work with downstream 
@@ -855,7 +845,7 @@ BEGIN
 			  NULL, 
 			  ''umls_mrhier'', 
 			  ''SNOMEDCT_US'', 
-			  ''SNOMED'', 
+			  ''LOOKUP_SNOMED'', 
 			  ''%s'',
 			  ''%s'');
 			',
