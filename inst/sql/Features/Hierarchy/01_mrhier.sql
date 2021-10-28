@@ -1180,6 +1180,7 @@ BEGIN
 				  target_table,
 				  source_rows,
 				  target_rows);
+			COMMIT;
 
     end if;
     end loop;
