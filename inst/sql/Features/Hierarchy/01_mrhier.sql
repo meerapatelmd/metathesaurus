@@ -769,8 +769,8 @@ and it is subset here by the 2nd level root concept to make it
 more manageable.
 -----------------------------------------------------------*/  
 
-DROP TABLE IF EXISTS umls_mrhier.tmp_lookup; 
-CREATE TABLE umls_mrhier.tmp_lookup (
+DROP TABLE IF EXISTS umls_mrhier.lookup_snomed; 
+CREATE TABLE umls_mrhier.lookup_snomed (
     hierarchy_table text,
     root_aui varchar(12), 
     root_code varchar(255), 
@@ -779,7 +779,7 @@ CREATE TABLE umls_mrhier.tmp_lookup (
     root_count bigint
 );
 
-INSERT INTO umls_mrhier.tmp_lookup 
+INSERT INTO umls_mrhier.lookup_snomed 
 SELECT 
 	'SNOMEDCT_US' AS hierarchy_table,
 	ptr_aui AS root_aui, 
@@ -798,7 +798,7 @@ GROUP BY ptr_aui, ptr_code, ptr_str
 ORDER BY COUNT(*)
 ;
 
-SELECT * FROM umls_mrhier.tmp_lookup;
+SELECT * FROM umls_mrhier.lookup_snomed;
 
 
 DO
@@ -831,8 +831,8 @@ begin
 	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
 
 
-    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.tmp_lookup;
-    for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.tmp_lookup l    
+    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_snomed;
+    for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup_snomed l    
     loop 
       iteration := f.iteration;
       aui := f.ptr_aui;
@@ -911,8 +911,8 @@ The lookup is updated with the SNOMEDCT subset tables
 and counts.
 -----------------------------------------------------------*/
 
-DROP TABLE IF EXISTS umls_mrhier.tmp_lookup2;
-CREATE TABLE umls_mrhier.tmp_lookup2 AS (
+DROP TABLE IF EXISTS umls_mrhier.tmp_lookup;
+CREATE TABLE umls_mrhier.tmp_lookup AS (
 	SELECT 
 	  lu.hierarchy_sab, 
 	  tmp.ptr_aui, 
@@ -921,14 +921,14 @@ CREATE TABLE umls_mrhier.tmp_lookup2 AS (
 	  COALESCE(tmp.updated_hierarchy_table, lu.hierarchy_table) AS hierarchy_table, 
 	  COALESCE(tmp.level_2_count, lu.count) AS count  
 	FROM umls_mrhier.lookup lu  
-	LEFT JOIN umls_mrhier.tmp_lookup tmp 
+	LEFT JOIN umls_mrhier.lookup_snomed tmp 
 	ON lu.hierarchy_table = tmp.hierarchy_table
 )
 ;
 
 DROP TABLE umls_mrhier.lookup; 
-DROP TABLE umls_mrhier.tmp_lookup;
-ALTER TABLE umls_mrhier.tmp_lookup2 RENAME TO lookup;
+DROP TABLE umls_mrhier.lookup_snomed;
+ALTER TABLE umls_mrhier.tmp_lookup RENAME TO lookup;
 
 SELECT * FROM umls_mrhier.lookup;
 
