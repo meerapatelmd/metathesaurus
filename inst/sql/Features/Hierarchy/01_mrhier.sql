@@ -1402,7 +1402,7 @@ BEGIN
 	INTO mth_version;
 	
 	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
-    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_crosstab_statement    
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_crosstab_statement l   
     LOOP
 		iteration    := f.iteration;
 		source_table := f.extended_table;
@@ -1483,7 +1483,7 @@ BEGIN
 			  ''%s'', 
 			  ''%s'', 
 			  ''%s'',
-			   NULL);
+			   ''%s'');
 			',
 			  start_timestamp, 
 			  stop_timestamp,
@@ -1501,6 +1501,9 @@ BEGIN
 end;
 $$
 ;
+
+
+SELECT * FROM umls_mrhier.pivot_snomedct_us_organism;
 
 SELECT * FROM public.process_umls_mrhier_log;
 
