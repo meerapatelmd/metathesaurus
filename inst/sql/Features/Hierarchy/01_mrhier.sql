@@ -164,7 +164,7 @@ begin
 END;  
 $$;
 
--- 	  raise notice '[%] %/% % (% ptrs)', start_time, iteration, total_iterations, sab, f.count;
+
 create or replace function notify_iteration(iteration int, total_iterations int, report varchar, report_size int, report_size_units varchar) 
 returns void
 language plpgsql
@@ -798,7 +798,8 @@ GROUP BY ptr_aui, ptr_code, ptr_str
 ORDER BY COUNT(*)
 ;
 
-SELECT * FROM umls_mrhier.lookup_snomed;
+SELECT * 
+FROM umls_mrhier.lookup_snomed;
 
 
 DO
