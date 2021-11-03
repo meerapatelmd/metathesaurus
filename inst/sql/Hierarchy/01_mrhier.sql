@@ -1871,5 +1871,3 @@ CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
 CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
 CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 
-
-DROP SCHEMA old_umls_mrhier CASCADE;
