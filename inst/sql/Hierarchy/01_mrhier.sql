@@ -24,6 +24,7 @@
 *     the progress log and annotations
 * [ ] After 2021AB update, see how the lookup and results tables can be 
 *     renamed with a degree of provenance.
+* [ ] Add the `sab` field back to final MRHIER_STR table
 * [ ] Some log entries do not have target table row counts
 **************************************************************************/
 
@@ -1053,7 +1054,6 @@ CREATE TABLE umls_mrhier.lookup_ext AS (
   	SUBSTRING(CONCAT('ext_', hierarchy_table), 1, 60) AS extended_table
   FROM umls_mrhier.tmp_lookup
 );
-
 DROP TABLE umls_mrhier.tmp_lookup;
 
 
@@ -1198,6 +1198,8 @@ BEGIN
 				  source_rows,
 				  target_rows);
 			
+			COMMIT;
+			
 
     end if;
     end loop;
@@ -1212,19 +1214,15 @@ $$
 / Each table is pivoted on ptr_id and its attributes to 
 / compile classifications in at the row level.
 /-----------------------------------------------------------*/
-
-ALTER TABLE umls_mrhier.lookup_ext 
-RENAME TO tmp_lookup;
-
+DROP TABLE IF EXISTS umls_mrhier.lookup;
 CREATE TABLE umls_mrhier.lookup AS (
   SELECT 
   	*, 
   	SUBSTRING(CONCAT('tmp_pivot_', hierarchy_table), 1, 60) AS tmp_pivot_table, 
   	SUBSTRING(CONCAT('pivot_', hierarchy_table), 1, 60) AS pivot_table
-  FROM umls_mrhier.tmp_lookup
+  FROM umls_mrhier.lookup_ext
 );
-
-DROP TABLE umls_mrhier.tmp_lookup;
+COMMIT;
 
 /*-----------------------------------------------------------
 / A second pivot lookup is made to construct the crosstab function 
@@ -1238,9 +1236,7 @@ CREATE TABLE  umls_mrhier.lookup_crosstab_statement (
   sql_statement text
 )
 ;
-
-
-SELECT * FROM umls_mrhier.lookup;
+COMMIT;
 
 /*-----------------------------------------------------------
 / A crosstab function call is created to pivot each table 
@@ -1348,6 +1344,8 @@ BEGIN
 	      source_table, 
 	      target_table, 
 	      pivot_table);
+	      
+	      COMMIT;
 	
 		PERFORM notify_completion(CONCAT('processing sql statement for ', source_table, ' into table ', target_table));
 		
@@ -1390,7 +1388,6 @@ BEGIN
 			  source_rows);
 		
 		
-
     end if;
     end loop;
 end;
@@ -1522,14 +1519,14 @@ $$
 ;
 
 
-SELECT * FROM umls_mrhier.pivot_snomedct_us_organism;
+/*-----------------------------------------------------------
+/ The absolute maximum ptr level across the entire MRHIER 
+/ is derived to generate the DDL for the final MRHIER_STR 
+/ table.
+/-----------------------------------------------------------*/
 
-SELECT * FROM public.process_umls_mrhier_log;
-
-
-
-DROP TABLE IF EXISTS umls_mrhier.ext_lookup;
-CREATE TABLE umls_mrhier.ext_lookup (
+DROP TABLE IF EXISTS umls_mrhier.lookup_abs_max;
+CREATE TABLE umls_mrhier.lookup_abs_max (
   extended_table varchar(255), 
   max_ptr_level int
 );
@@ -1580,7 +1577,7 @@ begin
     EXECUTE 
       format(
       	'
-      	INSERT INTO umls_mrhier.ext_lookup 
+      	INSERT INTO umls_mrhier.lookup_abs_max 
       	SELECT 
       	 ''%s'' AS extended_table, 
       	 MAX(ptr_level) AS max_ptr_level 
@@ -1597,6 +1594,11 @@ begin
 END;
 $$
 ;
+
+
+/*-----------------------------------------------------------
+/ MRHIER_STR Table 
+/-----------------------------------------------------------*/
 
 DO 
 $$
@@ -1615,12 +1617,12 @@ DECLARE
 BEGIN 
   SELECT max(max_ptr_level) 
   INTO abs_max_ptr_level
-  FROM umls_mrhier.ext_lookup;
+  FROM umls_mrhier.lookup_abs_max;
   
   EXECUTE 
   format('
-  DROP TABLE IF EXISTS umls_mrhier.ddl_lookup;
-  CREATE TABLE umls_mrhier.ddl_lookup (
+  DROP TABLE IF EXISTS umls_mrhier.lookup_final_ddl;
+  CREATE TABLE umls_mrhier.lookup_final_ddl (
      ddl text
   );
   
@@ -1631,7 +1633,7 @@ BEGIN
       FROM seq1 
   )
    
-  INSERT INTO umls_mrhier.ddl_lookup
+  INSERT INTO umls_mrhier.lookup_final_ddl
   SELECT ddl 
   FROM seq2
   ;',
@@ -1639,7 +1641,7 @@ BEGIN
   
   SELECT ddl
   INTO processed_mrhier_ddl
-  FROM umls_mrhier.ddl_lookup;
+  FROM umls_mrhier.lookup_final_ddl;
   
   EXECUTE 
     format(
@@ -1656,7 +1658,7 @@ BEGIN
     processed_mrhier_ddl
     );
     
-  DROP TABLE umls_mrhier.ddl_lookup;
+  DROP TABLE umls_mrhier.lookup_final_ddl;
   
   SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
   for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_crosstab_statement pl
@@ -1687,13 +1689,13 @@ $$
 
 
 
-/*
-MRHIER_EXCL Table  
-Table that includes any source MRHIER `ptr` that did not make it 
-to the `MRHIER_STR` table.
-
-- Only vocabularies where `LAT = 'ENG'` and not 'SRC' in MRCONSO table 
-*/
+/*-----------------------------------------------------------
+/MRHIER_EXCL Table  
+/Table that includes any source MRHIER `ptr` that did not make it 
+/to the `MRHIER_STR` table.
+/
+/- Only vocabularies where `LAT = 'ENG'` and not 'SRC' in MRCONSO table 
+-----------------------------------------------------------*/
 
 WITH a AS (
 	SELECT m1.sab,m1.ptr_id, CASE WHEN m1.ptr IS NULL THEN TRUE ELSE FALSE END ptr_is_null  
@@ -1726,12 +1728,9 @@ CREATE TABLE umls_mrhier.mrhier_str_excl AS (
 	) 
 ;
 
-
-
-
-
-SELECT * 
-FROM public.setup_umls_class_log;
+/*-----------------------------------------------------------
+/ Final Tables  
+-----------------------------------------------------------*/
 
 DO
 $$
@@ -1855,7 +1854,6 @@ BEGIN
 END;
 $$
 ;
-
 
 ALTER TABLE umls_class.mrhier_str
 ADD CONSTRAINT xpk_mrhier_str 
