@@ -248,17 +248,15 @@ $$
 
 
 
-ALTER SCHEMA umls_mrhier RENAME TO old_umls_mrhier;
-CREATE SCHEMA umls_mrhier;
-
                                         
 /**************************************************************************
 If the current UMLS Metathesaurus version is not logged for 
-the transfer of the MIRHIER table, it is copied to the 
+the transfer of the MRHIER table, the `umls_mrhier` schema is 
+renamed to `old_umls_mrhier` (after dropping an existing `old_umls_mrhier`). 
+The MRHIER table is then copied to the 
 `umls_mrhier` schema with the addition of a `ptr_id` for 
 each row number.
 **************************************************************************/  
-
 
 
 DO
@@ -279,6 +277,10 @@ BEGIN
 	INTO requires_processing;
 	
   	IF requires_processing THEN 
+  	
+  		DROP SCHEMA IF EXISTS old_umls_mrhier;
+  		ALTER SCHEMA umls_mrhier RENAME TO old_umls_mrhier;
+		CREATE SCHEMA umls_mrhier;
   	
   		SELECT get_log_timestamp() 
   		INTO start_timestamp
@@ -371,12 +373,9 @@ $$
 ;
 
 
-
-SELECT * 
-FROM public.process_umls_mrhier_log;
-
 /*-------------------------------------------------------------- 
 CREATE INITIAL LOOKUP TABLES
+----------------------------------------------------------------
 Create lookup table between all the hierarchy vocabularies (`sab` 
 in MRHIER) and a cleaned up version of the `sab` value 
 to be used as its tablename (some `sab` values could have 
@@ -573,11 +572,10 @@ end;
 $$
 ;
 
-select * from public.process_umls_mrhier_log;
-
 
 /*-----------------------------------------------------------    
-PROCESS PTR
+PARSE PTR
+-------------------------------------------------------------
 For each unique `sab` in the MRHIER table, 
 the decimal-separated `ptr` string is parsed along with its 
 ordinality as `ptr_level`. The parsed individual `ptr_aui` 
