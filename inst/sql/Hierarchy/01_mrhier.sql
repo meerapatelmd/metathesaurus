@@ -32,7 +32,7 @@ Setup log table logs the final `MRHIER`, `MRHIER_STR`, and `MRHIER_STR_EXCL` tab
 Both are setup if it does not already exist.  
 **************************************************************************/
 
--- Log for processing steps
+
 CREATE TABLE IF NOT EXISTS public.process_umls_mrhier_log (
     process_start_datetime timestamp without time zone,
     process_stop_datetime timestamp without time zone,
@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS public.process_umls_mrhier_log (
 );
 
 
--- Final log once the MRHIER, MRHIER_STR, and MRHIER_STR_EXCL are written
 CREATE TABLE IF NOT EXISTS public.setup_umls_class_log (
     suc_datetime timestamp without time zone,
     mth_version character varying(255),
@@ -133,9 +132,7 @@ END;
 $$;
 
 
--- Check if a unique source to target table transformation had already previously written based on 
--- what was logged in the process log. If so it is skipped to reduce duplicative tasks.
-drop function if exists check_if_requires_processing(character varying,character varying,character varying);
+DROP FUNCTION check_if_requires_processing(character varying,character varying,character varying);
 create or replace function check_if_requires_processing(umls_mth_version varchar, source_table varchar, target_table varchar) 
 returns boolean 
 language plpgsql
@@ -248,6 +245,12 @@ begin
 end;
 $$
 ;
+
+
+
+ALTER SCHEMA umls_mrhier RENAME TO old_umls_mrhier;
+CREATE SCHEMA umls_mrhier;
+
                                         
 /**************************************************************************
 If the current UMLS Metathesaurus version is not logged for 
@@ -255,6 +258,8 @@ the transfer of the MIRHIER table, it is copied to the
 `umls_mrhier` schema with the addition of a `ptr_id` for 
 each row number.
 **************************************************************************/  
+
+
 
 DO
 $$
@@ -358,11 +363,17 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
+			  
+		COMMIT;
 	END IF;
 end;
 $$
 ;
 
+
+
+SELECT * 
+FROM public.process_umls_mrhier_log;
 
 /*-------------------------------------------------------------- 
 CREATE INITIAL LOOKUP TABLES
@@ -450,6 +461,8 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
+			  
+		COMMIT;
 
 	END IF;
 end;
@@ -552,13 +565,15 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
+		
+		COMMIT;
 
 	END IF;
 end;
 $$
 ;
 
-
+select * from public.process_umls_mrhier_log;
 
 
 /*-----------------------------------------------------------    
@@ -588,8 +603,8 @@ BEGIN
 	SELECT get_umls_mth_version() 
 	INTO mth_version;
 	
-	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
-    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup l    
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_parse;
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_parse l    
     LOOP
 		iteration := f.iteration;
 		target_table := f.hierarchy_table;
@@ -751,7 +766,7 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
-		COMMIT;
+		  COMMIT;
 	END IF;
 	END LOOP;
 end;
@@ -1858,3 +1873,5 @@ CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
 CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
 CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 
+
+DROP SCHEMA old_umls_mrhier CASCADE;
