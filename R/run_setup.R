@@ -1,5 +1,5 @@
 #' @title
-#' Instantiate Postgres (Deprecated)
+#' Instantiate Postgres
 #' @inherit setup description
 #' @inheritParams setup
 #' @seealso
@@ -9,7 +9,7 @@
 #'  \code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
 #'  \code{\link[stringr]{str_remove}}
 #'  \code{\link[progress]{progress_bar}}
-#' @rdname setup_pg_mth
+#' @rdname run_setup
 #' @family setup
 #' @export
 #' @importFrom pg13 lsSchema send lsTables dropTable
@@ -18,9 +18,10 @@
 #' @importFrom dplyr mutate select distinct filter
 #' @importFrom stringr str_remove_all
 #' @importFrom progress progress_bar
+#' @importFrom glue glue
 
 
-setup_pg_mth <-
+run_setup <-
   function(conn,
            conn_fun = "pg13::local_connect()",
            schema = "mth",
@@ -43,9 +44,6 @@ setup_pg_mth <-
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE) {
-
-    .Deprecated(new = "run_setup")
-
     if (missing(log_version) | missing(log_release_date)) {
       stop("`log_version` and `log_release_date` are required.")
     }
@@ -119,11 +117,46 @@ setup_pg_mth <-
     }
 
     if (omop_only) {
-      tables <- c("MRCONSO", "MRHIER", "MRMAP", "MRSMAP", "MRSAT", "MRREL")
+      tables <-
+        c(
+          'MRCONSO',
+          'MRHIER',
+          'MRMAP',
+          'MRSMAP',
+          'MRSAT',
+          'MRREL'
+        )
     }
 
     if (english_only) {
-      tables <- tables[!(tables %in% c("MRXW_BAQ", "MRXW_CHI", "MRXW_CZE", "MRXW_DAN", "MRXW_DUT", "MRXW_EST", "MRXW_FIN", "MRXW_FRE", "MRXW_GER", "MRXW_GRE", "MRXW_HEB", "MRXW_HUN", "MRXW_ITA", "MRXW_JPN", "MRXW_KOR", "MRXW_LAV", "MRXW_NOR", "MRXW_POL", "MRXW_POR", "MRXW_RUS", "MRXW_SCR", "MRXW_SPA", "MRXW_SWE", "MRXW_TUR"))]
+      tables <-
+        tables[!(tables %in%  c(
+                              'MRXW_BAQ',
+                              'MRXW_CHI',
+                              'MRXW_CZE',
+                              'MRXW_DAN',
+                              'MRXW_DUT',
+                              'MRXW_EST',
+                              'MRXW_FIN',
+                              'MRXW_FRE',
+                              'MRXW_GER',
+                              'MRXW_GRE',
+                              'MRXW_HEB',
+                              'MRXW_HUN',
+                              'MRXW_ITA',
+                              'MRXW_JPN',
+                              'MRXW_KOR',
+                              'MRXW_LAV',
+                              'MRXW_NOR',
+                              'MRXW_POL',
+                              'MRXW_POR',
+                              'MRXW_RUS',
+                              'MRXW_SCR',
+                              'MRXW_SPA',
+                              'MRXW_SWE',
+                              'MRXW_TUR'
+                            ))]
+
     }
 
     if ("reset_schema" %in% steps) {
@@ -169,6 +202,49 @@ setup_pg_mth <-
 
     # Log
     if ("log" %in% steps) {
+
+      sql_statement <-
+        glue::glue(
+      "
+      CREATE TABLE IF NOT EXISTS {log_schema}.{log_table_name} (
+          sm_datetime timestamp without time zone NOT NULL,
+          sm_version varchar(100) NOT NULL,
+          sm_release_date varchar(25) NOT NULL,
+          sm_schema varchar(25) NOT NULL,
+          ambiglui int,
+          ambigsui int,
+          deletedcui int,
+          deletedlui int,
+          deletedsui int,
+          mergedcui int,
+          mergedlui int,
+          mraui int,
+          mrcols int,
+          mrconso int,
+          mrcui int,
+          mrcxt int,
+          mrdef int,
+          mrdoc int,
+          mrfiles int,
+          mrhier int,
+          mrhist int,
+          mrmap int,
+          mrrank int,
+          mrrel int,
+          mrsab int,
+          mrsat int,
+          mrsmap int,
+          mrsty int,
+          mrxns_eng int,
+          mrxnw_eng int,
+          mrxw_eng int
+      );
+      ")
+
+      pg13::send(conn = conn,
+                 sql_statement = sql_statement)
+
+
       table_names <-
         pg13::ls_tables(
           conn = conn,
@@ -196,7 +272,7 @@ setup_pg_mth <-
           values_from = "Rows"
         ) %>%
         dplyr::mutate(
-          sm_datetime = Sys.time(),
+          sm_datetime = as.character(Sys.time()),
           sm_version = log_version,
           sm_release_date = log_release_date,
           sm_schema = schema
@@ -206,62 +282,76 @@ setup_pg_mth <-
           sm_version,
           sm_release_date,
           sm_schema,
-          dplyr::everything()
+          dplyr::all_of(c(
+            'ambiglui',
+            'ambigsui',
+            'deletedcui',
+            'deletedlui',
+            'deletedsui',
+            'mergedcui',
+            'mergedlui',
+            'mraui',
+            'mrcols',
+            'mrconso',
+            'mrcui',
+            'mrcxt',
+            'mrdef',
+            'mrdoc',
+            'mrfiles',
+            'mrhier',
+            'mrhist',
+            'mrmap',
+            'mrrank',
+            'mrrel',
+            'mrsab',
+            'mrsat',
+            'mrsmap',
+            'mrsty',
+            'mrxns_eng',
+            'mrxnw_eng',
+            'mrxw_eng'
+          ))
         )
 
 
+      current_row_count <-
+        unname(unlist(current_row_count))
 
-      if (pg13::table_exists(
-        conn = conn,
-        schema = log_schema,
-        table_name = log_table_name
-      )) {
-        updated_log <-
-          dplyr::bind_rows(
-            pg13::read_table(
-              conn = conn,
-              schema = log_schema,
-              table = log_table_name,
-              verbose = verbose,
-              render_sql = render_sql,
-              render_only = render_only
-            ),
-            current_row_count
-          ) %>%
-          dplyr::select(
-            sm_datetime,
-            sm_version,
-            sm_release_date,
-            sm_schema,
-            dplyr::everything()
-          )
-      } else {
-        updated_log <- current_row_count
-      }
+      sql_statement <-
+        glue::glue(
+          "
+          INSERT INTO {log_schema}.{log_table_name}
+          VALUES ({glue::glue_collapse(glue::single_quote(current_row_count), sep = ', ')})
+          ;
+          "
+        )
 
-      pg13::drop_table(
-        conn = conn,
-        schema = log_schema,
-        table = log_table_name,
-        verbose = verbose,
-        render_sql = render_sql,
-        render_only = render_only
-      )
+      pg13::send(conn = conn,
+                 sql_statement = sql_statement)
 
-      pg13::write_table(
-        conn = conn,
-        schema = log_schema,
-        table_name = log_table_name,
-        data = updated_log,
-        verbose = verbose,
-        render_sql = render_sql,
-        render_only = render_only
-      )
 
       cli::cat_line()
       cli::cat_boxx("Log Results",
         float = "center"
       )
+
+      sql_statement <-
+        glue::glue(
+          "
+          SELECT *
+          FROM {log_schema}.{log_table_name}
+          WHERE sm_datetime IN (SELECT MAX(sm_datetime) FROM {log_schema}.{log_table_name});
+          "
+        )
+
+      updated_log <-
+      pg13::query(
+        conn = conn,
+        sql_statement = sql_statement,
+        checks = ''
+      )
+
+
       print(tibble::as_tibble(updated_log))
       cli::cat_line()
     }

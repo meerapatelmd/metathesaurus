@@ -32,7 +32,7 @@
 #' @importFrom stringr str_replace_all
 #' @importFrom SqlRender render
 #' @importFrom pg13 send query
-#' @importFrom dplyr transmute
+#' @importFrom dplyr transmute n
 #' @importFrom tibble tibble
 #' @import huxtable
 #' @import glue
@@ -105,7 +105,8 @@ write_crosswalk_table <-
       conn_fun = conn_fun,
       sql_statement = ddl_statement,
       verbose = verbose,
-      render_sql = render_sql
+      render_sql = render_sql,
+      checks = ""
     )
 
     if (missing(tty_ranking)) {
@@ -121,10 +122,11 @@ write_crosswalk_table <-
               sab = sab
             ),
           verbose = verbose,
-          render_sql = render_sql
+          render_sql = render_sql,
+          checks = ""
         ) %>%
               transmute(tty,
-                        rank = 1:n())
+                        rank = 1:dplyr::n())
 
 
       tty_ranking <- tty_ranking_df$tty
@@ -147,7 +149,8 @@ write_crosswalk_table <-
                                     tty_ranking = pg13::sQuo(tty_ranking)
                             ),
                     verbose = verbose,
-                    render_sql = render_sql
+                    render_sql = render_sql,
+                    checks = ""
             ) %>%
             unlist() %>%
             unname()
@@ -176,7 +179,8 @@ write_crosswalk_table <-
                                 tty_ranking = pg13::sQuo(tty_ranking)
                         ),
                 verbose = verbose,
-                render_sql = render_sql
+                render_sql = render_sql,
+                checks = ""
         )
 
         tty_ranking_df <-
@@ -289,7 +293,8 @@ write_crosswalk_table <-
       conn_fun = conn_fun,
       sql_statement = sql_statement,
       verbose = verbose,
-      render_sql = render_sql
+      render_sql = render_sql,
+      checks = ""
     )
 
 
@@ -298,7 +303,8 @@ write_crosswalk_table <-
             conn_fun = conn_fun,
             sql_statement = glue::glue("SELECT COUNT(DISTINCT code) FROM {crosswalk_schema}.{sab_table};"),
             verbose = verbose,
-            render_sql = render_sql
+            render_sql = render_sql,
+            checks = ""
     )
 
     original_unique_code_ct <-
@@ -306,7 +312,8 @@ write_crosswalk_table <-
                     conn_fun = conn_fun,
                     sql_statement = glue::glue("SELECT COUNT(DISTINCT code) FROM mth.mrconso WHERE sab = '{sab}';"),
                     verbose = verbose,
-                    render_sql = render_sql
+                    render_sql = render_sql,
+                    checks = ""
             )
 
     row_count <-
@@ -314,7 +321,8 @@ write_crosswalk_table <-
             conn_fun = conn_fun,
             sql_statement = glue::glue("SELECT COUNT(*) FROM {crosswalk_schema}.{sab_table};"),
             verbose = verbose,
-            render_sql = render_sql
+            render_sql = render_sql,
+            checks = ""
     )
 
 
@@ -353,7 +361,8 @@ write_crosswalk_table <-
             sql_statement =
                     glue::glue("SELECT log.sm_version, log.sm_release_date FROM {log_schema}.{log_table_name} log WHERE log.sm_datetime IN (SELECT MAX(sm_datetime) FROM {log_schema}.{log_table_name});"),
             verbose = verbose,
-            render_sql = render_sql
+            render_sql = render_sql,
+            checks = ""
     )
 
 
