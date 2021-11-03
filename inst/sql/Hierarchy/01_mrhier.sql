@@ -22,6 +22,9 @@
 * To Do:  
 * [ ] Cleanup scripts with functions from 1387 onward, including logging to 
 *     the progress log and annotations
+* [ ] After 2021AB update, see how the lookup and results tables can be 
+*     renamed with a degree of provenance.
+* [ ] Some log entries do not have target table row counts
 **************************************************************************/
 
 
