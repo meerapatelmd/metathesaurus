@@ -364,7 +364,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 			  
-		COMMIT;
+		
 	END IF;
 end;
 $$
@@ -462,7 +462,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 			  
-		COMMIT;
+		
 
 	END IF;
 end;
@@ -566,7 +566,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 		
-		COMMIT;
+		
 
 	END IF;
 end;
@@ -766,7 +766,6 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
-		  COMMIT;
 	END IF;
 	END LOOP;
 end;
@@ -1010,7 +1009,7 @@ BEGIN
 				  target_table,
 				  source_rows,
 				  target_rows);
-			COMMIT;
+			
 
     end if;
     end loop;
@@ -1197,7 +1196,7 @@ BEGIN
 				  target_table,
 				  source_rows,
 				  target_rows);
-			COMMIT;
+			
 
     end if;
     end loop;
@@ -1388,7 +1387,7 @@ BEGIN
 			  sab,
 			  source_table,
 			  source_rows);
-		COMMIT;
+		
 		
 
     end if;
@@ -1512,7 +1511,7 @@ BEGIN
 			  target_table,
 			  source_rows, 
 			  target_rows);
-		COMMIT;
+		
 		
 
     end if;
