@@ -1879,6 +1879,18 @@ CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 / The extended tables are subset for the specific classes
 / below derived from RxNorm's RxClass Navigator.
 /-----------------------------------------------------------*/
+CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
+    sr_datetime timestamp without time zone,
+    sr_mth_version character varying(255),
+    sr_mth_release_dt character varying(255),
+    sabs character varying(255),
+    rxclass_schema character varying(255),
+    rxclass_abbr character varying(255),
+    rxclass_code character varying(255),
+    row_ct numeric
+);
+
+
 DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass;
 CREATE TABLE umls_mrhier.lookup_rxclass (
 rxclass_sab varchar(255) NOT NULL,
