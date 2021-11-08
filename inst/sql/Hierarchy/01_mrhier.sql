@@ -1208,7 +1208,6 @@ $$
 ;
 
 
-
 /*-----------------------------------------------------------
 / PIVOT
 / Each table is pivoted on ptr_id and its attributes to
@@ -1871,3 +1870,76 @@ CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
 CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
 CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 
+
+
+
+
+/*-----------------------------------------------------------
+/ RXCLASS SUBSET
+/ The extended tables are subset for the specific classes
+/ below derived from RxNorm's RxClass Navigator.
+/-----------------------------------------------------------*/
+DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass;
+CREATE TABLE umls_mrhier.lookup_rxclass (
+rxclass_sab varchar(255) NOT NULL,
+rxclass_abbr varchar(255) NOT NULL,
+rxclass_code varchar(255) NOT NULL
+);
+
+INSERT INTO umls_mrhier.lookup_rxclass
+VALUES
+  ('MED-RT', 'EPC', 'N0000189939'),
+  ('MSH', 'MeSHPA', 'D020228'),
+  ('MED-RT', 'MoA', 'N0000000223'),
+  ('MED-RT', 'PE', 'N0000009802'),
+  ('MED-RT', 'PK', 'N0000000003'),
+  ('MED-RT', 'TC', 'N0000178293'),
+  ('MSH', 'Diseases', 'U000006'),
+  ('MSH', 'AgeGroups', 'D009273'),
+  ('MSH', 'Behavior', 'D001520'),
+  ('MSH', 'Reproductive', 'D055703'),
+  ('MSH', 'Substances', 'U000005'),
+  ('SNOMEDCT_US', 'DISPOS', '766779001'),
+  ('SNOMEDCT_US', 'STRUCT', '763760008');
+
+DROP TABLE IF EXISTS umls_mrhier.tmp_rxclass0;
+CREATE TABLE umls_mrhier.tmp_rxclass0 AS (
+        SELECT * FROM umls_mrhier.ext_med_rt
+        UNION
+        SELECT * FROM umls_mrhier.ext_msh
+        UNION
+        SELECT * FROM umls_mrhier.snomedct_us
+);
+
+DROP TABLE IF EXISTS umls_mrhier.tmp_rxclass1;
+CREATE TABLE umls_mrhier.tmp_rxclass1 as (
+        SELECT DISTINCT l.*, t0.ptr_id
+        FROM umls_mrhier.tmp_rxclass0 t0
+        INNER JOIN umls_mrhier.lookup_rxclass l
+        ON l.rxclass_code = t0.ptr_code
+)
+;
+
+DROP TABLE IF EXISTS umls_mrhier.tmp_rxclass2;
+CREATE TABLE umls_mrhier.tmp_rxclass2 as (
+        SELECT
+          t1.rxclass_sab,
+          t1.rxclass_abbr,
+          t1.rxclass_code,
+          t0.*
+        FROM umls_mrhier.tmp_rxclass0 t0
+        INNER JOIN umls_mrhier.tmp_class1 t1
+        ON t0.ptr_id = t1.ptr_id
+)
+;
+
+DROP TABLE IF EXISTS umls_mrhier.ext_rxclass;
+CREATE TABLE umls_mrhier.ext_rxclass AS (
+        SELECT *
+        FROM umls_mrhier.tmp_rxclass2
+)
+;
+
+DROP TABLE umls_mrhier.tmp_rxclass0;
+DROP TABLE umls_mrhier.tmp_rxclass1;
+DROP TABLE umls_mrhier.tmp_rxclass2;
