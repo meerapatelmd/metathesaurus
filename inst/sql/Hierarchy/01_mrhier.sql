@@ -606,7 +606,7 @@ $$
 
 
 /**************************************************************************
-/ III. PARSE PTR BY SAB
+/ III. PARSE PTR BY SAB ('parse')
 / -------------------------------------------------------------------------
 / For each unique SAB in the MRHIER table,
 / the decimal-separated PTR string is parsed along with its
@@ -1067,15 +1067,10 @@ end;
 $$
 ;
 
-
-/*-----------------------------------------------------------
-REFRESH LOOKUP
-The lookup is updated with the SNOMEDCT subset tables
-and counts.
------------------------------------------------------------*/
-
-DROP TABLE IF EXISTS umls_mrhier.tmp_lookup;
-CREATE TABLE umls_mrhier.tmp_lookup AS (
+-- `LOOKUP_PARSE` is updated with the SNOMEDCT subset tables 
+-- and counts.
+ALTER TABLE umls_mrhier.lookup_parse TO tmp_lookup_parse;
+CREATE TABLE umls_mrhier.lookup_parse AS (
 	SELECT
 	  lu.hierarchy_sab,
 	  tmp.root_aui,
@@ -1088,22 +1083,25 @@ CREATE TABLE umls_mrhier.tmp_lookup AS (
 	ON lu.hierarchy_table = tmp.hierarchy_table
 )
 ;
+DROP TABLE umls_mrhier.lookup_snomed; 
+DROP TABLE umls_mrhier.tmp_lookup_parse; 
 
-/*-----------------------------------------------------------
-/ EXTEND PTR PATH TO LEAF
-/ The leaf of the hierarchy is found within the source concept
-/ (`aui`, `code`, and `str`). These leafs are added at the end
-/ of the path to root.
-/-----------------------------------------------------------*/
+
+/**************************************************************************
+/ V. EXTEND PATH TO ROOT WITH LEAF ('ext')
+/ -------------------------------------------------------------------------
+/ The leaf of the hierarchy is represented by the AUI, CODE, and STR. 
+/ These leafs are added at the end of the path to root to get a complete 
+/ representation of the classification.
+**************************************************************************/
+
 DROP TABLE IF EXISTS umls_mrhier.lookup_ext;
 CREATE TABLE umls_mrhier.lookup_ext AS (
   SELECT
   	*,
   	SUBSTRING(CONCAT('ext_', hierarchy_table), 1, 60) AS extended_table
-  FROM umls_mrhier.tmp_lookup
+  FROM umls_mrhier.lookup_parse
 );
-DROP TABLE umls_mrhier.tmp_lookup;
-
 
 DO
 $$
