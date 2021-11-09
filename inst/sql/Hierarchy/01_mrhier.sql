@@ -25,7 +25,8 @@
 * [ ] After 2021AB update, see how the lookup and results tables can be
 *     renamed with a degree of provenance.
 * [ ] Add the `sab` field back to final MRHIER_STR table
-* [ ] Some log entries do not have target table row counts
+* [X] Some log entries do not have target table row counts
+* [ ] Log entries from `ext_` to `pivot_` do not have `sab` value
 **************************************************************************/
 
 
@@ -262,7 +263,6 @@ The MRHIER table is then copied to the
 each row number.
 **************************************************************************/
 
-
 DO
 $$
 DECLARE
@@ -282,9 +282,9 @@ BEGIN
 
   	IF requires_processing THEN
 
-  		DROP SCHEMA IF EXISTS old_umls_mrhier;
-  		ALTER SCHEMA umls_mrhier RENAME TO old_umls_mrhier;
+  		DROP SCHEMA IF EXISTS umls_mrhier CASCADE;
 		CREATE SCHEMA umls_mrhier;
+		COMMIT;
 
   		SELECT get_log_timestamp()
   		INTO start_timestamp
@@ -324,6 +324,8 @@ BEGIN
 		CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
 
 		DROP TABLE umls_mrhier.tmp_mrhier;
+		
+		COMMIT;
 
 		PERFORM notify_completion('processing MRHIER');
 
