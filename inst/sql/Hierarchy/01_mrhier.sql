@@ -370,7 +370,10 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
-
+			  
+		COMMIT;
+			  
+		PERFORM notify_timediff('processing MRHIER', start_timestamp, stop_timestamp);
 
 	END IF;
 end;
@@ -465,6 +468,11 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
+			  
+		COMMIT;
+			  
+		
+		PERFORM notify_timediff('processing LOOKUP_ENG', start_timestamp, stop_timestamp);
 
 
 
@@ -524,8 +532,11 @@ BEGIN
 		FROM df
 		ORDER BY count -- ordered so that when writing tables later on, can see that the script is working fine over multiple small tables at first
 		;
+		
 
 		PERFORM notify_completion('processing LOOKUP_PARSE');
+		
+		COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -569,6 +580,13 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
+			  
+		COMMIT;
+			  
+		
+		PERFORM notify_timediff('processing LOOKUP_PARSE', start_timestamp, stop_timestamp);
+
+
 
 
 
@@ -723,6 +741,9 @@ BEGIN
 			  	target_table,
 			  	target_table
 			  	);
+			  	
+			  COMMIT;
+			  
 
 
   		PERFORM notify_completion(CONCAT('processing', ' ', source_sab, ' into table ', target_table));
@@ -769,6 +790,10 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
+			  
+		COMMIT;
+		
+		PERFORM notify_timediff(CONCAT('processing', ' ', source_sab, ' into table ', target_table), start_timestamp, stop_timestamp);
 	END IF;
 	END LOOP;
 end;
@@ -882,6 +907,10 @@ BEGIN
 
 
 		PERFORM notify_completion('processing LOOKUP_SNOMED');
+		
+		COMMIT;
+		
+		PERFORM notify_timediff('processing LOOKUP_SNOMED', start_timestamp, stop_timestamp);
 
 	END IF;
 end;
@@ -969,6 +998,8 @@ BEGIN
 				  );
 
 
+			COMMIT; 
+			
 			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
 
 
@@ -1012,6 +1043,10 @@ BEGIN
 				  target_table,
 				  source_rows,
 				  target_rows);
+				  
+		COMMIT;
+		
+		PERFORM notify_timediff(CONCAT('processing table ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
     end if;
@@ -1152,6 +1187,8 @@ BEGIN
 			  	source_table,
 			  	source_table,
 			  	target_table);
+			  	
+			COMMIT;
 
 			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
 
@@ -1199,7 +1236,10 @@ BEGIN
 				  source_rows,
 				  target_rows);
 
-			COMMIT;
+			
+		COMMIT;
+		
+		PERFORM notify_timediff(CONCAT('processing table ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
     end if;
@@ -1386,6 +1426,11 @@ BEGIN
 			  sab,
 			  source_table,
 			  source_rows);
+			  
+		COMMIT;
+		
+		PERFORM notify_timediff(CONCAT('processing sql statement for ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
+
 
 
     end if;
@@ -1462,6 +1507,8 @@ BEGIN
 	      		source_table,
 	      		tmp_table,
 	      		tmp_table);
+	      		
+	    COMMIT;
 
 		PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
 
@@ -1509,6 +1556,12 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
+			  
+			  
+		COMMIT;
+		
+		
+		PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
 
