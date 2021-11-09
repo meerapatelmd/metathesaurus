@@ -383,15 +383,14 @@ end;
 $$
 ;
 
+/**************************************************************************
+/ II. CREATE LOOKUP TABLES `LOOKUP_ENG` and `LOOKUP_PARSE`
+/ -------------------------------------------------------------------------
+/ `LOOKUP_ENG` is a single field of all SAB that have a LAT value of 'ENG' 
+/ in the MRCONSO table. 
+**************************************************************************/
 
-/*--------------------------------------------------------------
-CREATE INITIAL LOOKUP TABLES
-----------------------------------------------------------------
-Create lookup table between all the hierarchy vocabularies (`sab`
-in MRHIER) and a cleaned up version of the `sab` value
-to be used as its tablename (some `sab` values could have
-punctuation that is forbidden in table names).
---------------------------------------------------------------*/
+
 DO
 $$
 DECLARE
@@ -484,6 +483,13 @@ end;
 $$
 ;
 
+
+/**************************************************************************
+/ II. CREATE LOOKUP TABLES `LOOKUP_ENG` and `LOOKUP_PARSE`
+/ -------------------------------------------------------------------------
+/ `LOOKUP_PARSE` maps each SAB to its corresponding tablename because 
+/ some SABs contain punctuation that is forbidden in Postgres tablenames.  
+**************************************************************************/
 
 DO
 $$
@@ -599,14 +605,16 @@ $$
 ;
 
 
-/*-----------------------------------------------------------
-PARSE PTR
--------------------------------------------------------------
-For each unique `sab` in the MRHIER table,
-the decimal-separated `ptr` string is parsed along with its
-ordinality as `ptr_level`. The parsed individual `ptr_aui`
-is joined to MRCONSO to add the `ptr_code` and `ptr_str`.
------------------------------------------------------------*/
+/**************************************************************************
+/ III. PARSE PTR BY SAB
+/ -------------------------------------------------------------------------
+/ For each unique SAB in the MRHIER table,
+/ the decimal-separated PTR string is parsed along with its
+/ ordinality as PTR_LEVEL. The parsed individual PTR_AUI
+/ is joined to MRCONSO to add the PTR_CODE and PTR. Each SAB is written to 
+/ its own table referenced in the `lookup_parse` table. 
+**************************************************************************/
+
 
 DO
 $$
@@ -804,12 +812,13 @@ $$
 ;
 
 
-/*-----------------------------------------------------------
-SPLIT SNOMEDCT AT ROOT
-The SNOMEDCT_US table is too large to work with downstream
-and it is subset here by the 2nd level root concept to make it
-more manageable.
------------------------------------------------------------*/
+/**************************************************************************
+/ IV. SPLIT SNOMEDCT_US TABLE BY ROOT 
+/ -------------------------------------------------------------------------
+/ The SNOMEDCT_US table is too large to work with downstream
+/ and it is subset here by the 2nd level root concept to make it
+/ more manageable.
+**************************************************************************/
 
 DO
 $$
