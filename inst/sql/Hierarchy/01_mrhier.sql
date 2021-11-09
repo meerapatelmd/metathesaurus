@@ -1382,7 +1382,7 @@ BEGIN
 
 	      )
 
-	      INSERT INTO umls_mrhier.lookup_crosstab_statement
+	      INSERT INTO umls_mrhier.lookup_pivot_crosstab
 	      SELECT * FROM seq5
 	      ;
 	      ',
@@ -1468,8 +1468,8 @@ BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
 
-	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
-    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_crosstab_statement l
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_crosstab;
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_pivot_crosstab l
     LOOP
 		iteration    := f.iteration;
 		source_table := f.extended_table;
@@ -1719,8 +1719,8 @@ BEGIN
 
   DROP TABLE umls_mrhier.lookup_final_str_ddl;
 
-  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_crosstab_statement;
-  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_crosstab_statement pl
+  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_crosstab;
+  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_pivot_crosstab pl
   loop
     iteration := f.iteration;
     pivot_table := f.pivot_table;
