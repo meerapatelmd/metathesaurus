@@ -1345,19 +1345,127 @@ $$
 / Each table is pivoted on ptr_id to compile classifications in at 
 / the row level.
 **************************************************************************/
-DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_tables;
-CREATE TABLE umls_mrhier.lookup_pivot_tables AS (
-  SELECT
-  	*,
-  	SUBSTRING(CONCAT('tmp_pivot_', hierarchy_table), 1, 60) AS tmp_pivot_table,
-  	SUBSTRING(CONCAT('pivot_', hierarchy_table), 1, 60) AS pivot_table
-  FROM umls_mrhier.lookup_ext
-);
-COMMIT;
+
+DO
+$$
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
+BEGIN
+	SELECT get_umls_mth_version()
+	INTO mth_version;
+
+	SELECT check_if_requires_processing(mth_version, 'LOOKUP_EXT', 'LOOKUP_PIVOT_TABLES')
+	INTO requires_processing;
+
+  	IF requires_processing THEN
+
+  		SELECT get_log_timestamp()
+  		INTO start_timestamp
+  		;
+
+  		PERFORM notify_start('processing LOOKUP_EXT');
+
+  		
+		DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_tables;
+		CREATE TABLE umls_mrhier.lookup_pivot_tables AS (
+		  SELECT
+		  	*,
+		  	SUBSTRING(CONCAT('tmp_pivot_', hierarchy_table), 1, 60) AS tmp_pivot_table,
+		  	SUBSTRING(CONCAT('pivot_', hierarchy_table), 1, 60) AS pivot_table
+		  FROM umls_mrhier.lookup_ext
+		);
+		COMMIT;
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+		SELECT get_row_count('umls_mrhier.lookup_ext')
+		INTO source_rows
+		;
+
+		SELECT get_row_count('umls_mrhier.lookup_pivot_tables')
+		INTO target_rows
+		;
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''LOOKUP_EXT'',
+			  ''LOOKUP_PIVOT_TABLES'',
+			  ''%s'',
+			  ''%s'');
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_rows,
+			  target_rows);
 
 
+		PERFORM notify_completion('processing LOOKUP_EXT');
+		
+		COMMIT;
+		
+		PERFORM notify_timediff('processing LOOKUP_EXT', start_timestamp, stop_timestamp);
+
+	END IF;
+END;
+$$
+;
+
+
+----------------------------------------
 -- A second pivot lookup is made to construct the crosstab 
 -- function call
+DO
+$$
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
+BEGIN
+	SELECT get_umls_mth_version()
+	INTO mth_version;
+
+	SELECT check_if_requires_processing(mth_version, 'LOOKUP_PARSE', 'LOOKUP_EXT')
+	INTO requires_processing;
+
+  	IF requires_processing THEN
+
+  		SELECT get_log_timestamp()
+  		INTO start_timestamp
+  		;
+
+  		PERFORM notify_start('processing LOOKUP_EXT');
+  		
 DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_crosstab;
 CREATE TABLE  umls_mrhier.lookup_pivot_crosstab (
   extended_table varchar(255),
@@ -1372,6 +1480,13 @@ COMMIT;
 -- based on the maximum `ptr_level` in that table. This is
 -- required to pass the subsequent column names as the
 -- argument to the crosstab function.
+
+
+END;
+$$
+;
+
+
 DO
 $$
 DECLARE
