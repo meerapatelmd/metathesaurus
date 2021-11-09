@@ -256,9 +256,8 @@ $$
 
 /**************************************************************************
 If the current UMLS Metathesaurus version is not logged for
-the transfer of the MRHIER table, the `umls_mrhier` schema is
-renamed to `old_umls_mrhier` (after dropping an existing `old_umls_mrhier`).
-The MRHIER table is then copied to the
+the transfer of the MRHIER table, the `umls_mrhier` schema is dropped.
+The new MRHIER table is then copied to the
 `umls_mrhier` schema with the addition of a `ptr_id` for
 each row number.
 **************************************************************************/
