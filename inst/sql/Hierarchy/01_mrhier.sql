@@ -1259,13 +1259,14 @@ $$
 ;
 
 
-/*-----------------------------------------------------------
-/ PIVOT
-/ Each table is pivoted on ptr_id and its attributes to
-/ compile classifications in at the row level.
-/-----------------------------------------------------------*/
-DROP TABLE IF EXISTS umls_mrhier.lookup;
-CREATE TABLE umls_mrhier.lookup AS (
+/**************************************************************************
+/ VI. PIVOT CLASSIFICATIONS ('pivot')
+/ -------------------------------------------------------------------------
+/ Each table is pivoted on ptr_id to compile classifications in at 
+/ the row level.
+**************************************************************************/
+DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_tables;
+CREATE TABLE umls_mrhier.lookup_pivot_tables AS (
   SELECT
   	*,
   	SUBSTRING(CONCAT('tmp_pivot_', hierarchy_table), 1, 60) AS tmp_pivot_table,
@@ -1274,12 +1275,11 @@ CREATE TABLE umls_mrhier.lookup AS (
 );
 COMMIT;
 
-/*-----------------------------------------------------------
-/ A second pivot lookup is made to construct the crosstab function
-/ call
-/-----------------------------------------------------------*/
-DROP TABLE IF EXISTS umls_mrhier.lookup_crosstab_statement;
-CREATE TABLE  umls_mrhier.lookup_crosstab_statement (
+
+-- A second pivot lookup is made to construct the crosstab 
+-- function call
+DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_crosstab;
+CREATE TABLE  umls_mrhier.lookup_pivot_crosstab (
   extended_table varchar(255),
   tmp_pivot_table varchar(255),
   pivot_table varchar(255),
@@ -1288,14 +1288,10 @@ CREATE TABLE  umls_mrhier.lookup_crosstab_statement (
 ;
 COMMIT;
 
-/*-----------------------------------------------------------
-/ A crosstab function call is created to pivot each table
-/ based on the maximum `ptr_level` in that table. This is
-/ required to pass the subsequent column names as the
-/ argument to the crosstab function.
-/-----------------------------------------------------------*/
-
-
+-- A crosstab function call is created to pivot each table
+-- based on the maximum `ptr_level` in that table. This is
+-- required to pass the subsequent column names as the
+-- argument to the crosstab function.
 DO
 $$
 DECLARE
@@ -1318,8 +1314,8 @@ BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
 
-	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup WHERE hierarchy_sab <> 'SRC';
-    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup l WHERE l.hierarchy_sab <> 'SRC'
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot WHERE hierarchy_sab <> 'SRC';
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_pivot l WHERE l.hierarchy_sab <> 'SRC'
     LOOP
 		iteration    := f.iteration;
 		source_table := f.extended_table;
@@ -1328,7 +1324,7 @@ BEGIN
 		source_rows  := f.count;
 		sab          := f.hierarchy_sab;
 
-		SELECT check_if_requires_processing(mth_version, source_table, 'LOOKUP_CROSSTAB_STATEMENT')
+		SELECT check_if_requires_processing(mth_version, source_table, 'LOOKUP_PIVOT_CROSSTAB')
 		INTO requires_processing;
 
   		IF requires_processing THEN
@@ -1425,7 +1421,7 @@ BEGIN
 			  ''%s'',
 			  ''umls_mrhier'',
 			  ''%s'',
-			  ''LOOKUP_CROSSTAB_STATEMENT'',
+			  ''LOOKUP_PIVOT_CROSSTAB'',
 			  ''%s'',
 			   NULL);
 			',
