@@ -1067,25 +1067,6 @@ end;
 $$
 ;
 
--- `LOOKUP_PARSE` is updated with the SNOMEDCT subset tables 
--- and counts.
-ALTER TABLE umls_mrhier.lookup_parse TO tmp_lookup_parse;
-CREATE TABLE umls_mrhier.lookup_parse AS (
-	SELECT
-	  lu.hierarchy_sab,
-	  tmp.root_aui,
-	  tmp.root_code,
-	  tmp.root_str,
-	  COALESCE(tmp.updated_hierarchy_table, lu.hierarchy_table) AS hierarchy_table,
-	  COALESCE(tmp.root_count, lu.count) AS count
-	FROM umls_mrhier.lookup_parse lu
-	LEFT JOIN umls_mrhier.lookup_snomed tmp
-	ON lu.hierarchy_table = tmp.hierarchy_table
-)
-;
-DROP TABLE umls_mrhier.lookup_snomed; 
-DROP TABLE umls_mrhier.tmp_lookup_parse; 
-
 
 /**************************************************************************
 / V. EXTEND PATH TO ROOT WITH LEAF ('ext')
@@ -1094,14 +1075,113 @@ DROP TABLE umls_mrhier.tmp_lookup_parse;
 / These leafs are added at the end of the path to root to get a complete 
 / representation of the classification.
 **************************************************************************/
+DO
+$$
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	source_rows bigint;
+	target_rows bigint;
+BEGIN
+	SELECT get_umls_mth_version()
+	INTO mth_version;
 
-DROP TABLE IF EXISTS umls_mrhier.lookup_ext;
-CREATE TABLE umls_mrhier.lookup_ext AS (
-  SELECT
-  	*,
-  	SUBSTRING(CONCAT('ext_', hierarchy_table), 1, 60) AS extended_table
-  FROM umls_mrhier.lookup_parse
-);
+	SELECT check_if_requires_processing(mth_version, 'LOOKUP_PARSE', 'LOOKUP_EXT')
+	INTO requires_processing;
+
+  	IF requires_processing THEN
+
+  		SELECT get_log_timestamp()
+  		INTO start_timestamp
+  		;
+
+  		PERFORM notify_start('processing LOOKUP_EXT');
+  		
+		DROP TABLE IF EXISTS umls_mrhier.tmp_lookup_ext;
+		CREATE TABLE umls_mrhier.tmp_lookup_ext AS (
+			SELECT
+			  lu.hierarchy_sab,
+			  tmp.root_aui,
+			  tmp.root_code,
+			  tmp.root_str,
+			  COALESCE(tmp.updated_hierarchy_table, lu.hierarchy_table) AS hierarchy_table,
+			  COALESCE(tmp.root_count, lu.count) AS count
+			FROM umls_mrhier.lookup_parse lu
+			LEFT JOIN umls_mrhier.lookup_snomed tmp
+			ON lu.hierarchy_table = tmp.hierarchy_table
+		)
+		;
+		DROP TABLE IF EXISTS umls_mrhier.lookup_ext;
+		CREATE TABLE umls_mrhier.lookup_ext AS (
+		  SELECT
+		  	*,
+		  	SUBSTRING(CONCAT('ext_', hierarchy_table), 1, 60) AS extended_table
+		  FROM umls_mrhier.lookup_parse
+		);
+		DROP TABLE umls_mrhier.tmp_lookup_ext;
+		
+		
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+		SELECT get_row_count('umls_mrhier.lookup_parse')
+		INTO source_rows
+		;
+
+		SELECT get_row_count('umls_mrhier.lookup_ext')
+		INTO target_rows
+		;
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''LOOKUP_PARSE'',
+			  ''LOOKUP_EXT'',
+			  ''%s'',
+			  ''%s'');
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_rows,
+			  target_rows);
+
+
+		PERFORM notify_completion('processing LOOKUP_EXT');
+		
+		COMMIT;
+		
+		PERFORM notify_timediff('processing LOOKUP_EXT', start_timestamp, stop_timestamp);
+
+	END IF;
+
+
+END;
+$$
+;
+
 
 DO
 $$
@@ -1445,7 +1525,8 @@ end;
 $$
 ;
 
-
+-- The sql statements are executed from 
+-- 'LOOKUP_PIVOT_CROSSTAB'
 DO
 $$
 DECLARE
@@ -1577,6 +1658,12 @@ end;
 $$
 ;
 
+/**************************************************************************
+/ VII. UNION PIVOTED TABLES
+/ -------------------------------------------------------------------------
+/ Each table is pivoted on ptr_id to compile classifications in at 
+/ the row level.
+**************************************************************************/
 
 /*-----------------------------------------------------------
 / The absolute maximum ptr level across the entire MRHIER
