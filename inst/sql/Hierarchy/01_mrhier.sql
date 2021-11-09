@@ -255,11 +255,14 @@ $$
 
 
 /**************************************************************************
-If the current UMLS Metathesaurus version is not logged for
-the transfer of the MRHIER table, the `umls_mrhier` schema is dropped.
-The new MRHIER table is then copied to the
-`umls_mrhier` schema with the addition of a `ptr_id` for
-each row number.
+/ I. Transfer MRHIER to `umls_mrhier` Schema 
+/ -------------------------------------------------------------------------
+/ If the current UMLS Metathesaurus version is not logged for
+/ the transfer of the MRHIER table, the `umls_mrhier` schema is dropped.
+/ The unique AUI-RELA-PTR from the MRHIER table in the `mth` schema 
+/ is then copied to the along with the AUI's CODE, SAB and STR in the MRCONSO 
+/ table. A `ptr_id` to serve as a unique identifier each row number, which 
+/ represents a unique classification for the given AUI.
 **************************************************************************/
 
 DO
