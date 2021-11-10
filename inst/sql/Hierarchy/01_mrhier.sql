@@ -1698,7 +1698,7 @@ BEGIN
 		tmp_table    := f.tmp_pivot_table;
 		target_table := f.pivot_table;
 		
-		PERFORM notify_iteration(iteration, total_iterations, source_table);
+		PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
 		SELECT check_if_requires_processing(mth_version, source_table, target_table)
 		INTO requires_processing;
