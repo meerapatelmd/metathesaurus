@@ -1439,55 +1439,12 @@ $$
 ;
 
 
-----------------------------------------
 -- A second pivot lookup is made to construct the crosstab 
 -- function call
-DO
-$$
-DECLARE
-	requires_processing boolean;
-	start_timestamp timestamp;
-	stop_timestamp timestamp;
-	mth_version varchar;
-	mth_date varchar;
-	source_rows bigint;
-	target_rows bigint;
-BEGIN
-	SELECT get_umls_mth_version()
-	INTO mth_version;
-
-	SELECT check_if_requires_processing(mth_version, 'LOOKUP_PARSE', 'LOOKUP_EXT')
-	INTO requires_processing;
-
-  	IF requires_processing THEN
-
-  		SELECT get_log_timestamp()
-  		INTO start_timestamp
-  		;
-
-  		PERFORM notify_start('processing LOOKUP_EXT');
-  		
-DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_crosstab;
-CREATE TABLE  umls_mrhier.lookup_pivot_crosstab (
-  extended_table varchar(255),
-  tmp_pivot_table varchar(255),
-  pivot_table varchar(255),
-  sql_statement text
-)
-;
-COMMIT;
-
 -- A crosstab function call is created to pivot each table
 -- based on the maximum `ptr_level` in that table. This is
 -- required to pass the subsequent column names as the
 -- argument to the crosstab function.
-
-
-END;
-$$
-;
-
-
 DO
 $$
 DECLARE
@@ -1509,9 +1466,77 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
+	
+	SELECT check_if_requires_processing(mth_version, 'LOOKUP_PIVOT_TABLES', 'LOOKUP_PIVOT_CROSSTAB')
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+		SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+		
+		DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_crosstab;
+		CREATE TABLE  umls_mrhier.lookup_pivot_crosstab (
+		  extended_table varchar(255),
+		  tmp_pivot_table varchar(255),
+		  pivot_table varchar(255),
+		  sql_statement text
+		)
+		;
+		
+		COMMIT;
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
 
-	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot WHERE hierarchy_sab <> 'SRC';
-    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_pivot l WHERE l.hierarchy_sab <> 'SRC'
+		SELECT get_umls_mth_version()
+		INTO mth_version
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+		SELECT get_row_count('umls_mrhier.lookup_pivot_tables')
+		INTO source_rows
+		;
+
+		SELECT get_row_count('umls_mrhier.lookup_pivot_crosstab')
+		INTO target_rows
+		;
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''LOOKUP_PIVOT_TABLES'',
+			  ''LOOKUP_PIVOT_CROSSTAB'',
+			  ''%s'',
+			  ''%s'');
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_rows,
+			  target_rows);
+			  
+		COMMIT;
+		
+		
+		
+	END IF;
+
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_tables WHERE hierarchy_sab <> 'SRC';
+    FOR f IN SELECT ROW_NUMBER() OVER() AS iteration, l.* FROM umls_mrhier.lookup_pivot_tables l WHERE l.hierarchy_sab <> 'SRC'
     LOOP
 		iteration    := f.iteration;
 		source_table := f.extended_table;
