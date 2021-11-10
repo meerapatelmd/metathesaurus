@@ -1804,15 +1804,12 @@ $$
 /**************************************************************************
 / VII. UNION PIVOTED TABLES
 / -------------------------------------------------------------------------
-/ Each table is pivoted on ptr_id to compile classifications in at 
-/ the row level.
-**************************************************************************/
-
-/*-----------------------------------------------------------
+/ A MRHIER_STR table is written that is a union of all the pivoted 
+/ tables.
 / The absolute maximum ptr level across the entire MRHIER
 / is derived to generate the DDL for the column names of the
 / final MRHIER_STR table.
-/-----------------------------------------------------------*/
+**************************************************************************/
 
 DROP TABLE IF EXISTS umls_mrhier.lookup_abs_max;
 CREATE TABLE umls_mrhier.lookup_abs_max (
