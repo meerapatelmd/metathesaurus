@@ -753,7 +753,7 @@ BEGIN
 			  	target_table
 			  	);
 			  	
-			  COMMIT;
+			 -- COMMIT;
 			  
 
 
@@ -802,7 +802,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 			  
-		COMMIT;
+		-- COMMIT;
 		
 		PERFORM notify_timediff(CONCAT('processing', ' ', source_sab, ' into table ', target_table), start_timestamp, stop_timestamp);
 	END IF;
@@ -1119,9 +1119,11 @@ BEGIN
 		  SELECT
 		  	*,
 		  	SUBSTRING(CONCAT('ext_', hierarchy_table), 1, 60) AS extended_table
-		  FROM umls_mrhier.lookup_parse
+		  FROM umls_mrhier.tmp_lookup_ext
 		);
 		DROP TABLE umls_mrhier.tmp_lookup_ext;
+		
+		COMMIT;
 		
 		
 		
@@ -1170,8 +1172,7 @@ BEGIN
 
 
 		PERFORM notify_completion('processing LOOKUP_EXT');
-		
-		COMMIT;
+
 		
 		PERFORM notify_timediff('processing LOOKUP_EXT', start_timestamp, stop_timestamp);
 
@@ -1182,6 +1183,8 @@ END;
 $$
 ;
 
+select * 
+from umls_mrhier.lookup_parse;
 
 DO
 $$
