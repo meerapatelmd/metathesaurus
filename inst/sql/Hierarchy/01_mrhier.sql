@@ -1810,14 +1810,6 @@ $$
 / is derived to generate the DDL for the column names of the
 / final MRHIER_STR table.
 **************************************************************************/
-
-DROP TABLE IF EXISTS umls_mrhier.lookup_abs_max;
-CREATE TABLE umls_mrhier.lookup_abs_max (
-  extended_table varchar(255),
-  max_ptr_level int
-);
-
-
 DO
 $$
 DECLARE
@@ -1832,7 +1824,7 @@ DECLARE
     f record;
     sab varchar(100);
     source_table varchar(255);
-    target_table varchar(255);
+    target_table varchar(255) := 'LOOKUP_MRHIER_ABS_MAX';
     pivot_table varchar(255);
 	iteration int;
     total_iterations int;
@@ -1854,6 +1846,8 @@ BEGIN
 		  extended_table varchar(255),
 		  max_ptr_level int
 		);	
+		
+		COMMIT;
 		
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -1900,68 +1894,95 @@ BEGIN
 	
 	END IF;
 	
-	
-
-do
-$$
-declare
-  	sql_statement text;
-  	f record;
-  	e_tbl varchar(255);
-  	h_tbl varchar(255);
-  	ct integer;
-  	final_ct integer;
-	start_time timestamp;
-	end_time timestamp;
-	iteration int;
-	total_iterations int;
-	log_datetime timestamp;
-	log_mth_version varchar(25);
-	log_mth_release_dt timestamp;
-begin
-	log_datetime := date_trunc('second', timeofday()::timestamp);
-	SELECT sm_version
-	INTO log_mth_version
-	FROM public.setup_mth_log
-	WHERE sm_datetime IN
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
-
-	SELECT sm_release_date
-	INTO log_mth_release_dt
-	FROM public.setup_mth_log
-	WHERE sm_datetime IN
-	  (SELECT MAX(sm_datetime) FROM public.setup_mth_log);
-
-
-  	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup;
-  	for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup pl
+	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_ext;
+  	for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup_ext l
  	LOOP
-      iteration := f.iteration;
-      e_tbl := f.extended_table;
-      h_tbl := f.hierarchy_table;
-      start_time := date_trunc('second', timeofday()::timestamp);
+ 		iteration    := f.iteration;
+		source_table := f.extended_table;
+		
+		PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
-      raise notice '[%] %/% %', start_time, iteration, total_iterations, e_tbl;
+		SELECT check_if_requires_processing(mth_version, source_table, target_table)
+		INTO requires_processing;
+
+  		IF requires_processing THEN
+  		
+  			PERFORM notify_start(CONCAT('processing ', source_table, ' into table ', target_table));
+
+	  		SELECT get_log_timestamp()
+			INTO start_timestamp
+			;
+			
+			EXECUTE
+		      format(
+		      	'
+		      	INSERT INTO umls_mrhier.lookup_mrhier_abs_max
+		      	SELECT
+		      	 ''%s'' AS extended_table,
+		      	 MAX(ptr_level) AS max_ptr_level
+		      	 FROM umls_mrhier.%s
+		      	 ;
+		      	',
+		      		source_table,
+		      		source_table);
+		    	    COMMIT;
+
+			PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
 
 
+			SELECT get_log_timestamp()
+			INTO stop_timestamp
+			;
+	
+			SELECT get_umls_mth_version()
+			INTO mth_version
+			;
+	
+			SELECT get_umls_mth_dt()
+			INTO mth_date
+			;
+	
+			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table)
+			INTO target_rows;
+	
+			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', source_table)
+			INTO source_rows;
+	
+	
+			EXECUTE
+			  format(
+			    '
+				INSERT INTO public.process_umls_mrhier_log
+				VALUES (
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  NULL,
+				  ''umls_mrhier'',
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				   ''%s'');
+				',
+				  start_timestamp,
+				  stop_timestamp,
+				  mth_version,
+				  mth_date,
+				  source_table,
+				  target_table,
+				  source_rows,
+				  target_rows);
+				  
+				  
+			COMMIT;
+			
+			
+			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
-    EXECUTE
-      format(
-      	'
-      	INSERT INTO umls_mrhier.lookup_abs_max
-      	SELECT
-      	 ''%s'' AS extended_table,
-      	 MAX(ptr_level) AS max_ptr_level
-      	 FROM umls_mrhier.%s
-      	 ;
-      	',
-      		e_tbl,
-      		e_tbl);
+	END IF;
+	END LOOP;
 
-    	  end_time := date_trunc('second', timeofday()::timestamp);
-      raise notice '% complete (%)', e_tbl, end_time - start_time;
-
-    end loop;
 END;
 $$
 ;
