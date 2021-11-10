@@ -1183,8 +1183,6 @@ END;
 $$
 ;
 
-select * 
-from umls_mrhier.lookup_parse;
 
 DO
 $$
@@ -1372,7 +1370,7 @@ BEGIN
   		INTO start_timestamp
   		;
 
-  		PERFORM notify_start('processing LOOKUP_EXT');
+  		PERFORM notify_start('processing LOOKUP_PIVOT_TABLES');
 
   		
 		DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_tables;
@@ -1429,11 +1427,11 @@ BEGIN
 			  target_rows);
 
 
-		PERFORM notify_completion('processing LOOKUP_EXT');
+		PERFORM notify_completion('processing LOOKUP_PIVOT_TABLES');
 		
 		COMMIT;
 		
-		PERFORM notify_timediff('processing LOOKUP_EXT', start_timestamp, stop_timestamp);
+		PERFORM notify_timediff('processing LOOKUP_PIVOT_TABLES', start_timestamp, stop_timestamp);
 
 	END IF;
 END;
