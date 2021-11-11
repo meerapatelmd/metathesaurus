@@ -2265,36 +2265,121 @@ $$
 /
 /- Only vocabularies where `LAT = 'ENG'` and not 'SRC' in MRCONSO table
 -----------------------------------------------------------*/
+DO
+$$
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	max_level int;
+	source_rows bigint;
+	target_rows bigint;
+    f record;
+    sab varchar(100);
+    source_table varchar(255) := 'MRHIER';
+    target_table varchar(255) := 'MRHIER_STR_EXCL;
+    pivot_table varchar(255);
+	iteration int;
+    total_iterations int;
+    processed_mrhier_ddl text;
+    abs_max_ptr_level int;
+BEGIN
+	SELECT get_umls_mth_version()
+	INTO mth_version;
+	
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+	
+	  	SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+		
+		PERFORM notify_start('Creating MRHIER_STR_EXCL table');
+	  
+		WITH a AS (
+			SELECT m1.sab,m1.ptr_id, CASE WHEN m1.ptr IS NULL THEN TRUE ELSE FALSE END ptr_is_null
+			FROM umls_mrhier.mrhier m1
+			LEFT JOIN umls_mrhier.mrhier_str m2
+			ON m1.ptr_id = m2.ptr_id
+			WHERE
+			  m2.ptr_id IS NULL AND
+			  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND
+			  m1.sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values
+		
+		SELECT a.sab, a.ptr_is_null, COUNT(*)
+		FROM a
+		GROUP BY a.sab, a.ptr_is_null
+		;
+		
+		
+		DROP TABLE IF EXISTS umls_mrhier.mrhier_str_excl;
+		CREATE TABLE umls_mrhier.mrhier_str_excl AS (
+			SELECT m1.*
+			FROM umls_mrhier.mrhier m1
+			LEFT JOIN umls_mrhier.mrhier_str m2
+			ON m1.ptr_id = m2.ptr_id
+			WHERE
+			  m2.ptr_id IS NULL AND
+			  m1.ptr IS NOT NULL AND
+			  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND
+			  m1.sab <> 'SRC'
+			ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
+			)
+		;
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
 
-WITH a AS (
-	SELECT m1.sab,m1.ptr_id, CASE WHEN m1.ptr IS NULL THEN TRUE ELSE FALSE END ptr_is_null
-	FROM umls_mrhier.mrhier m1
-	LEFT JOIN umls_mrhier.mrhier_str m2
-	ON m1.ptr_id = m2.ptr_id
-	WHERE
-	  m2.ptr_id IS NULL AND
-	  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND
-	  m1.sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
 
-SELECT a.sab, a.ptr_is_null, COUNT(*)
-FROM a
-GROUP BY a.sab, a.ptr_is_null
-;
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table)
+		INTO target_rows;
+
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', source_table)
+		INTO source_rows;
 
 
-DROP TABLE IF EXISTS umls_mrhier.mrhier_str_excl;
-CREATE TABLE umls_mrhier.mrhier_str_excl AS (
-	SELECT m1.*
-	FROM umls_mrhier.mrhier m1
-	LEFT JOIN umls_mrhier.mrhier_str m2
-	ON m1.ptr_id = m2.ptr_id
-	WHERE
-	  m2.ptr_id IS NULL AND
-	  m1.ptr IS NOT NULL AND
-	  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND
-	  m1.sab <> 'SRC'
-	ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
-	)
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			   ''%s'');
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_table,
+			  target_table,
+			  source_rows,
+			  target_rows);
+			  
+			COMMIT;
+			
+			
+			PERFORM notify_timediff('Creating MRHIER_STR_EXCL table', start_timestamp, stop_timestamp);
+	
+	END IF; 
+	
+END;
+$$
 ;
 
 /*-----------------------------------------------------------
