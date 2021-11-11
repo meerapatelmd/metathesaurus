@@ -2444,7 +2444,7 @@ BEGIN
 		INTO mrhier_rows 
 		FROM umls_class.mrhier;
 		
-		PERFORM notify_stop('copying MRHIER table');
+		PERFORM notify_completion('copying MRHIER table');
 		
 		  EXECUTE
 		    format(
@@ -2473,7 +2473,7 @@ BEGIN
 		INTO mrhier_str_rows 
 		FROM umls_class.mrhier_str;
 		
-		PERFORM notify_stop('copying MRHIER_STR table');
+		PERFORM notify_completion('copying MRHIER_STR table');
 		
 		EXECUTE
 		    format(
@@ -2501,7 +2501,7 @@ BEGIN
 		INTO mrhier_str_excl_rows 
 		FROM umls_class.mrhier_str_excl;
 		
-		PERFORM notify_stop('copying MRHIER_STR_EXCL table');
+		PERFORM notify_completion('copying MRHIER_STR_EXCL table');
 		
 		EXECUTE
 		    format(
@@ -2532,7 +2532,7 @@ BEGIN
 		CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
 		CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 		 
-		PERFORM notify_stop('adding constraints');
+		PERFORM notify_completion('adding constraints');
 		
 		INSERT INTO public.setup_umls_class_log 
 		SELECT 
@@ -2544,7 +2544,7 @@ BEGIN
 		DROP TABLE public.tmp_setup_umls_class_log;
 		COMMIT;
 		
-	    PERFORM notify_stop('writing umls_class schema');
+	    PERFORM notify_completion('writing umls_class schema');
 		 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -2587,115 +2587,6 @@ BEGIN
 END;
 $$
 ;
-
-
-DROP TABLE IF EXISTS umls_class.mrhier;
-CREATE TABLE umls_class.mrhier AS (
-SELECT *
-FROM umls_mrhier.mrhier
-)
-;
-
-DO
-$$
-DECLARE
-  mrhier_rows bigint;
-BEGIN
-  SELECT COUNT(*)
-  INTO mrhier_rows
-  FROM umls_class.mrhier;
-
-  EXECUTE
-    format(
-    '
-    UPDATE public.setup_umls_class_log
-    SET mrhier = %s
-    WHERE suc_datetime IN (SELECT MAX(suc_datetime) FROM public.setup_umls_class_log);
-    ',
-    mrhier_rows
-    )
-    ;
-END;
-$$
-;
-
-DROP TABLE IF EXISTS umls_class.mrhier_str;
-CREATE TABLE umls_class.mrhier_str AS (
-SELECT *
-FROM umls_mrhier.mrhier_str
-)
-;
-
-DO
-$$
-DECLARE
-  mrhier_str_rows bigint;
-BEGIN
-  SELECT COUNT(*)
-  INTO mrhier_str_rows
-  FROM umls_class.mrhier_str;
-
-  EXECUTE
-    format(
-    '
-    UPDATE public.setup_umls_class_log
-    SET mrhier_str = %s
-    WHERE suc_datetime IN (SELECT MAX(suc_datetime) FROM public.setup_umls_class_log);
-    ',
-    mrhier_str_rows
-    )
-    ;
-END;
-$$
-;
-
-DROP TABLE IF EXISTS umls_class.mrhier_str_excl;
-CREATE TABLE umls_class.mrhier_str_excl AS (
-SELECT *
-FROM umls_mrhier.mrhier_str_excl
-)
-;
-
-DO
-$$
-DECLARE
-  mrhier_str_excl_rows bigint;
-BEGIN
-  SELECT COUNT(*)
-  INTO mrhier_str_excl_rows
-  FROM umls_class.mrhier_str_excl;
-
-  EXECUTE
-    format(
-    '
-    UPDATE public.setup_umls_class_log
-    SET mrhier_str_excl = %s
-    WHERE suc_datetime IN (SELECT MAX(suc_datetime) FROM public.setup_umls_class_log);
-    ',
-    mrhier_str_excl_rows
-    )
-    ;
-END;
-$$
-;
-
-ALTER TABLE umls_class.mrhier_str
-ADD CONSTRAINT xpk_mrhier_str
-PRIMARY KEY (ptr_id);
-
-CREATE INDEX x_mrhier_str_aui ON umls_class.mrhier_str(aui);
-CREATE INDEX x_mrhier_str_code ON umls_class.mrhier_str(code);
-
-
-ALTER TABLE umls_class.mrhier_str_excl
-ADD CONSTRAINT xpk_mrhier_str_excl
-PRIMARY KEY (ptr_id);
-
-CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
-CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
-CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
-
-
 
 
 
