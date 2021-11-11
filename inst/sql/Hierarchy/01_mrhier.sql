@@ -2257,7 +2257,7 @@ END;
 $$
 ; 
 
-
+SELECT * FROM umls_mrhier.lookup_eng;
 /*-----------------------------------------------------------
 /MRHIER_EXCL Table
 /Table that includes any source MRHIER `ptr` that did not make it
@@ -2279,7 +2279,7 @@ DECLARE
     f record;
     sab varchar(100);
     source_table varchar(255) := 'MRHIER';
-    target_table varchar(255) := 'MRHIER_STR_EXCL;
+    target_table varchar(255) := 'MRHIER_STR_EXCL';
     pivot_table varchar(255);
 	iteration int;
     total_iterations int;
@@ -2298,22 +2298,7 @@ BEGIN
 		INTO start_timestamp
 		;
 		
-		PERFORM notify_start('Creating MRHIER_STR_EXCL table');
-	  
-		WITH a AS (
-			SELECT m1.sab,m1.ptr_id, CASE WHEN m1.ptr IS NULL THEN TRUE ELSE FALSE END ptr_is_null
-			FROM umls_mrhier.mrhier m1
-			LEFT JOIN umls_mrhier.mrhier_str m2
-			ON m1.ptr_id = m2.ptr_id
-			WHERE
-			  m2.ptr_id IS NULL AND
-			  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND
-			  m1.sab <> 'SRC') -- 'SRC' concepts are basically the source vocabulary and have NULL `ptr` values
-		
-		SELECT a.sab, a.ptr_is_null, COUNT(*)
-		FROM a
-		GROUP BY a.sab, a.ptr_is_null
-		;
+		PERFORM notify_start('Writing MRHIER_STR_EXCL Table');
 		
 		
 		DROP TABLE IF EXISTS umls_mrhier.mrhier_str_excl;
@@ -2325,7 +2310,7 @@ BEGIN
 			WHERE
 			  m2.ptr_id IS NULL AND
 			  m1.ptr IS NOT NULL AND
-			  m1.sab IN (SELECT sab FROM umls_mrhier.lookup_eng) AND
+			  m1.sab IN (SELECT l.sab FROM umls_mrhier.lookup_eng l) AND
 			  m1.sab <> 'SRC'
 			ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
 			)
@@ -2374,7 +2359,7 @@ BEGIN
 			COMMIT;
 			
 			
-			PERFORM notify_timediff('Creating MRHIER_STR_EXCL table', start_timestamp, stop_timestamp);
+			PERFORM notify_timediff('Writing MRHIER_STR_EXCL table', start_timestamp, stop_timestamp);
 	
 	END IF; 
 	
