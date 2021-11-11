@@ -2367,10 +2367,10 @@ END;
 $$
 ;
 
+
 /*-----------------------------------------------------------
 / Final Tables
 -----------------------------------------------------------*/
-
 DO
 $$
 DECLARE
@@ -2378,27 +2378,178 @@ DECLARE
 	mth_version varchar;
 	mth_release_dt varchar;
 	target_schema varchar := 'umls_class';
+	source_table varchar := NULL; 
+	target_table varchar := 'UMLS_CLASS Tables';
+	mrhier_rows bigint;
+	mrhier_str_rows bigint;
+	mrhier_str_excl_rows bigint;
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_date varchar;
 BEGIN
-	SELECT get_log_timestamp()
-	INTO log_timestamp;
 
 	SELECT get_umls_mth_version()
 	INTO mth_version;
 
-	SELECT get_umls_mth_dt()
-	INTO mth_release_dt;
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+	
+	   	SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+		
+		SELECT get_umls_mth_dt()
+		INTO mth_release_dt;
+		
+		DROP TABLE IF EXISTS public.tmp_setup_umls_class_log;
+		CREATE TABLE IF NOT EXISTS public.tmp_setup_umls_class_log (
+		    mth_version character varying(255),
+		    mth_release_dt character varying(255),
+		    target_schema character varying(255),
+		    mrhier bigint,
+		    mrhier_str bigint,
+		    mrhier_str_excl bigint
+		);
 
-	EXECUTE
-	 format('
-	 INSERT INTO public.setup_umls_class_log(suc_datetime, mth_version, mth_release_dt, target_schema)
-	 VALUES (''%s'', ''%s'', ''%s'', ''%s'')
-	 ;
-	 ',
-	 	log_timestamp,
-	 	mth_version,
-	 	mth_release_dt,
-	 	target_schema
-	 	);
+		EXECUTE
+		 format('
+		 INSERT INTO public.tmp_setup_umls_class_log(mth_version, mth_release_dt, target_schema)
+		 VALUES (''%s'', ''%s'', ''%s'')
+		 ;
+		 ',
+		 	mth_version,
+		 	mth_release_dt,
+		 	target_schema
+		 	);
+		 	
+		DROP SCHEMA umls_class CASCADE; 
+		CREATE SCHEMA umls_class; 
+		
+		DROP TABLE IF EXISTS umls_class.mrhier;
+		CREATE TABLE umls_class.mrhier AS (
+		SELECT *
+		FROM umls_mrhier.mrhier
+		)
+		;
+		COMMIT;
+		
+		SELECT COUNT(*) 
+		INTO mrhier_rows 
+		FROM umls_class.mrhier;
+		
+		  EXECUTE
+		    format(
+		    '
+		    UPDATE public.tmp_setup_umls_class_log
+		    SET mrhier = %s
+		    WHERE mth_version = ''%s'';
+		    ',
+		    mrhier_rows,
+		    mth_version
+		    )
+		  ;
+		  COMMIT;
+		  
+		DROP TABLE IF EXISTS umls_class.mrhier_str;
+		CREATE TABLE umls_class.mrhier_str AS (
+		SELECT *
+		FROM umls_mrhier.mrhier_str
+		)
+		;
+		COMMIT;
+		
+		SELECT COUNT(*) 
+		INTO mrhier_str_rows 
+		FROM umls_class.mrhier_str;
+		
+		EXECUTE
+		    format(
+		    '
+		    UPDATE public.tmp_setup_umls_class_log
+		    SET mrhier_str = %s
+		    WHERE mth_version = ''%s'';
+		    ',
+		    mrhier_str_rows,
+		    mth_version
+		    )
+		 ;
+		
+	 	DROP TABLE IF EXISTS umls_class.mrhier_str_excl;
+		CREATE TABLE umls_class.mrhier_str_excl AS (
+		SELECT *
+		FROM umls_mrhier.mrhier_str_excl
+		)
+		;
+		COMMIT;
+		
+		SELECT COUNT(*) 
+		INTO mrhier_str_excl_rows 
+		FROM umls_class.mrhier_str_excl;
+		
+		EXECUTE
+		    format(
+		    '
+		    UPDATE public.tmp_setup_umls_class_log
+		    SET mrhier_str = %s
+		    WHERE mth_version = ''%s'';
+		    ',
+		    mrhier_str_excl_rows,
+		    mth_version
+		    )
+		 ;
+		 
+		 
+		INSERT INTO public.setup_umls_class_log 
+		SELECT 
+		   TIMEOFDAY()::timestamp AS suc_datetime, 
+		   * 
+		FROM public.tmp_setup_umls_class_log
+		; 
+		
+		DROP TABLE public.tmp_setup_umls_class_log;
+		COMMIT;
+		 
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			   ''%s'');
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_table,
+			  target_table,
+			  NULL,
+			  NULL);
+			  
+			COMMIT;
+	 	
+	end if; 	
 END;
 $$
 ;
