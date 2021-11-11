@@ -2574,17 +2574,15 @@ BEGIN
 			  ''umls_mrhier'',
 			  ''%s'',
 			  ''%s'',
-			  ''%s'',
-			   ''%s'');
+			   NULL,
+			   NULL);
 			',
 			  start_timestamp,
 			  stop_timestamp,
 			  mth_version,
 			  mth_date,
 			  source_table,
-			  target_table,
-			  NULL,
-			  NULL);
+			  target_table);
 			  
 			COMMIT;
 	 	
