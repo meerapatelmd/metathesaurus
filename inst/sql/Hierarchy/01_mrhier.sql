@@ -1988,6 +1988,7 @@ $$
 ;
 
 
+
 -- Write MRHIER_STR Table 
 DO
 $$
@@ -2007,6 +2008,8 @@ DECLARE
     pivot_table varchar(255);
 	iteration int;
     total_iterations int;
+    processed_mrhier_ddl text;
+    abs_max_ptr_level int;
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
@@ -2020,22 +2023,91 @@ BEGIN
 		INTO start_timestamp
 		;
 		
-	  WITH seq1 AS (SELECT generate_series(1, %s) AS series),
-	  seq2 AS (
-	    SELECT
-	      STRING_AGG(CONCAT(''level_'', series, ''_str text''), '', '') AS ddl
-	      FROM seq1
-	  )
+		SELECT MAX(max_ptr_level) INTO abs_max_ptr_level FROM umls_mrhier.lookup_mrhier_abs_max; 
+		
+		EXECUTE
+		format(
+		'
+		DROP TABLE IF EXISTS umls_mrhier.lookup_mrhier_ddl; 
+		CREATE TABLE umls_mrhier.lookup_mrhier_ddl (
+			ddl text
+		);
+
+		
+		  WITH seq1 AS (SELECT generate_series(1, %s) AS series),
+		  seq2 AS (
+		    SELECT
+		      STRING_AGG(CONCAT(''level_'', series, ''_str text''), '', '') AS ddl
+		      FROM seq1
+		  )
+		
+		  INSERT INTO umls_mrhier.lookup_mrhier_ddl
+		  SELECT ddl
+		  FROM seq2
+		  ;',
+		  abs_max_ptr_level);
+		  
+		  
+		  COMMIT;
+		  
+		  	SELECT get_log_timestamp()
+			INTO stop_timestamp
+			;
 	
-	  INSERT INTO umls_mrhier.lookup_final_str_ddl
-	  SELECT ddl
-	  FROM seq2
-	  ;',
-	  abs_max_ptr_level);
+			SELECT get_umls_mth_version()
+			INTO mth_version
+			;
+	
+			SELECT get_umls_mth_dt()
+			INTO mth_date
+			;
+	
+			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'LOOKUP_MRHIER_DDL')
+			INTO target_rows;
+	
+			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'LOOKUP_MRHIER_ABS_MAX')
+			INTO source_rows;
+	
+	
+			EXECUTE
+			  format(
+			    '
+				INSERT INTO public.process_umls_mrhier_log
+				VALUES (
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				  NULL,
+				  ''umls_mrhier'',
+				  ''%s'',
+				  ''%s'',
+				  ''%s'',
+				   ''%s'');
+				',
+				  start_timestamp,
+				  stop_timestamp,
+				  mth_version,
+				  mth_date,
+				  'LOOKUP_MRHIER_ABS_MAX',
+				  'LOOKUP_MRHIER_DDL',
+				  source_rows,
+				  target_rows);
+		  
+	END IF;
+	
+	SELECT check_if_requires_processing(mth_version, 'LOOKUP_MRHIER_DDL', 'MRHIER_STR')
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+	
+		SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
 	
 	  SELECT ddl
 	  INTO processed_mrhier_ddl
-	  FROM umls_mrhier.lookup_final_str_ddl;
+	  FROM umls_mrhier.lookup_mrhier_ddl;
 	
 	  EXECUTE
 	    format(
@@ -2051,8 +2123,7 @@ BEGIN
 	    ',
 	    processed_mrhier_ddl
 	    );
-	
-	  DROP TABLE umls_mrhier.lookup_final_str_ddl;
+	    
 		
 		COMMIT;
 		
@@ -2064,10 +2135,10 @@ BEGIN
 		INTO mth_date
 		;
 
-		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'lookup_ext')
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'MRHIER_STR')
 		INTO target_rows;
 
-		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'lookup_mrhier_abs_max')
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'LOOKUP_MRHIER_DDL')
 		INTO source_rows;
 
 
@@ -2091,8 +2162,8 @@ BEGIN
 			  stop_timestamp,
 			  mth_version,
 			  mth_date,
-			  'LOOKUP_EXT',
-			  'LOOKUP_MRHIER_ABS_MAX',
+			  'LOOKUP_MRHIER_DDL',
+			  'MRHIER_STR',
 			  source_rows,
 			  target_rows);
 			  
@@ -2100,6 +2171,86 @@ BEGIN
 		COMMIT;
 	
 	END IF;
+	
+  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_crosstab;
+  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_pivot_crosstab pl
+  loop
+    iteration := f.iteration;
+    pivot_table := f.pivot_table;
+    source_table := f.pivot_table;
+    target_table := 'MRHIER_STR';
+    
+	PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
+
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing;
+
+  	IF requires_processing THEN
+    
+	    SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+		
+		PERFORM notify_start(CONCAT('Adding ' || source_table || ' to ' || target_table));
+		
+	    EXECUTE
+	      format('
+	      INSERT INTO umls_mrhier.mrhier_str
+	      SELECT * FROM umls_mrhier.%s
+	      ',
+	      pivot_table
+	      );
+	      
+	      		COMMIT;
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'MRHIER_STR')
+		INTO target_rows;
+
+		EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', source_table)
+		INTO source_rows;
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			   ''%s'');
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_table,
+			  'MRHIER_STR',
+			  source_rows,
+			  target_rows);
+			  
+			COMMIT;
+			
+			
+			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
+			
+   END IF;
+   END loop;
+
 	
 	
 END;
