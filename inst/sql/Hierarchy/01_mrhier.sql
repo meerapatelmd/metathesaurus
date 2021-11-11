@@ -2404,6 +2404,8 @@ BEGIN
 		SELECT get_umls_mth_dt()
 		INTO mth_release_dt;
 		
+		PERFORM notify_start('writing umls_class schema');
+		
 		DROP TABLE IF EXISTS public.tmp_setup_umls_class_log;
 		CREATE TABLE IF NOT EXISTS public.tmp_setup_umls_class_log (
 		    mth_version character varying(255),
@@ -2428,6 +2430,8 @@ BEGIN
 		DROP SCHEMA umls_class CASCADE; 
 		CREATE SCHEMA umls_class; 
 		
+		PERFORM notify_start('copying MRHIER table'); 
+		
 		DROP TABLE IF EXISTS umls_class.mrhier;
 		CREATE TABLE umls_class.mrhier AS (
 		SELECT *
@@ -2439,6 +2443,8 @@ BEGIN
 		SELECT COUNT(*) 
 		INTO mrhier_rows 
 		FROM umls_class.mrhier;
+		
+		PERFORM notify_stop('copying MRHIER table');
 		
 		  EXECUTE
 		    format(
@@ -2453,6 +2459,8 @@ BEGIN
 		  ;
 		  COMMIT;
 		  
+		PERFORM notify_start('copying MRHIER_STR table'); 
+		
 		DROP TABLE IF EXISTS umls_class.mrhier_str;
 		CREATE TABLE umls_class.mrhier_str AS (
 		SELECT *
@@ -2465,6 +2473,8 @@ BEGIN
 		INTO mrhier_str_rows 
 		FROM umls_class.mrhier_str;
 		
+		PERFORM notify_stop('copying MRHIER_STR table');
+		
 		EXECUTE
 		    format(
 		    '
@@ -2476,6 +2486,8 @@ BEGIN
 		    mth_version
 		    )
 		 ;
+		 
+		PERFORM notify_start('copying MRHIER_STR_EXCL table');
 		
 	 	DROP TABLE IF EXISTS umls_class.mrhier_str_excl;
 		CREATE TABLE umls_class.mrhier_str_excl AS (
@@ -2489,6 +2501,8 @@ BEGIN
 		INTO mrhier_str_excl_rows 
 		FROM umls_class.mrhier_str_excl;
 		
+		PERFORM notify_stop('copying MRHIER_STR_EXCL table');
+		
 		EXECUTE
 		    format(
 		    '
@@ -2500,8 +2514,26 @@ BEGIN
 		    mth_version
 		    )
 		 ;
+		
+		PERFORM notify_start('adding constraints');
+		ALTER TABLE umls_class.mrhier_str
+		ADD CONSTRAINT xpk_mrhier_str
+		PRIMARY KEY (ptr_id);
+		
+		CREATE INDEX x_mrhier_str_aui ON umls_class.mrhier_str(aui);
+		CREATE INDEX x_mrhier_str_code ON umls_class.mrhier_str(code);
+		
+		
+		ALTER TABLE umls_class.mrhier_str_excl
+		ADD CONSTRAINT xpk_mrhier_str_excl
+		PRIMARY KEY (ptr_id);
+		
+		CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
+		CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
+		CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 		 
-		 
+		PERFORM notify_stop('adding constraints');
+		
 		INSERT INTO public.setup_umls_class_log 
 		SELECT 
 		   TIMEOFDAY()::timestamp AS suc_datetime, 
@@ -2511,6 +2543,8 @@ BEGIN
 		
 		DROP TABLE public.tmp_setup_umls_class_log;
 		COMMIT;
+		
+	    PERFORM notify_stop('writing umls_class schema');
 		 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
