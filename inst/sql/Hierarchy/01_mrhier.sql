@@ -1073,7 +1073,8 @@ $$
 / -------------------------------------------------------------------------
 / The leaf of the hierarchy is represented by the AUI, CODE, and STR. 
 / These leafs are added at the end of the path to root to get a complete 
-/ representation of the classification.
+/ representation of the classification.  
+/ Note that the RxClass subset are derived from this step.
 **************************************************************************/
 DO
 $$
@@ -1802,7 +1803,7 @@ $$
 ;
 
 /**************************************************************************
-/ VII. UNION PIVOTED TABLES
+/ VII. MRHIER_STR: UNION PIVOTED TABLES
 / -------------------------------------------------------------------------
 / A MRHIER_STR table is written that is a union of all the pivoted 
 / tables.
@@ -2257,14 +2258,13 @@ END;
 $$
 ; 
 
-SELECT * FROM umls_mrhier.lookup_eng;
-/*-----------------------------------------------------------
-/MRHIER_EXCL Table
-/Table that includes any source MRHIER `ptr` that did not make it
-/to the `MRHIER_STR` table.
-/
-/- Only vocabularies where `LAT = 'ENG'` and not 'SRC' in MRCONSO table
------------------------------------------------------------*/
+/**************************************************************************
+/ VIII. MRHIER_STR_EXCL: EXCLUDED PATH TO ROOT VALUES
+/ -------------------------------------------------------------------------
+/ Table that includes any source MRHIER `ptr` that did not make it
+/ to the `MRHIER_STR` table. Only vocabularies where `LAT = 'ENG'` and not 'SRC' 
+/ in the MRCONSO table are included.  
+**************************************************************************/
 DO
 $$
 DECLARE
@@ -2368,9 +2368,14 @@ $$
 ;
 
 
-/*-----------------------------------------------------------
-/ Final Tables
------------------------------------------------------------*/
+/**************************************************************************
+/ IX. UMLS_CLASS Schema
+/ -------------------------------------------------------------------------
+/ A fresh UMLS_CLASS schema is created with copies of the MRHIER, MRHIER_STR, 
+/ and MRHIER_STR_EXCL tables to section them off from the processing tables in the 
+/ UMLS_MRHIER schema with a corresponding SETUP_UMLS_CLASS_LOG log table in 
+/ the public schema. 
+**************************************************************************/
 DO
 $$
 DECLARE
