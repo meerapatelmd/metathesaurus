@@ -25,9 +25,11 @@
 *     to the MRCONSO table at this stage
 * [X] Some log entries do not have target table row counts
 * [ ] Log entries from `ext_` to `pivot_` do not have `sab` value
-* [ ] Re-imagine the RxClass log so that it is a 1-row entry per incidence (mimic setup_umls_class_log)
-* [ ] Change order of final tables in UMLS Class and RxClass 
-* [ ] Add indexes if not already done so for the UMLS Class and RxClass tables
+* [X] Re-imagine the RxClass log so that it is a 1-row entry per incidence (mimic setup_umls_class_log)
+* [X] Change sort order of final tables in RxClass 
+* [ ] Change sort order of final tables in UMLS Class
+* [ ] Add indexes to final UMLS Class tables
+* [X] Add indexes to final RxClass tables
 **************************************************************************/
 
 
