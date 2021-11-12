@@ -3100,8 +3100,8 @@ BEGIN
 	
 	END IF;
 	
-  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_crosstab;
-  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_pivot_crosstab pl
+  SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_crosstab_code;
+  for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_pivot_crosstab_code pl
   loop
     iteration := f.iteration;
     pivot_table := f.pivot_table;
@@ -3184,6 +3184,7 @@ BEGIN
 END;
 $$
 ; 
+
 
 /**************************************************************************
 / VIII. MRHIER_STR_EXCL: EXCLUDED PATH TO ROOT VALUES
@@ -3575,6 +3576,7 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     rxclass_code character varying(255),
     row_ct numeric
 );
+
 
 
 DO
