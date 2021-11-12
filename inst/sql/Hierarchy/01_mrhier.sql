@@ -2816,9 +2816,7 @@ BEGIN
 			  'LOOKUP_MRHIER_ABS_MAX',
 			  source_rows,
 			  target_rows);
-			  
-			  
-		COMMIT;
+
 	
 	END IF;
 	
@@ -3104,8 +3102,8 @@ BEGIN
   for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_pivot_crosstab_code pl
   loop
     iteration := f.iteration;
-    pivot_table := f.pivot_table;
-    source_table := f.pivot_table;
+    pivot_table := f.pivot_code_table;
+    source_table := f.pivot_code_table;
     target_table := 'MRHIER_CODE';
     
 	PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
