@@ -3849,8 +3849,8 @@ BEGIN
 		        ORDER BY 
 		          t1.rxclass_sab, 
 		          t1.rxclass_abbr, 
-		          m1.aui, 
-		          m1.ptr_id
+		          m.aui, 
+		          m.ptr_id
 		)
 		;
 		
@@ -3922,8 +3922,8 @@ BEGIN
 		        ORDER BY 
 		          t1.rxclass_sab, 
 		          t1.rxclass_abbr, 
-		          m1.aui, 
-		          m1.ptr_id
+		          m.aui, 
+		          m.ptr_id
 		)
 		;
 		
@@ -3970,29 +3970,6 @@ BEGIN
 			  'RXCLASS_CODE');
 		
 	END IF;
-	
-			PERFORM notify_start('adding constraints');
-		ALTER TABLE umls_class.mrhier_str
-		ADD CONSTRAINT xpk_mrhier_str
-		PRIMARY KEY (ptr_id);
-		CREATE INDEX x_mrhier_str_aui ON umls_class.mrhier_str(aui);
-		CREATE INDEX x_mrhier_str_code ON umls_class.mrhier_str(code);
-		
-		ALTER TABLE umls_class.mrhier_code
-		ADD CONSTRAINT xpk_mrhier_code
-		PRIMARY KEY (ptr_id);
-		
-		CREATE INDEX x_mrhier_code_aui ON umls_class.mrhier_code(aui);
-		CREATE INDEX x_mrhier_code_code ON umls_class.mrhier_code(code);
-		
-		
-		ALTER TABLE umls_class.mrhier_str_excl
-		ADD CONSTRAINT xpk_mrhier_str_excl
-		PRIMARY KEY (ptr_id);
-		
-		CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
-		CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
-		CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 	    
 END;
 $$
