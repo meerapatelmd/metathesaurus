@@ -3837,7 +3837,7 @@ BEGIN
 	
 		DROP TABLE IF EXISTS rxclass.rxclass_str;
 		CREATE TABLE rxclass.rxclass_str as (
-		        SELECT 
+		        SELECT DISTINCT
 		          t1.rxclass_sab, 
 		          t1.rxclass_abbr, 
 		          t1.rxclass_code, 
@@ -3852,6 +3852,8 @@ BEGIN
 		          m.ptr_id
 		)
 		;
+		
+		COMMIT;
 		
 		ALTER TABLE rxclass.rxclass_str
 		ADD CONSTRAINT xpk_rxclass_str
@@ -3910,7 +3912,7 @@ BEGIN
 	
 		DROP TABLE IF EXISTS rxclass.rxclass_code;
 		CREATE TABLE rxclass.rxclass_code as (
-		        SELECT 
+		        SELECT DISTINCT
 		          t1.rxclass_sab, 
 		          t1.rxclass_abbr, 
 		          t1.rxclass_code, 
@@ -3925,6 +3927,8 @@ BEGIN
 		          m.ptr_id
 		)
 		;
+		
+		COMMIT;
 		
 		ALTER TABLE rxclass.rxclass_code
 		ADD CONSTRAINT xpk_rxclass_code
