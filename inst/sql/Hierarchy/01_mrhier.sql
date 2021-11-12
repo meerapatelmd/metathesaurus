@@ -3573,15 +3573,7 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     rxclass_code character varying(255),
     row_ct numeric
 );
-  
-DROP TABLE IF EXISTS rxclass.lookup_rxclass_ext;
-CREATE TABLE rxclass.lookup_rxclass_ext AS (
-SELECT DISTINCT ext.extended_table
-FROM rxclass.lookup_rxclass l 
-LEFT JOIN umls_mrhier.lookup_ext ext 
-ON ext.hierarchy_sab = l.rxclass_sab 
-ORDER BY ext.extended_table
-);
+
 
 DO
 $$
@@ -3607,7 +3599,7 @@ BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
 	
-	source_table := NULL;
+	source_table := '';
 	target_table := 'LOOKUP_RXCLASS';
 	
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
@@ -3681,7 +3673,7 @@ BEGIN
 	END IF;
 	
 	
-	source_table := NULL;
+	source_table := '';
 	target_table := 'LOOKUP_RXCLASS_EXT';
 	
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
@@ -3741,7 +3733,7 @@ BEGIN
 	END IF;	
 	
 
-	SELECT check_if_requires_processing(mth_version, NULL, 'RXCLASS_EXT')
+	SELECT check_if_requires_processing(mth_version, 'LOOKUP_RXCLASS_EXT', 'RXCLASS_EXT')
 	INTO requires_processing; 
 	
 	IF requires_processing THEN 
@@ -3820,7 +3812,7 @@ BEGIN
 			  ''%s'',
 			  NULL,
 			  ''umls_mrhier'',
-			  NULL,
+			  ''%s'',
 			  ''%s'',
 			   NULL,
 			   NULL);
@@ -3829,6 +3821,7 @@ BEGIN
 			  stop_timestamp,
 			  mth_version,
 			  mth_date,
+			  'LOOKUP_RXCLASS_EXT',
 			  'RXCLASS_EXT');
 			  
 			  
