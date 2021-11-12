@@ -3575,8 +3575,6 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     row_ct numeric
 );
 
-
-
 DO
 $$
 DECLARE
