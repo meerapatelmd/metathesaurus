@@ -3593,6 +3593,11 @@ DECLARE
     total_iterations int;
     processed_mrhier_ddl text;
     abs_max_ptr_level int;
+    rxclass_ext_rows bigint;
+    rxclass_code_rows bigint;
+    rxclass_str_rows bigint;
+    target_schema varchar(100) := 'rxclass';
+    sr_datetime timestamp := TIMEOFDAY()::timestamp;
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
@@ -3974,6 +3979,84 @@ BEGIN
 			  'RXCLASS_CODE');
 		
 	END IF;
+	
+	source_table := '';
+	target_table := 'SETUP_RXCLASS_LOG';
+	
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing; 
+	
+	
+	IF requires_processing THEN 	
+	
+	  SELECT COUNT(*) 
+	  INTO rxclass_ext_rows 
+	  FROM rxclass.rxclass_ext;
+	  
+	  SELECT COUNT(*) 
+	  INTO rxclass_code_rows 
+	  FROM rxclass.rxclass_code; 
+	  
+	  SELECT COUNT(*) 
+	  INTO rxclass_str_rows 
+	  FROM rxclass.rxclass_str;
+	  
+	  SELECT get_umls_mth_dt() 
+	  INTO mth_date;
+	  
+	  EXECUTE
+	  format(
+	  '
+	  INSERT INTO public.setup_rxclass_log 
+	  VALUES 
+	   (
+	    ''%s'', --sr_datetime
+	    ''%s'', --sr_mth_version
+	    ''%s'', --sr_mth_release_dt
+	    ''%s'', --target_schema
+	    ''%s'', --rxclass_ext
+	    ''%s'', --rxclass_str
+	    ''%s'' --rxclass_code
+	    )
+	    ',
+	    sr_datetime, 
+	    mth_version,
+	    mth_date, 
+	    'rxclass',
+	    rxclass_ext_rows,
+	    rxclass_str_rows,
+	    rxclass_code_rows
+	    );
+	    
+	    COMMIT;
+	    		
+	    EXECUTE
+	    format(
+	        '
+		INSERT INTO public.process_umls_mrhier_log
+		VALUES (
+		  ''%s'',
+		  ''%s'',
+		  ''%s'',
+		  ''%s'',
+		  NULL,
+		  ''umls_mrhier'',
+		  ''%s'',
+		  ''%s'',
+		   NULL,
+		   NULL);
+		',
+		  start_timestamp,
+		  stop_timestamp,
+		  mth_version,
+		  mth_date,
+		  source_table,
+		  target_table);
+	
+	
+	
+	END IF;
+	
 	    
 END;
 $$
