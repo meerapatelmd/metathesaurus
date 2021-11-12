@@ -3854,10 +3854,8 @@ BEGIN
 		;
 		
 		COMMIT;
-		
-		ALTER TABLE rxclass.rxclass_str
-		ADD CONSTRAINT xpk_rxclass_str
-		PRIMARY KEY (ptr_id);
+
+		CREATE INDEX x_rxclass_str_ptr_id ON rxclass.rxclass_str(ptr_id);
 		CREATE INDEX x_rxclass_str_rxclass_sab ON rxclass.rxclass_str(rxclass_sab);
 		CREATE INDEX x_rxclass_str_rxclass_abbr ON rxclass.rxclass_str(rxclass_abbr);
 		CREATE INDEX x_rxclass_str_rxclass_code ON rxclass.rxclass_str(rxclass_code);
@@ -3929,10 +3927,8 @@ BEGIN
 		;
 		
 		COMMIT;
-		
-		ALTER TABLE rxclass.rxclass_code
-		ADD CONSTRAINT xpk_rxclass_code
-		PRIMARY KEY (ptr_id);
+
+		CREATE INDEX x_rxclass_code_ptr_id ON rxclass.rxclass_code(ptr_id);
 		CREATE INDEX x_rxclass_code_rxclass_sab ON rxclass.rxclass_code(rxclass_sab);
 		CREATE INDEX x_rxclass_code_rxclass_abbr ON rxclass.rxclass_code(rxclass_abbr);
 		CREATE INDEX x_rxclass_code_rxclass_code ON rxclass.rxclass_code(rxclass_code);
