@@ -3857,6 +3857,16 @@ BEGIN
 		)
 		;
 		
+		ALTER TABLE rxclass.rxclass_str
+		ADD CONSTRAINT xpk_rxclass_str
+		PRIMARY KEY (ptr_id);
+		CREATE INDEX x_rxclass_str_rxclass_sab ON rxclass.rxclass_str(rxclass_sab);
+		CREATE INDEX x_rxclass_str_rxclass_abbr ON rxclass.rxclass_str(rxclass_abbr);
+		CREATE INDEX x_rxclass_str_rxclass_code ON rxclass.rxclass_str(rxclass_code);
+		CREATE INDEX x_rxclass_str_aui ON rxclass.rxclass_str(aui);
+		CREATE INDEX x_rxclass_str_code ON rxclass.rxclass_str(code);
+		
+		
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3920,6 +3930,15 @@ BEGIN
 		)
 		;
 		
+		ALTER TABLE rxclass.rxclass_code
+		ADD CONSTRAINT xpk_rxclass_code
+		PRIMARY KEY (ptr_id);
+		CREATE INDEX x_rxclass_code_rxclass_sab ON rxclass.rxclass_code(rxclass_sab);
+		CREATE INDEX x_rxclass_code_rxclass_abbr ON rxclass.rxclass_code(rxclass_abbr);
+		CREATE INDEX x_rxclass_code_rxclass_code ON rxclass.rxclass_code(rxclass_code);
+		CREATE INDEX x_rxclass_code_aui ON rxclass.rxclass_code(aui);
+		CREATE INDEX x_rxclass_code_code ON rxclass.rxclass_code(code);
+		
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3954,6 +3973,29 @@ BEGIN
 			  'RXCLASS_CODE');
 		
 	END IF;
+	
+			PERFORM notify_start('adding constraints');
+		ALTER TABLE umls_class.mrhier_str
+		ADD CONSTRAINT xpk_mrhier_str
+		PRIMARY KEY (ptr_id);
+		CREATE INDEX x_mrhier_str_aui ON umls_class.mrhier_str(aui);
+		CREATE INDEX x_mrhier_str_code ON umls_class.mrhier_str(code);
+		
+		ALTER TABLE umls_class.mrhier_code
+		ADD CONSTRAINT xpk_mrhier_code
+		PRIMARY KEY (ptr_id);
+		
+		CREATE INDEX x_mrhier_code_aui ON umls_class.mrhier_code(aui);
+		CREATE INDEX x_mrhier_code_code ON umls_class.mrhier_code(code);
+		
+		
+		ALTER TABLE umls_class.mrhier_str_excl
+		ADD CONSTRAINT xpk_mrhier_str_excl
+		PRIMARY KEY (ptr_id);
+		
+		CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
+		CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
+		CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
 	    
 END;
 $$
