@@ -3567,11 +3567,10 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     sr_datetime timestamp without time zone,
     sr_mth_version character varying(255),
     sr_mth_release_dt character varying(255),
-    sabs character varying(255),
-    rxclass_schema character varying(255),
-    rxclass_abbr character varying(255),
-    rxclass_code character varying(255),
-    row_ct numeric
+    target_schema varchar(255),
+    rxclass_ext int,
+    rxclass_str int,
+    rxclass_code int
 );
 
 DO
