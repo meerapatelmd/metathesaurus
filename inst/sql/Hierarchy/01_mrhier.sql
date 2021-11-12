@@ -3575,14 +3575,14 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
 );
 
 
-DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass;
-CREATE TABLE umls_mrhier.lookup_rxclass (
+DROP TABLE IF EXISTS rxclass.lookup_rxclass;
+CREATE TABLE rxclass.lookup_rxclass (
 rxclass_sab varchar(255) NOT NULL,
 rxclass_abbr varchar(255) NOT NULL,
 rxclass_code varchar(255) NOT NULL
 );
 
-INSERT INTO umls_mrhier.lookup_rxclass
+INSERT INTO rxclass.lookup_rxclass
 VALUES
   ('MED-RT', 'EPC', 'N0000189939'),
   ('MSH', 'MeSHPA', 'D020228'),
@@ -3597,45 +3597,104 @@ VALUES
   ('MSH', 'Substances', 'U000005'),
   ('SNOMEDCT_US', 'DISPOS', '766779001'),
   ('SNOMEDCT_US', 'STRUCT', '763760008');
-
-DROP TABLE IF EXISTS umls_mrhier.tmp_rxclass0;
-CREATE TABLE umls_mrhier.tmp_rxclass0 AS (
-        SELECT * FROM umls_mrhier.ext_med_rt
-        UNION
-        SELECT * FROM umls_mrhier.ext_msh
-        UNION
-        SELECT * FROM umls_mrhier.snomedct_us
+  
+DROP TABLE IF EXISTS rxclass.lookup_rxclass_ext;
+CREATE TABLE rxclass.lookup_rxclass_ext AS (
+SELECT DISTINCT ext.extended_table
+FROM rxclass.lookup_rxclass l 
+LEFT JOIN umls_mrhier.lookup_ext ext 
+ON ext.hierarchy_sab = l.rxclass_sab 
+ORDER BY ext.extended_table
 );
 
-DROP TABLE IF EXISTS umls_mrhier.tmp_rxclass1;
-CREATE TABLE umls_mrhier.tmp_rxclass1 as (
-        SELECT DISTINCT l.*, t0.ptr_id
-        FROM umls_mrhier.tmp_rxclass0 t0
-        INNER JOIN umls_mrhier.lookup_rxclass l
-        ON l.rxclass_code = t0.ptr_code
-)
+DO
+$$
+DECLARE
+	requires_processing boolean;
+	start_timestamp timestamp;
+	stop_timestamp timestamp;
+	mth_version varchar;
+	mth_date varchar;
+	max_level int;
+	source_rows bigint;
+	target_rows bigint;
+    f record;
+    sab varchar(100);
+    source_table varchar(255);
+    target_table varchar(255);
+    pivot_table varchar(255);
+	iteration int;
+    total_iterations int;
+    processed_mrhier_ddl text;
+    abs_max_ptr_level int;
+BEGIN
+	SELECT get_umls_mth_version()
+	INTO mth_version;
+	
+	
+	DROP TABLE IF EXISTS rxclass.tmp_rxclass0;
+	CREATE TABLE rxclass.tmp_rxclass0 (
+        ptr_id INTEGER NOT NULL, 
+        ptr text NOT NULL, 
+        aui varchar(12) NOT NULL,
+        code varchar(100) NOT NULL, 
+        str text NOT NULL, 
+        rela text, 
+        ptr_level integer NOT NULL, 
+        ptr_aui varchar(12) NOT NULL, 
+        ptr_code varchar(100) NOT NULL, 
+        ptr_str text NOT NULL
+    );
+	
+    SELECT COUNT(*) INTO total_iterations FROM rxclass.lookup_rxclass_ext;
+	for f in select ROW_NUMBER() OVER() AS iteration, l.* from rxclass.lookup_rxclass_ext l
+	  loop
+	    iteration := f.iteration;
+	    source_table := f.extended_table;
+	    target_table := 'TMP_RXCLASS0';
+	    
+	    PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
+	    
+	    EXECUTE
+	      format(
+	      '
+	      INSERT INTO rxclass.tmp_rxclass0 
+	      SELECT * FROM umls_mrhier.%s;
+	      ',
+	      source_table
+	      );
+	      
+	   end loop;
+	   
+	
+	
+	DROP TABLE IF EXISTS rxclass.tmp_rxclass1;
+	CREATE TABLE rxclass.tmp_rxclass1 as (
+	        SELECT DISTINCT l.*, t0.ptr_id
+	        FROM rxclass.tmp_rxclass0 t0
+	        INNER JOIN rxclass.lookup_rxclass l
+	        ON l.rxclass_code = t0.ptr_code
+	)
+	;
+	
+	DROP TABLE IF EXISTS rxclass.tmp_rxclass2;
+	CREATE TABLE rxclass.tmp_rxclass2 as (
+	        SELECT *
+	        FROM rxclass.tmp_rxclass1 t1
+	        INNER JOIN rxclass.mrhier_str m
+	        ON t1.ptr_id = m.ptr_id
+	)
+	;
+	
+	DROP TABLE IF EXISTS rxclass.rxclass; 
+	CREATE TABLE rxclass.rxclass AS (
+	  SELECT * FROM rxclass.tmp_rxclass2
+	);
+	
+	DROP TABLE rxclass.tmp_rxclass0;
+	DROP TABLE rxclass.tmp_rxclass1;
+	DROP TABLE rxclass.tmp_rxclass2;
+	    
+END;
+$$
 ;
-
-DROP TABLE IF EXISTS umls_mrhier.tmp_rxclass2;
-CREATE TABLE umls_mrhier.tmp_rxclass2 as (
-        SELECT
-          t1.rxclass_sab,
-          t1.rxclass_abbr,
-          t1.rxclass_code,
-          t0.*
-        FROM umls_mrhier.tmp_rxclass0 t0
-        INNER JOIN umls_mrhier.tmp_class1 t1
-        ON t0.ptr_id = t1.ptr_id
-)
-;
-
-DROP TABLE IF EXISTS umls_mrhier.ext_rxclass;
-CREATE TABLE umls_mrhier.ext_rxclass AS (
-        SELECT *
-        FROM umls_mrhier.tmp_rxclass2
-)
-;
-
-DROP TABLE umls_mrhier.tmp_rxclass0;
-DROP TABLE umls_mrhier.tmp_rxclass1;
-DROP TABLE umls_mrhier.tmp_rxclass2;
