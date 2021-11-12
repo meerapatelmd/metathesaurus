@@ -3573,30 +3573,6 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     rxclass_code character varying(255),
     row_ct numeric
 );
-
-
-DROP TABLE IF EXISTS rxclass.lookup_rxclass;
-CREATE TABLE rxclass.lookup_rxclass (
-rxclass_sab varchar(255) NOT NULL,
-rxclass_abbr varchar(255) NOT NULL,
-rxclass_code varchar(255) NOT NULL
-);
-
-INSERT INTO rxclass.lookup_rxclass
-VALUES
-  ('MED-RT', 'EPC', 'N0000189939'),
-  ('MSH', 'MeSHPA', 'D020228'),
-  ('MED-RT', 'MoA', 'N0000000223'),
-  ('MED-RT', 'PE', 'N0000009802'),
-  ('MED-RT', 'PK', 'N0000000003'),
-  ('MED-RT', 'TC', 'N0000178293'),
-  ('MSH', 'Diseases', 'U000006'),
-  ('MSH', 'AgeGroups', 'D009273'),
-  ('MSH', 'Behavior', 'D001520'),
-  ('MSH', 'Reproductive', 'D055703'),
-  ('MSH', 'Substances', 'U000005'),
-  ('SNOMEDCT_US', 'DISPOS', '766779001'),
-  ('SNOMEDCT_US', 'STRUCT', '763760008');
   
 DROP TABLE IF EXISTS rxclass.lookup_rxclass_ext;
 CREATE TABLE rxclass.lookup_rxclass_ext AS (
@@ -3631,69 +3607,348 @@ BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
 	
+	source_table := NULL;
+	target_table := 'LOOKUP_RXCLASS';
 	
-	DROP TABLE IF EXISTS rxclass.tmp_rxclass0;
-	CREATE TABLE rxclass.tmp_rxclass0 (
-        ptr_id INTEGER NOT NULL, 
-        ptr text NOT NULL, 
-        aui varchar(12) NOT NULL,
-        code varchar(100) NOT NULL, 
-        str text NOT NULL, 
-        rela text, 
-        ptr_level integer NOT NULL, 
-        ptr_aui varchar(12) NOT NULL, 
-        ptr_code varchar(100) NOT NULL, 
-        ptr_str text NOT NULL
-    );
-	
-    SELECT COUNT(*) INTO total_iterations FROM rxclass.lookup_rxclass_ext;
-	for f in select ROW_NUMBER() OVER() AS iteration, l.* from rxclass.lookup_rxclass_ext l
-	  loop
-	    iteration := f.iteration;
-	    source_table := f.extended_table;
-	    target_table := 'TMP_RXCLASS0';
-	    
-	    PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
-	    
-	    EXECUTE
-	      format(
-	      '
-	      INSERT INTO rxclass.tmp_rxclass0 
-	      SELECT * FROM umls_mrhier.%s;
-	      ',
-	      source_table
-	      );
-	      
-	   end loop;
-	   
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing; 
 	
 	
-	DROP TABLE IF EXISTS rxclass.tmp_rxclass1;
-	CREATE TABLE rxclass.tmp_rxclass1 as (
-	        SELECT DISTINCT l.*, t0.ptr_id
-	        FROM rxclass.tmp_rxclass0 t0
-	        INNER JOIN rxclass.lookup_rxclass l
-	        ON l.rxclass_code = t0.ptr_code
-	)
-	;
+	IF requires_processing THEN 
 	
-	DROP TABLE IF EXISTS rxclass.tmp_rxclass2;
-	CREATE TABLE rxclass.tmp_rxclass2 as (
-	        SELECT *
-	        FROM rxclass.tmp_rxclass1 t1
-	        INNER JOIN rxclass.mrhier_str m
-	        ON t1.ptr_id = m.ptr_id
-	)
-	;
+		SELECT get_log_timestamp() 
+		INTO start_timestamp
+		;
 	
-	DROP TABLE IF EXISTS rxclass.rxclass; 
-	CREATE TABLE rxclass.rxclass AS (
-	  SELECT * FROM rxclass.tmp_rxclass2
-	);
+		DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass;
+		CREATE TABLE umls_mrhier.lookup_rxclass (
+		rxclass_sab varchar(255) NOT NULL,
+		rxclass_abbr varchar(255) NOT NULL,
+		rxclass_code varchar(255) NOT NULL
+		);
+		
+		INSERT INTO umls_mrhier.lookup_rxclass
+		VALUES
+		  ('MED-RT', 'EPC', 'N0000189939'),
+		  ('MSH', 'MeSHPA', 'D020228'),
+		  ('MED-RT', 'MoA', 'N0000000223'),
+		  ('MED-RT', 'PE', 'N0000009802'),
+		  ('MED-RT', 'PK', 'N0000000003'),
+		  ('MED-RT', 'TC', 'N0000178293'),
+		  ('MSH', 'Diseases', 'U000006'),
+		  ('MSH', 'AgeGroups', 'D009273'),
+		  ('MSH', 'Behavior', 'D001520'),
+		  ('MSH', 'Reproductive', 'D055703'),
+		  ('MSH', 'Substances', 'U000005'),
+		  ('SNOMEDCT_US', 'DISPOS', '766779001'),
+		  ('SNOMEDCT_US', 'STRUCT', '763760008');
+		  
+		  
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''%s'',
+			  ''%s'',
+			   NULL,
+			   NULL);
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_table,
+			  target_table);
+			  
+			COMMIT;
+	END IF;
 	
-	DROP TABLE rxclass.tmp_rxclass0;
-	DROP TABLE rxclass.tmp_rxclass1;
-	DROP TABLE rxclass.tmp_rxclass2;
+	
+	source_table := NULL;
+	target_table := 'LOOKUP_RXCLASS_EXT';
+	
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing; 
+	
+	
+	IF requires_processing THEN 
+	
+		SELECT get_log_timestamp() 
+		INTO start_timestamp
+		;
+	
+		DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass_ext;
+		CREATE TABLE umls_mrhier.lookup_rxclass_ext AS (
+			SELECT DISTINCT ext.extended_table
+			FROM rxclass.lookup_rxclass l 
+			LEFT JOIN umls_mrhier.lookup_ext ext 
+			ON ext.hierarchy_sab = l.rxclass_sab 
+			ORDER BY ext.extended_table
+		);
+		  
+		  
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''%s'',
+			  ''%s'',
+			   NULL,
+			   NULL);
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  source_table,
+			  target_table);
+			  
+			COMMIT;
+	END IF;	
+	
+
+	SELECT check_if_requires_processing(mth_version, NULL, 'RXCLASS_EXT')
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+	
+		SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+		DROP SCHEMA rxclass CASCADE;
+	    CREATE SCHEMA rxclass;
+		DROP TABLE IF EXISTS rxclass.tmp_rxclass0;
+		CREATE TABLE rxclass.tmp_rxclass0 (
+	        ptr_id INTEGER NOT NULL, 
+	        ptr text NOT NULL, 
+	        aui varchar(12) NOT NULL,
+	        code varchar(100) NOT NULL, 
+	        str text NOT NULL, 
+	        rela text, 
+	        ptr_level integer NOT NULL, 
+	        ptr_aui varchar(12) NOT NULL, 
+	        ptr_code varchar(100) NOT NULL, 
+	        ptr_str text NOT NULL
+	    );
+		
+	    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_rxclass_ext;
+		for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup_rxclass_ext l
+		  loop
+		    iteration := f.iteration;
+		    source_table := f.extended_table;
+		    target_table := 'TMP_RXCLASS0';
+		    
+		    PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
+		    
+		    EXECUTE
+		      format(
+		      '
+		      INSERT INTO rxclass.tmp_rxclass0 
+		      SELECT * FROM umls_mrhier.%s;
+		      ',
+		      source_table
+		      );
+		      
+		    COMMIT;
+		      
+		   end loop;
+		   
+		
+		
+		DROP TABLE IF EXISTS rxclass.rxclass_ext;
+		CREATE TABLE rxclass.rxclass_ext as (
+		        SELECT DISTINCT l.*, t0.ptr_id
+		        FROM rxclass.tmp_rxclass0 t0
+		        INNER JOIN umls_mrhier.lookup_rxclass l
+		        ON l.rxclass_code = t0.ptr_code
+		)
+		;
+		DROP TABLE rxclass.tmp_rxclass0;
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  NULL,
+			  ''%s'',
+			   NULL,
+			   NULL);
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  'RXCLASS_EXT');
+			  
+			  
+	END IF;
+	
+	
+	SELECT check_if_requires_processing(mth_version, 'RXCLASS_EXT', 'RXCLASS_STR')
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+		
+		SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+	
+		DROP TABLE IF EXISTS rxclass.rxclass_str;
+		CREATE TABLE rxclass.rxclass_str as (
+		        SELECT 
+		          t1.rxclass_sab, 
+		          t1.rxclass_abbr, 
+		          t1.rxclass_code, 
+		          m.*
+		        FROM rxclass.rxclass_ext t1
+		        INNER JOIN umls_mrhier.mrhier_str m
+		        ON t1.ptr_id = m.ptr_id
+		)
+		;
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''%s'',
+			  ''%s'',
+			   NULL,
+			   NULL);
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  'RXCLASS_EXT',
+			  'RXCLASS_STR');
+	
+	END IF;
+	
+	SELECT check_if_requires_processing(mth_version, 'RXCLASS_EXT', 'RXCLASS_CODE')
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+		
+		SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+	
+	
+		DROP TABLE IF EXISTS rxclass.rxclass_code;
+		CREATE TABLE rxclass.rxclass_code as (
+		        SELECT 
+		          t1.rxclass_sab, 
+		          t1.rxclass_abbr, 
+		          t1.rxclass_code, 
+		          m.*
+		        FROM rxclass.rxclass_ext t1
+		        INNER JOIN umls_mrhier.mrhier_code m
+		        ON t1.ptr_id = m.ptr_id
+		)
+		;
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''umls_mrhier'',
+			  ''%s'',
+			  ''%s'',
+			   NULL,
+			   NULL);
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  'RXCLASS_EXT',
+			  'RXCLASS_CODE');
+		
+	END IF;
 	    
 END;
 $$
