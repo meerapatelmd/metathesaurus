@@ -2,10 +2,7 @@
 * Derive entire hierarchies from UMLS Metathesaurus MRHIER Table
 * Authors: Meera Patel
 * Date: 2021-10-27
-*
-*
-* | MRHIER | --> | MRHIER | --> | MRHIER_STR | + | MRHIER_STR_EXCL |
-*
+* https://lucid.app/lucidchart/b7e40e42-ea80-43be-baf5-7f92cbfb6d6f/edit?viewport_loc=-185%2C997%2C1560%2C929%2C0_0&invitationId=inv_61a38c21-37a1-49fa-a857-d7585471e5f1
 *
 * | MRHIER | --> | MRHIER |
 * ptr_id is added to the source table. ptr_id is the source MRHIER's row number.
@@ -3576,8 +3573,6 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     rxclass_code character varying(255),
     row_ct numeric
 );
-
-SELECT * FROM umls_mrhier.lookup_rxclass;
 
 DO
 $$
