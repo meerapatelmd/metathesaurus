@@ -20,13 +20,15 @@
 * `ptr` values in `MRHIER_STR` are accounted for in the `MRHIER_STR_EXCL` table.
 *
 * To Do:
-* [ ] Cleanup scripts with functions from 1387 onward, including logging to
+* [X] Cleanup scripts with functions from 1387 onward, including logging to
 *     the progress log and annotations
 * [ ] After 2021AB update, see how the lookup and results tables can be
 *     renamed with a degree of provenance.
-* [ ] Add the `sab` field back to final MRHIER_STR table
+* [ ] Add the `sab` field back to final MRHIER_STR table by doing a join 
+*     to the MRCONSO table at this stage
 * [X] Some log entries do not have target table row counts
 * [ ] Log entries from `ext_` to `pivot_` do not have `sab` value
+* [ ] Re-imagine the RxClass log so that it is a 1-row entry per incidence
 **************************************************************************/
 
 
