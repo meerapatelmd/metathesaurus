@@ -3312,6 +3312,7 @@ DECLARE
 	target_table varchar := 'UMLS_CLASS Tables';
 	mrhier_rows bigint;
 	mrhier_str_rows bigint;
+	mrhier_code_rows bigint;
 	mrhier_str_excl_rows bigint;
 	requires_processing boolean;
 	start_timestamp timestamp;
@@ -3343,7 +3344,8 @@ BEGIN
 		    target_schema character varying(255),
 		    mrhier bigint,
 		    mrhier_str bigint,
-		    mrhier_str_excl bigint
+		    mrhier_str_excl bigint,
+		    mrhier_code bigint
 		);
 
 		EXECUTE
@@ -3416,6 +3418,37 @@ BEGIN
 		    mth_version
 		    )
 		 ;
+
+		PERFORM notify_start('copying MRHIER_CODE table'); 
+		
+		DROP TABLE IF EXISTS umls_class.mrhier_code;
+		CREATE TABLE umls_class.mrhier_code AS (
+		SELECT *
+		FROM umls_mrhier.mrhier_code
+		)
+		;
+		COMMIT;
+		
+		SELECT COUNT(*) 
+		INTO mrhier_code_rows 
+		FROM umls_class.mrhier_code;
+		
+		PERFORM notify_completion('copying MRHIER_CODE table');
+		
+		EXECUTE
+		    format(
+		    '
+		    UPDATE public.tmp_setup_umls_class_log
+		    SET mrhier_code = %s
+		    WHERE mth_version = ''%s'';
+		    ',
+		    mrhier_code_rows,
+		    mth_version
+		    )
+		 ;
+
+
+
 		 
 		PERFORM notify_start('copying MRHIER_STR_EXCL table');
 		
