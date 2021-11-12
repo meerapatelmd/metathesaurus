@@ -3784,7 +3784,12 @@ BEGIN
 		        SELECT DISTINCT l.*, t0.*
 		        FROM rxclass.tmp_rxclass0 t0
 		        INNER JOIN umls_mrhier.lookup_rxclass l
-		        ON l.rxclass_code = t0.ptr_code
+		        ON l.rxclass_code = t0.ptr_code 
+		        ORDER BY 
+		          l.rxclass_sab, 
+		          l.rxclass_abbr, 
+		          t0.ptr_id, 
+		          t0.ptr_level
 		)
 		;
 		DROP TABLE rxclass.tmp_rxclass0;
