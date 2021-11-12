@@ -3577,6 +3577,8 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     row_ct numeric
 );
 
+SELECT * FROM umls_mrhier.lookup_rxclass;
+
 DO
 $$
 DECLARE
@@ -3785,7 +3787,7 @@ BEGIN
 		
 		DROP TABLE IF EXISTS rxclass.rxclass_ext;
 		CREATE TABLE rxclass.rxclass_ext as (
-		        SELECT DISTINCT l.*, t0.ptr_id
+		        SELECT DISTINCT l.*, t0.*
 		        FROM rxclass.tmp_rxclass0 t0
 		        INNER JOIN umls_mrhier.lookup_rxclass l
 		        ON l.rxclass_code = t0.ptr_code
