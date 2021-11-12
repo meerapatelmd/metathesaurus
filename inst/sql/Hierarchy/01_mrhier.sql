@@ -28,7 +28,9 @@
 *     to the MRCONSO table at this stage
 * [X] Some log entries do not have target table row counts
 * [ ] Log entries from `ext_` to `pivot_` do not have `sab` value
-* [ ] Re-imagine the RxClass log so that it is a 1-row entry per incidence
+* [ ] Re-imagine the RxClass log so that it is a 1-row entry per incidence (mimic setup_umls_class_log)
+* [ ] Change order of final tables in UMLS Class and RxClass 
+* [ ] Add indexes if not already done so for the UMLS Class and RxClass tables
 **************************************************************************/
 
 
@@ -3846,7 +3848,12 @@ BEGIN
 		          m.*
 		        FROM rxclass.rxclass_ext t1
 		        INNER JOIN umls_mrhier.mrhier_str m
-		        ON t1.ptr_id = m.ptr_id
+		        ON t1.ptr_id = m.ptr_id 
+		        ORDER BY 
+		          t1.rxclass_sab, 
+		          t1.rxclass_abbr, 
+		          m1.aui, 
+		          m1.ptr_id
 		)
 		;
 		
@@ -3904,7 +3911,12 @@ BEGIN
 		          m.*
 		        FROM rxclass.rxclass_ext t1
 		        INNER JOIN umls_mrhier.mrhier_code m
-		        ON t1.ptr_id = m.ptr_id
+		        ON t1.ptr_id = m.ptr_id 
+		        ORDER BY 
+		          t1.rxclass_sab, 
+		          t1.rxclass_abbr, 
+		          m1.aui, 
+		          m1.ptr_id
 		)
 		;
 		
