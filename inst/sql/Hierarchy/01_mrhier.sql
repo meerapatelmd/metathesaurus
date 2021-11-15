@@ -63,6 +63,17 @@ CREATE TABLE IF NOT EXISTS public.setup_umls_class_log (
     mrhier_str_excl bigint
 );
 
+CREATE TABLE IF NOT EXISTS public.setup_umls_class_log (
+    suc_datetime timestamp without time zone,
+    mth_version character varying(255),
+    mth_release_dt character varying(255),
+    target_schema character varying(255),
+    mrhier bigint,
+    mrhier_str bigint,
+    mrhier_str_excl bigint,
+    mrhier_code bigint
+);
+
 /**************************************************************************
 Logging Functions
 **************************************************************************/
@@ -3389,7 +3400,6 @@ BEGIN
 		    mth_version
 		    )
 		  ;
-		  COMMIT;
 		  
 		PERFORM notify_start('copying MRHIER_STR table'); 
 		
@@ -3399,7 +3409,6 @@ BEGIN
 		FROM umls_mrhier.mrhier_str
 		)
 		;
-		COMMIT;
 		
 		SELECT COUNT(*) 
 		INTO mrhier_str_rows 
@@ -3511,8 +3520,8 @@ BEGIN
 		FROM public.tmp_setup_umls_class_log
 		; 
 		
+		
 		DROP TABLE public.tmp_setup_umls_class_log;
-		COMMIT;
 		
 	    PERFORM notify_completion('writing umls_class schema');
 		 
