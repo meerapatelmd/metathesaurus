@@ -60,16 +60,6 @@ CREATE TABLE IF NOT EXISTS public.setup_umls_class_log (
     target_schema character varying(255),
     mrhier bigint,
     mrhier_str bigint,
-    mrhier_str_excl bigint
-);
-
-CREATE TABLE IF NOT EXISTS public.setup_umls_class_log (
-    suc_datetime timestamp without time zone,
-    mth_version character varying(255),
-    mth_release_dt character varying(255),
-    target_schema character varying(255),
-    mrhier bigint,
-    mrhier_str bigint,
     mrhier_str_excl bigint,
     mrhier_code bigint
 );
@@ -3577,6 +3567,7 @@ CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
     sr_mth_version character varying(255),
     sr_mth_release_dt character varying(255),
     target_schema varchar(255),
+    rxclass_lookup int,
     rxclass_ext int,
     rxclass_str int,
     rxclass_code int
