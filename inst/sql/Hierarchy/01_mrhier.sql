@@ -3381,7 +3381,7 @@ BEGIN
 		FROM umls_mrhier.mrhier
 		)
 		;
-		COMMIT;
+		-- COMMIT;
 		
 		SELECT COUNT(*) 
 		INTO mrhier_rows 
@@ -3436,7 +3436,7 @@ BEGIN
 		FROM umls_mrhier.mrhier_code
 		)
 		;
-		COMMIT;
+		-- COMMIT;
 		
 		SELECT COUNT(*) 
 		INTO mrhier_code_rows 
@@ -3467,7 +3467,7 @@ BEGIN
 		FROM umls_mrhier.mrhier_str_excl
 		)
 		;
-		COMMIT;
+		-- COMMIT;
 		
 		SELECT COUNT(*) 
 		INTO mrhier_str_excl_rows 
@@ -3558,7 +3558,7 @@ BEGIN
 			  source_table,
 			  target_table);
 			  
-			COMMIT;
+			-- COMMIT;
 	 	
 	end if; 	
 END;
