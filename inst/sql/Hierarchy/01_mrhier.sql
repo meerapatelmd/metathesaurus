@@ -40,7 +40,6 @@ Setup log table logs the final `MRHIER`, `MRHIER_STR`, and `MRHIER_STR_EXCL` tab
 Both are setup if it does not already exist.
 **************************************************************************/
 
-
 CREATE TABLE IF NOT EXISTS public.process_umls_mrhier_log (
     process_start_datetime timestamp without time zone,
     process_stop_datetime timestamp without time zone,
@@ -53,7 +52,6 @@ CREATE TABLE IF NOT EXISTS public.process_umls_mrhier_log (
     source_row_ct numeric,
     target_row_ct numeric
 );
-
 
 CREATE TABLE IF NOT EXISTS public.setup_umls_class_log (
     suc_datetime timestamp without time zone,
@@ -3310,7 +3308,7 @@ DECLARE
 	mth_version varchar;
 	mth_release_dt varchar;
 	target_schema varchar := 'umls_class';
-	source_table varchar := NULL; 
+	source_table varchar := ''; 
 	target_table varchar := 'UMLS_CLASS Tables';
 	mrhier_rows bigint;
 	mrhier_str_rows bigint;
