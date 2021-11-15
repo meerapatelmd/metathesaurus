@@ -4066,6 +4066,61 @@ BEGIN
 	
 	END IF;
 	
+	source_table := '';
+	target_table := 'RXCLASS_LOOKUP';
+	
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+
+	SELECT get_log_timestamp() 
+	INTO start_timestamp
+	;
+
+	DROP TABLE IF EXISTS rxclass.rxclass_lookup;
+	CREATE TABLE rxclass.rxclass_lookup AS (
+	 SELECT * FROM umls_mrhier.lookup_rxclass
+	)
+	;
+	  
+	  
+	SELECT get_log_timestamp()
+	INTO stop_timestamp
+	;
+
+	SELECT get_umls_mth_dt()
+	INTO mth_date
+	;
+
+
+
+	EXECUTE
+	  format(
+	    '
+		INSERT INTO public.process_umls_mrhier_log
+		VALUES (
+		  ''%s'',
+		  ''%s'',
+		  ''%s'',
+		  ''%s'',
+		  NULL,
+		  ''rxclass'',
+		  ''%s'',
+		  ''%s'',
+		   NULL,
+		   NULL);
+		',
+		  start_timestamp,
+		  stop_timestamp,
+		  mth_version,
+		  mth_date,
+		  source_table,
+		  target_table);
+		  
+		COMMIT;
+END IF;
+
 	    
 END;
 $$
