@@ -3909,7 +3909,7 @@ BEGIN
 	END IF;
 	
 	
-	SELECT check_if_requires_processing(mth_version, 'RXCLASS_STR', 'RXCLASS_RXNORM_MAP')
+	SELECT check_if_requires_processing(mth_version, 'RXCLASS_STR', 'RXCLASS_RXNORM_IN_PIN_MIN_MAP')
 	INTO requires_processing; 
 	
 	IF requires_processing THEN 
@@ -3917,8 +3917,8 @@ BEGIN
 		INTO start_timestamp
 		;
 	
-		DROP TABLE IF EXISTS rxclass.rxclass_rxnorm_map;
-		CREATE TABLE rxclass.rxclass_rxnorm_map AS (
+		DROP TABLE IF EXISTS rxclass.rxclass_rxnorm_in_pin_min_map;
+		CREATE TABLE rxclass.rxclass_rxnorm_in_pin_min_map AS (
 			SELECT 
 			 m.aui AS rxnorm_aui,
 			 m.code AS rxnorm_code, 
@@ -3959,12 +3959,12 @@ BEGIN
 	);
 	
 
-		CREATE INDEX x_rxclass_rxnorm_map_ptr_id ON rxclass.rxclass_rxnorm_map(ptr_id);
-		CREATE INDEX x_rxclass_rxnorm_map_rxclass_sab ON rxclass.rxclass_rxnorm_map(rxclass_sab);
-		CREATE INDEX x_rxclass_rxnorm_map_rxclass_abbr ON rxclass.rxclass_rxnorm_map(rxclass_abbr);
-		CREATE INDEX x_rxclass_rxnorm_map_rxclass_code ON rxclass.rxclass_rxnorm_map(rxclass_code);
-		CREATE INDEX x_rxclass_rxnorm_map_aui ON rxclass.rxclass_rxnorm_map(aui);
-		CREATE INDEX x_rxclass_rxnorm_map_code ON rxclass.rxclass_rxnorm_map(code);
+		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_ptr_id ON rxclass.rxclass_rxnorm_in_pin_min_map(ptr_id);
+		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_sab ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_sab);
+		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_abbr ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_abbr);
+		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_code ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_code);
+		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_aui ON rxclass.rxclass_rxnorm_in_pin_min_map(aui);
+		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_code ON rxclass.rxclass_rxnorm_in_pin_min_map(code);
 		
 		
 		SELECT get_log_timestamp()
@@ -3998,7 +3998,7 @@ BEGIN
 			  mth_version,
 			  mth_date,
 			  'RXCLASS_STR',
-			  'RXCLASS_RXNORM_MAP');
+			  'RXCLASS_RXNORM_IN_PIN_MIN_MAP');
 	
 	END IF;
 	
