@@ -3908,6 +3908,101 @@ BEGIN
 	
 	END IF;
 	
+	
+	SELECT check_if_requires_processing(mth_version, 'RXCLASS_STR', 'RXCLASS_RXNORM_MAP')
+	INTO requires_processing; 
+	
+	IF requires_processing THEN 
+		SELECT get_log_timestamp()
+		INTO start_timestamp
+		;
+	
+		DROP TABLE IF EXISTS rxclass.rxclass_rxnorm_map;
+		CREATE TABLE rxclass.rxclass_rxnorm_map AS (
+			SELECT 
+			 m.aui AS rxnorm_aui,
+			 m.code AS rxnorm_code, 
+			 m.str  AS rxnorm_str,
+			 m.tty  AS rxnorm_tty, 
+			 doc.expl AS rxnorm_tty_name,
+			 r.rel  AS rel, 
+			 r.rela AS rela,
+			 rxclass.*
+			FROM rxclass.rxclass_str rxclass 
+			INNER JOIN mth.mrrel r 
+			ON r.aui1 = rxclass.aui 
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso WHERE sab = 'RXNORM' AND tty IN ('IN', 'PIN', 'MIN')) m 
+			ON r.aui2 = m.aui 
+			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc 
+			ON m.tty = doc.value
+			UNION 
+			SELECT 
+			 m.aui AS rxnorm_aui,
+			 m.code AS rxnorm_code, 
+			 m.str  AS rxnorm_str,
+			 m.tty  AS rxnorm_tty, 
+			 doc.expl AS rxnorm_tty_name,
+			 r.rel  AS rel, 
+			 r.rela AS rela,
+			 rxclass.*
+			FROM rxclass.rxclass_str rxclass 
+			INNER JOIN mth.mrrel r 
+			ON r.aui1 = rxclass.aui 
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso WHERE sab = 'RXNORM' AND tty NOT IN ('IN', 'PIN', 'MIN')) m0 
+			ON r.aui2 = m0.aui 
+			INNER JOIN mth.mrrel r2 
+			ON r2.aui1 = m0.aui 
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso WHERE sab = 'RXNORM' AND tty IN ('IN', 'PIN', 'MIN')) m 
+			ON m.aui = r2.aui2 
+			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc 
+			ON m.tty = doc.value
+	);
+	
+			COMMIT;
+
+		CREATE INDEX x_rxclass_rxnorm_map_ptr_id ON rxclass.rxclass_rxnorm_map(ptr_id);
+		CREATE INDEX x_rxclass_rxnorm_map_rxclass_sab ON rxclass.rxclass_rxnorm_map(rxclass_sab);
+		CREATE INDEX x_rxclass_rxnorm_map_rxclass_abbr ON rxclass.rxclass_rxnorm_map(rxclass_abbr);
+		CREATE INDEX x_rxclass_rxnorm_map_rxclass_code ON rxclass.rxclass_rxnorm_map(rxclass_code);
+		CREATE INDEX x_rxclass_rxnorm_map_aui ON rxclass.rxclass_rxnorm_map(aui);
+		CREATE INDEX x_rxclass_rxnorm_map_code ON rxclass.rxclass_rxnorm_map(code);
+		
+		
+		SELECT get_log_timestamp()
+		INTO stop_timestamp
+		;
+
+		SELECT get_umls_mth_dt()
+		INTO mth_date
+		;
+
+
+
+		EXECUTE
+		  format(
+		    '
+			INSERT INTO public.process_umls_mrhier_log
+			VALUES (
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  ''%s'',
+			  NULL,
+			  ''rxclass'',
+			  ''%s'',
+			  ''%s'',
+			   NULL,
+			   NULL);
+			',
+			  start_timestamp,
+			  stop_timestamp,
+			  mth_version,
+			  mth_date,
+			  'RXCLASS_STR',
+			  'RXCLASS_RXNORM_MAP');
+	
+	END IF;
+	
 	SELECT check_if_requires_processing(mth_version, 'RXCLASS_EXT', 'RXCLASS_CODE')
 	INTO requires_processing; 
 	
