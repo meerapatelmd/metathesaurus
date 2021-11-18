@@ -3931,7 +3931,7 @@ BEGIN
 			FROM rxclass.rxclass_str rxclass 
 			INNER JOIN mth.mrrel r 
 			ON r.aui1 = rxclass.aui 
-			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso WHERE sab = 'RXNORM' AND tty IN ('IN', 'PIN', 'MIN')) m 
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m0 WHERE m0.sab = 'RXNORM' AND m0.tty IN ('IN', 'PIN', 'MIN')) m 
 			ON r.aui2 = m.aui 
 			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc 
 			ON m.tty = doc.value
@@ -3948,17 +3948,16 @@ BEGIN
 			FROM rxclass.rxclass_str rxclass 
 			INNER JOIN mth.mrrel r 
 			ON r.aui1 = rxclass.aui 
-			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso WHERE sab = 'RXNORM' AND tty NOT IN ('IN', 'PIN', 'MIN')) m0 
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m00 WHERE m00.sab = 'RXNORM' AND m00.tty NOT IN ('IN', 'PIN', 'MIN')) m0 
 			ON r.aui2 = m0.aui 
 			INNER JOIN mth.mrrel r2 
 			ON r2.aui1 = m0.aui 
-			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso WHERE sab = 'RXNORM' AND tty IN ('IN', 'PIN', 'MIN')) m 
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m000 WHERE m000.sab = 'RXNORM' AND m000.tty IN ('IN', 'PIN', 'MIN')) m 
 			ON m.aui = r2.aui2 
 			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc 
 			ON m.tty = doc.value
 	);
 	
-			COMMIT;
 
 		CREATE INDEX x_rxclass_rxnorm_map_ptr_id ON rxclass.rxclass_rxnorm_map(ptr_id);
 		CREATE INDEX x_rxclass_rxnorm_map_rxclass_sab ON rxclass.rxclass_rxnorm_map(rxclass_sab);
