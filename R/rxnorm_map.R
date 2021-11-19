@@ -1,5 +1,23 @@
-
-
+#' @title
+#' Retrieve the Table Listing RxNorm Paths
+#'
+#' @description
+#' Retrieve the table found at
+#' \url{https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix}
+#' that will be used to generate the SQL queries to derive RxNorm maps.
+#' @param url Source URL. It is not hardcoded in case the URL changes in the future.
+#'  Default: 'https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix'
+#' @return
+#' Tibble of a machine-readable version of what is read at the `url` parameter.
+#' @rdname get_rxnorm_paths
+#' @family RxNorm Map
+#' @export
+#' @import rvest
+#' @import tidyr
+#' @import dplyr
+#' @import pg13
+#' @importFrom rlang parse_expr
+#' @importFrom glue glue
 get_rxnorm_paths <-
         function(url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix") {
                 input <-
@@ -81,6 +99,35 @@ get_rxnorm_paths <-
                 output_list2
         }
 
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+#' @param conn PARAM_DESCRIPTION
+#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
+#' @param start_arg PARAM_DESCRIPTION
+#' @param end_arg PARAM_DESCRIPTION
+#' @param verbose PARAM_DESCRIPTION, Default: TRUE
+#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
+#' @param render_only PARAM_DESCRIPTION, Default: FALSE
+#' @param checks PARAM_DESCRIPTION, Default: ''
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[dplyr]{filter}}
+#'  \code{\link[glue]{glue}}
+#'  \code{\link[cli]{cli_abort}}
+#'  \code{\link[pg13]{query}}
+#' @rdname get_rxnorm_map
+#' @export
+#' @importFrom dplyr filter
+#' @importFrom glue glue
+#' @importFrom cli cli_inform
+#' @importFrom pg13 query
 get_rxnorm_map <-
         function(conn,
                  conn_fun = "pg13::local_connect()",
@@ -162,6 +209,22 @@ get_rxnorm_map <-
         }
 
 
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[dplyr]{filter}},\code{\link[dplyr]{mutate}},\code{\link[dplyr]{filter_all}}
+#' @rdname get_rxnorm_ingredient_map
+#' @export
+#' @importFrom dplyr filter transmute filter_at
 get_rxnorm_ingredient_map <-
         function() {
                 rxnorm_concept_map <-
