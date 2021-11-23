@@ -32,8 +32,8 @@ run_setup <-
              "copy_rrfs",
              "add_indexes",
              "log",
-             "setup_crosswalk"
-           ),
+             "setup_crosswalk"),
+           postprocess = TRUE,
            mrconso_only = FALSE,
            omop_only = FALSE,
            english_only = TRUE,
