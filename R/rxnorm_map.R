@@ -488,3 +488,274 @@ get_rxnorm_ingredient_map <-
                 final_rxnorm_ingredient_map
 
         }
+
+
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+#' @param conn PARAM_DESCRIPTION
+#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
+#' @param from_tty PARAM_DESCRIPTION, Default: c("BN", "BPCK", "DF", "DFG", "ET", "GPCK", "IN", "MIN", "PIN",
+#'    "PSN", "SBD", "SBDC", "SBDF", "SBDG", "SCD", "SCDC", "SCDF",
+#'    "SCDG", "SY", "TMSY")
+#' @param to_tty PARAM_DESCRIPTION, Default: c("BN", "BPCK", "DF", "DFG", "ET", "GPCK", "IN", "MIN", "PIN",
+#'    "PSN", "SBD", "SBDC", "SBDF", "SBDG", "SCD", "SCDC", "SCDF",
+#'    "SCDG", "SY", "TMSY")
+#' @param full_path PARAM_DESCRIPTION, Default: FALSE
+#' @param schema PARAM_DESCRIPTION, Default: 'mth'
+#' @param target_schema PARAM_DESCRIPTION, Default: 'rxclass'
+#' @param verbose PARAM_DESCRIPTION, Default: TRUE
+#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
+#' @param render_only PARAM_DESCRIPTION, Default: FALSE
+#' @param checks PARAM_DESCRIPTION, Default: ''
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[cli]{cli_alert}},\code{\link[cli]{cli_abort}}
+#'  \code{\link[rlang]{parse_expr}}
+#'  \code{\link[pg13]{dc}},\code{\link[pg13]{c("query", "query")}},\code{\link[pg13]{send}}
+#'  \code{\link[dplyr]{filter}}
+#'  \code{\link[glue]{glue}}
+#'  \code{\link[readr]{write_delim}}
+#' @rdname write_rxnorm_map
+#' @family RxNorm Class
+#' @export
+#' @importFrom cli cli_alert_danger cli_inform
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc query send
+#' @importFrom dplyr filter
+#' @importFrom glue glue
+#' @importFrom readr write_csv
+
+
+
+write_rxnorm_map <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           from_tty = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
+           to_tty = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
+           full_path = FALSE,
+           schema = "mth",
+           target_schema = "rxclass",
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+    # Match Arguments
+    from_tty <-
+      match.arg(arg = from_tty,
+                choices = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
+                several.ok = FALSE)
+
+    to_tty <-
+      match.arg(arg = to_tty,
+                choices = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
+                several.ok = FALSE)
+
+    if (identical(from_tty, to_tty)) {
+
+      cli::cli_alert_danger("`from_tty` and `to_tty` are the same value. '{from_tty}' cannot be mapped to itself.")
+
+
+
+    } else {
+
+      if (missing(conn)) {
+        conn <- eval(rlang::parse_expr(conn_fun))
+        on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+                after = TRUE)
+      }
+
+      rxnorm_concept_map <-
+        get_rxnorm_paths()
+      Sys.sleep(1)
+      run_map <-
+        rxnorm_concept_map %>%
+        dplyr::filter(start %in% from_tty,
+                      end %in% to_tty) %>%
+        distinct() %>%
+        arrange(as.integer(path_level))
+
+      if (nrow(run_map)==0) {
+        stop(glue::glue("A path starting from '{from_tty}' and ending at '{to_tty}' does not exist."))
+      }
+
+      max_path_level <-
+        max(run_map$path_level)
+      cli::cli_inform("Path from '{from_tty}' to '{to_tty}' is {max_path_level} level{?s} in length.")
+
+      output <- list()
+      for (i in 1:nrow(run_map)) {
+        from <- run_map$from[i]
+        to   <- run_map$to[i]
+
+        sql_statement <-
+          glue::glue(
+            "
+    SELECT
+     m1.tty  AS {from}_tty,
+     m1.aui  AS {from}_aui,
+     m1.code AS {from}_code,
+     m1.str  AS {from}_str,
+     m2.tty  AS {to}_tty,
+     m2.aui  AS {to}_aui,
+     m2.code AS {to}_code,
+     m2.str  AS {to}_str
+    FROM {schema}.MRCONSO m1
+    INNER JOIN {schema}.MRREL r
+    ON r.aui1 = m1.aui
+    INNER JOIN {schema}.MRCONSO m2
+    ON r.aui2 = m2.aui
+    WHERE
+      m1.sab = 'RXNORM' AND
+      m1.tty = '{from}' AND
+      m2.sab = 'RXNORM' AND
+      m2.tty = '{to}'
+    ;
+    ")
+
+        sql_statement <-
+          as.character(sql_statement)
+
+        output[[i]] <-
+          pg13::query(conn = conn,
+                      sql_statement = sql_statement,
+                      verbose = verbose,
+                      render_sql = render_sql,
+                      render_only = render_only,
+                      checks = checks)
+
+      }
+      final_output <- output
+
+      tmp_csv <- tempfile(fileext = ".csv")
+
+      readr::write_csv(x = final_output,
+                       file = tmp_csv,
+                       na = "",
+                       col_names = TRUE)
+
+      on.exit(expr = unlink(tmp_csv),
+              add = TRUE,
+              after = TRUE)
+
+      if (full_path) {
+
+        final_output <-
+        final_output %>%
+          reduce(full_join) %>%
+          distinct()
+
+
+      } else {
+
+        final_output <-
+        final_output %>%
+          reduce(full_join) %>%
+          select(starts_with(tolower(from_tty)),
+                 starts_with(tolower(to_tty))) %>%
+          distinct()
+
+      }
+    }
+
+
+    new_table_field_names <- colnames(final_output)
+    new_table_field_types <- vector(mode = "character",
+                                    length = length(new_table_field_names))
+
+    tty_ddl <-
+      grepl(pattern = "tty",
+            x = new_table_field_names) %>%
+      map(function(x) ifelse(x == TRUE, "varchar(10)", NA_character_)) %>%
+      unlist()
+
+    aui_ddl <-
+    grepl(pattern = "aui",
+          x = new_table_field_names) %>%
+      map(function(x) ifelse(x == TRUE, "varchar(9)", NA_character_)) %>%
+      unlist()
+
+    code_ddl <-
+      grepl(pattern = "code",
+            x = new_table_field_names) %>%
+      map(function(x) ifelse(x == TRUE, "integer", NA_character_)) %>%
+      unlist()
+
+    str_ddl <-
+      grepl(pattern = "str",
+            x = new_table_field_names) %>%
+      map(function(x) ifelse(x == TRUE, "text", NA_character_)) %>%
+      unlist()
+
+
+    str_map <-
+    tibble(field = new_table_field_names,
+           tty_ddl = tty_ddl,
+           aui_ddl = aui_ddl,
+           code_ddl = code_ddl,
+           str_ddl = str_ddl) %>%
+      transmute(field,
+                ddl = coalesce(tty_ddl,
+                               aui_ddl,
+                               code_ddl,
+                               str_ddl))
+
+    if (any(is.na(str_map$ddl))) {
+
+      print(str_map)
+      cli::cli_alert_danger("DDL is missing.")
+
+    }
+
+   ddl_strs <-
+      str_map %>%
+      transmute(ddl = sprintf("\t%s %s NOT NULL", field, ddl)) %>%
+      unlist() %>%
+      unname() %>%
+      paste(collapse = ",\n")
+
+
+
+
+
+   if (full_path) {
+
+     final_table <- glue::glue("rxnorm_map_from_{from_tty}_to_{to_tty}_full")
+
+   } else {
+     final_table <- glue::glue("rxnorm_map_from_{from_tty}_to_{to_tty}")
+   }
+
+   sql_statement <-
+     glue::glue(
+       "
+       DROP TABLE IF EXISTS {target_schema}.{final_table};
+       CREATE TABLE {target_schema}.{final_table} (
+       {ddl_strs}
+       );
+
+        COPY {target_schema}.{final_table}
+        FROM '{tmp_csv}'
+        CSV HEADER QUOTE E'\\b';
+       ")
+
+
+       pg13::send(conn = conn,
+                  sql_statement = sql_statement,
+                    checks = checks,
+                  verbose = verbose,
+                  render_sql = render_sql,
+                  render_only = render_only)
+
+
+
+
+
+  }

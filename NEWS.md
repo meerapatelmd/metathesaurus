@@ -1,6 +1,8 @@
 # metathesaurus 4.0.0.9000   
 
 * Added RxNorm Map family of functions  
+* Introduced RxNorm processing built on the `PL/R` 
+extension.  
 * Fixed bug with `run_setup` where the `conn_fun` argument 
 was not utilized.  
 * Added SQL script for post-processing of the MRHIER 
