@@ -660,6 +660,7 @@ write_rxnorm_map <-
     readr::write_csv(x = final_output,
                      file = tmp_csv,
                      na = "",
+                     quote = "all",
                      col_names = TRUE)
 
     on.exit(expr = unlink(tmp_csv),
@@ -686,7 +687,7 @@ write_rxnorm_map <-
     code_ddl <-
       grepl(pattern = "code",
             x = new_table_field_names) %>%
-      map(function(x) ifelse(x == TRUE, "integer", NA_character_)) %>%
+      map(function(x) ifelse(x == TRUE, "text", NA_character_)) %>%
       unlist()
 
     str_ddl <-
@@ -744,7 +745,7 @@ write_rxnorm_map <-
 
         COPY {target_schema}.{final_table}
         FROM '{tmp_csv}'
-        CSV HEADER QUOTE E'\\b';
+        CSV HEADER QUOTE E'\"';
        ")
 
 
