@@ -25,6 +25,7 @@
 #' @import secretary
 #' @importFrom rlang parse_expr
 #' @importFrom glue glue
+
 read_rxnorm_paths <-
         function(url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix") {
 
@@ -36,7 +37,8 @@ read_rxnorm_paths <-
           if (!is.null(cache_file)) {
 
             cached_datetime <- file.info(cache_file)$ctime
-            secretary::typewrite(glue::glue("Loading table that was cached {prettyunits::time_ago(cached_datetime)}."))
+            secretary::typewrite(
+              glue::glue("Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}."))
             R.cache::loadCache(key = list(url = url),
                                dirs = "metathesaurus")
 
