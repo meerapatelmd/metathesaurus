@@ -1,7 +1,7 @@
 #' @title
 #' Instantiate Postgres
 #' @inherit setup description
-#' @inheritParams setup
+#' @inheritParams pkg_args
 #' @seealso
 #'  \code{\link[pg13]{lsSchema}},\code{\link[pg13]{send}},\code{\link[pg13]{lsTables}},\code{\link[pg13]{dropTable}}
 #'  \code{\link[SqlRender]{render}}
@@ -44,8 +44,16 @@ run_setup <-
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE) {
+
+
     if (missing(log_version) | missing(log_release_date)) {
       stop("`log_version` and `log_release_date` are required.")
+    }
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
     }
 
 
@@ -359,11 +367,11 @@ run_setup <-
     if ("setup_crosswalk" %in% steps) {
 
       setup_crosswalk_schema(
-        conn_fun = conn_fun,
+        conn = conn,
         crosswalk_schema = "mth_crosswalk"
       )
 
-
-
     }
+
+
   }

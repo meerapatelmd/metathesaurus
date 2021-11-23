@@ -1,3 +1,11 @@
+# metathesaurus 4.0.0.9000   
+
+* Added RxNorm Map family of functions  
+* Fixed bug with `run_setup` where the `conn_fun` argument 
+was not utilized.  
+* Added SQL script for post-processing of the MRHIER 
+table. 
+
 # metathesaurus 4.0.0  
 
 * Apply tidy style to R files  

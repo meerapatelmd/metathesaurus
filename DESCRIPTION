@@ -1,6 +1,6 @@
 Package: metathesaurus
 Title: Setup UMLS Metathesaurus in MySQL5.5 or Postgres
-Version: 4.0.0
+Version: 4.0.0.9000
 Authors@R: 
     person(given = "Meera",
            family = "Patel",
