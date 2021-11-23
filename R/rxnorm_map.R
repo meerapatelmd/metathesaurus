@@ -634,16 +634,6 @@ write_rxnorm_map <-
       }
       final_output <- output
 
-      tmp_csv <- tempfile(fileext = ".csv")
-
-      readr::write_csv(x = final_output,
-                       file = tmp_csv,
-                       na = "",
-                       col_names = TRUE)
-
-      on.exit(expr = unlink(tmp_csv),
-              add = TRUE,
-              after = TRUE)
 
       if (full_path) {
 
@@ -664,6 +654,17 @@ write_rxnorm_map <-
 
       }
     }
+
+    tmp_csv <- tempfile(fileext = ".csv")
+
+    readr::write_csv(x = final_output,
+                     file = tmp_csv,
+                     na = "",
+                     col_names = TRUE)
+
+    on.exit(expr = unlink(tmp_csv),
+            add = TRUE,
+            after = TRUE)
 
 
     new_table_field_names <- colnames(final_output)
