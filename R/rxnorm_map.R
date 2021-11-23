@@ -12,7 +12,7 @@
 #' this dataframe in the event that the source documentation is ever lost.
 #' @return
 #' Tibble of a machine-readable version of what is read at the `url` parameter.
-#' @rdname get_rxnorm_paths
+#' @rdname read_rxnorm_paths
 #' @family RxNorm Map
 #' @export
 #' @import rvest
@@ -25,7 +25,7 @@
 #' @import secretary
 #' @importFrom rlang parse_expr
 #' @importFrom glue glue
-get_rxnorm_paths <-
+read_rxnorm_paths <-
         function(url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix") {
 
           cache_file <-
@@ -36,7 +36,7 @@ get_rxnorm_paths <-
           if (!is.null(cache_file)) {
 
             cached_datetime <- file.info(cache_file)$ctime
-            secretary::typewrite(glue::glue("Loading cached results from {prettyunits::time_ago(cached_datetime)}."))
+            secretary::typewrite(glue::glue("Loading table that was cached {prettyunits::time_ago(cached_datetime)}."))
             R.cache::loadCache(key = list(url = url),
                                dirs = "metathesaurus")
 
@@ -134,11 +134,11 @@ get_rxnorm_paths <-
 #' Write RxNorm Path Lookup
 #'
 #' @description
-#' Write the tibble returned by `get_rxnorm_paths()` to a
+#' Write the tibble returned by `read_rxnorm_paths()` to a
 #' Postgres table.
 #'
 #' @inheritParams pkg_args
-#' @inheritParams get_rxnorm_paths
+#' @inheritParams read_rxnorm_paths
 #' @inheritParams pg13::write_table
 #' @rdname write_rxnorm_path_lookup
 #' @family RxNorm Map
@@ -160,7 +160,7 @@ write_rxnorm_path_lookup <-
 
 
     out <-
-      get_rxnorm_paths(url = url) %>%
+      read_rxnorm_paths(url = url) %>%
       dplyr::group_by(start, end) %>%
       dplyr::arrange(as.integer(path_level),
                      .by_group = TRUE) %>%
@@ -304,7 +304,7 @@ get_rxnorm_map <-
               }
 
                 rxnorm_concept_map <-
-                        get_rxnorm_paths()
+                        read_rxnorm_paths()
                 Sys.sleep(1)
                 run_map <-
                         rxnorm_concept_map %>%
@@ -415,7 +415,7 @@ get_rxnorm_ingredient_map <-
                  render_only = FALSE,
                  checks = "") {
                 rxnorm_concept_map <-
-                        get_rxnorm_paths()
+                        read_rxnorm_paths()
 
                 ingr_rxnorm_concept_map <-
                         rxnorm_concept_map %>%
@@ -573,7 +573,7 @@ write_rxnorm_map <-
       }
 
       rxnorm_concept_map <-
-        get_rxnorm_paths()
+        read_rxnorm_paths()
       Sys.sleep(1)
       run_map <-
         rxnorm_concept_map %>%
@@ -732,7 +732,9 @@ write_rxnorm_map <-
      final_table <- glue::glue("rxnorm_map_from_{from_tty}_to_{to_tty}_full")
 
    } else {
+
      final_table <- glue::glue("rxnorm_map_from_{from_tty}_to_{to_tty}")
+
    }
 
    sql_statement <-
