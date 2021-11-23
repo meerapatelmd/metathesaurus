@@ -12,6 +12,18 @@ setup_mysql_mth(
   rrf_dir
 )
 }
+\arguments{
+\item{conn}{Database connection. For MySQL5.5,
+the connection made by RMySQL's dbConnect and for Postgres,
+the connection via DatabaseConnector.}
+
+\item{mrconso_only}{Setup only the MRCONSO Table? Default: FALSE}
+
+\item{omop_only}{Setup the MRCONSO, MRHIER, MRMAP,
+MRSMAP, MRSAT, AND MRREL Tables only? Default: FALSE}
+
+\item{english_only}{Setup only the ENG Tables? Default: TRUE}
+}
 \description{
 Instantiate MySQL5.5
 }
@@ -27,6 +39,7 @@ Instantiate MySQL5.5
 \code{\link[progress]{progress_bar}}
 
 Other setup: 
+\code{\link{run_setup}()},
 \code{\link{setup_pg_mth}()}
 }
 \concept{setup}

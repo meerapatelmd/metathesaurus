@@ -4,18 +4,32 @@
 \alias{pkg_args}
 \title{Run Functions}
 \arguments{
-\item{conn}{Database connection. For MySQL5.5, the connection made by RMySQL's dbConnect and for Postgres, the connection via DatabaseConnector.}
+\item{conn}{Database connection. For MySQL5.5,
+the connection made by RMySQL's dbConnect and for Postgres,
+the connection via DatabaseConnector.}
 
-\item{schema}{For Postgres executions only, the schema to write all the tables to, Default: 'mth'}
+\item{conn_fun}{Instead of supplying of a direct
+database connection, an expression can be supplied that
+automatically connects and disconnects the connection
+once the function is run.}
 
-\item{rrf_dir}{Path to directory to the RRF Files either unpackaged by direct download or produced by Metamorphosys}
+\item{schema}{For Postgres executions only, the
+schema to write all the tables to, Default: 'mth'}
+
+\item{rrf_dir}{Path to directory to the RRF Files
+either unpackaged by direct download or produced by Metamorphosys}
 
 \item{mrconso_only}{Setup only the MRCONSO Table? Default: FALSE}
 
-\item{omop_only}{Setup the MRCONSO, MRHIER, MRMAP, MRSMAP, MRSAT, AND MRREL Tables only? Default: FALSE}
+\item{omop_only}{Setup the MRCONSO, MRHIER, MRMAP,
+MRSMAP, MRSAT, AND MRREL Tables only? Default: FALSE}
 
-\item{english_only}{Setup only the ENG Tables? PARAM_DESCRIPTION, Default: TRUE}
+\item{english_only}{Setup only the ENG Tables? Default: TRUE}
 }
 \description{
-These functions setup the instance of the given DBMS. All SQL Statements that fail to execute are printed back in the console at the conclusion of execution. It is important to note that the schemas are dropped and rewritten with the run and all present tables will be lost.
+These functions setup the instance of the given DBMS.
+All SQL Statements that fail to execute are printed back
+in the console at the conclusion of execution. It is important
+to note that the schemas are dropped and rewritten with the
+run and all present tables will be lost.
 }

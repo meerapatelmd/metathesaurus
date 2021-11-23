@@ -2,7 +2,7 @@
 % Please edit documentation in R/pg.R
 \name{setup_pg_mth}
 \alias{setup_pg_mth}
-\title{Instantiate Postgres}
+\title{Instantiate Postgres (Deprecated)}
 \usage{
 setup_pg_mth(
   conn,
@@ -24,7 +24,7 @@ setup_pg_mth(
 )
 }
 \description{
-Instantiate Postgres
+Instantiate Postgres (Deprecated)
 }
 \seealso{
 \code{\link[pg13]{lsSchema}},\code{\link[pg13]{send}},\code{\link[pg13]{lsTables}},\code{\link[pg13]{dropTable}}
@@ -35,6 +35,7 @@ Instantiate Postgres
 \code{\link[progress]{progress_bar}}
 
 Other setup: 
+\code{\link{run_setup}()},
 \code{\link{setup_mysql_mth}()}
 }
 \concept{setup}
