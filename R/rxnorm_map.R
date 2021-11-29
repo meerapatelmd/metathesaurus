@@ -554,6 +554,81 @@ get_rxnorm_tty_lookup <-
 
   }
 
+
+
+
+
+rxnorm_requires_processing <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           mth_version,
+           mth_release_dt,
+           target_table,
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+    if (missing(mth_version)|missing(target_table)) {
+      stop("`mth_version` and `target_table` must be supplied!", call. = FALSE)
+    }
+
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+
+sql_statement <-
+  "
+  CREATE TABLE IF NOT EXISTS public.process_rxmap_log (
+    process_start_datetime timestamp without time zone,
+    process_stop_datetime timestamp without time zone,
+    mth_version character varying(255),
+    mth_release_dt character varying(255),
+    sab character varying(255),
+    target_schema character varying(255),
+    source_table character varying(255),
+    target_table character varying(255),
+    source_row_ct numeric,
+    target_row_ct numeric
+  );
+  "
+
+pg13::send(
+  conn = conn,
+  sql_statement = sql_statement,
+  checks = checks,
+  verbose = verbose,
+  render_sql = render_sql,
+  render_only = render_only)
+
+sql_statement <-
+  glue::glue(
+"
+SELECT *
+FROM public.process_rxmap_log
+WHERE
+  mth_version = '{mth_version}'
+  AND mth_release_dt = '{mth_release_dt}'
+  AND target_table = '{target_table}'
+")
+
+out <-
+pg13::query(
+  conn = conn,
+  sql_statement = sql_statement,
+  checks = checks,
+  verbose = verbose,
+  render_sql = render_sql,
+  render_only = render_only)
+
+nrow(out)==0
+
+  }
+
 #' @title
 #' Write RxNorm Path Lookup
 #'
@@ -573,18 +648,20 @@ get_rxnorm_tty_lookup <-
 write_rxnorm_path_lookup <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           schema = "rxmap",
+           target_schema = "rxmap",
            table_name = "lookup_rxnorm_paths",
+           mth_version,
+           mth_release_dt,
            url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
+           check_for_updates = FALSE,
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE,
            checks = "") {
 
-
-
     out <-
-      read_rxnorm_paths(url = url) %>%
+      read_rxnorm_paths(url = url,
+                        check_for_updates = check_for_updates) %>%
       dplyr::group_by(start, end) %>%
       dplyr::arrange(as.integer(path_level),
                      .by_group = TRUE) %>%
@@ -597,6 +674,17 @@ write_rxnorm_path_lookup <-
               after = TRUE)
     }
 
+    if (rxnorm_requires_processing(conn = conn,
+                               mth_version = mth_version,
+                               mth_release_dt = mth_release_dt,
+                               target_table = table_name,
+                               verbose = verbose,
+                               render_sql = render_sql,
+                               render_only = render_only,
+                               checks = checks)) {
+
+
+      process_start <- Sys.time()
 
     tmp_csv <- tempfile(fileext = ".csv")
 
@@ -614,8 +702,8 @@ write_rxnorm_path_lookup <-
       sql_statement =
         glue::glue(
           "
-        DROP TABLE IF EXISTS {schema}.tmp_{table_name};
-        CREATE TABLE {schema}.tmp_{table_name} (
+        DROP TABLE IF EXISTS {target_schema}.tmp_{table_name};
+        CREATE TABLE {target_schema}.tmp_{table_name} (
           rowid int NOT NULL,
           rxnorm_start_tty varchar(10) NOT NULL,
           rxnorm_end_tty varchar(10) NOT NULL,
@@ -624,23 +712,23 @@ write_rxnorm_path_lookup <-
           to_tty varchar(10) NOT NULL
         );
 
-        COPY {schema}.tmp_{table_name}
+        COPY {target_schema}.tmp_{table_name}
         FROM '{tmp_csv}'
         CSV HEADER QUOTE E'\\b';
 
-        DROP TABLE IF EXISTS {schema}.{table_name};
-        CREATE TABLE {schema}.{table_name} AS (
+        DROP TABLE IF EXISTS {target_schema}.{table_name};
+        CREATE TABLE {target_schema}.{table_name} AS (
           SELECT
             tmp.rxnorm_start_tty,
             tmp.rxnorm_end_tty,
             tmp.path_level,
             tmp.from_tty,
             tmp.to_tty
-          FROM {schema}.tmp_{table_name} tmp
+          FROM {target_schema}.tmp_{table_name} tmp
           ORDER BY tmp.rowid
         );
 
-        DROP TABLE {schema}.tmp_{table_name};
+        DROP TABLE {target_schema}.tmp_{table_name};
         ",
           checks = checks,
           verbose = verbose,
@@ -648,6 +736,37 @@ write_rxnorm_path_lookup <-
           render_only = render_only)
     )
 
+
+    process_stop <-
+      Sys.time()
+
+
+    target_table_rows <-
+      pg13::query(
+        conn = conn,
+        checks = checks,
+        sql_statement = glue::glue("SELECT COUNT(*) FROM {target_schema}.{table_name};"),
+        verbose = verbose,
+        render_sql = render_sql,
+        render_only = render_only) %>%
+      unlist() %>%
+      unname()
+
+    rxnorm_log_processing(
+      conn = conn,
+      process_start = process_start,
+      process_stop = process_stop,
+      mth_version = mth_version,
+      mth_release_dt = mth_release_dt,
+      target_schema = target_schema,
+      source_table = "",
+      target_table = table_name,
+      source_table_rows = 0,
+      target_table_rows = target_table_rows
+    )
+
+
+    }
   }
 
 
@@ -755,6 +874,63 @@ write_rxnorm_ingredient_map <-
 
 
 
+rxnorm_log_processing <-
+  function(process_start,
+           process_stop,
+           mth_version,
+           mth_release_dt,
+           target_schema,
+           source_table,
+           target_table,
+           source_table_rows,
+           target_table_rows,
+           conn,
+           conn_fun = "pg13::local_connect()",
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+
+
+    sql_statement <-
+      glue::glue(
+        "INSERT INTO public.process_rxmap_log
+        VALUES(
+          '{process_start}',
+          '{process_stop}',
+          '{mth_version}',
+          '{mth_release_dt}',
+          'RXNORM',
+          '{target_schema}',
+          '{source_table}',
+          '{target_table}',
+          '{source_table_rows}',
+          '{target_table_rows}'
+        );
+        "
+      )
+
+
+    pg13::send(
+      conn = conn,
+      sql_statement = sql_statement,
+      checks = checks,
+      verbose = verbose,
+      render_sql = render_sql,
+      render_only = render_only)
+  }
+
+
+
 #' @title FUNCTION_TITLE
 #' @description FUNCTION_DESCRIPTION
 #' @param conn PARAM_DESCRIPTION
@@ -789,11 +965,30 @@ write_rxnorm_tty_lookup <-
            conn_fun = "pg13::local_connect()",
            schema = "mth",
            target_schema = "rxmap",
+           mth_version,
+           mth_release_dt,
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE,
            checks = "") {
 
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+    if (rxnorm_requires_processing(conn = conn,
+                                   mth_version = mth_version,
+                                   mth_release_dt = mth_release_dt,
+                                   target_table = "lookup_tty",
+                                   verbose = verbose,
+                                   render_sql = render_sql,
+                                   render_only = render_only,
+                                   checks = checks)) {
+
+
+      process_start <- Sys.time()
 
     final_output <- get_rxnorm_tty_lookup()
 
@@ -809,25 +1004,43 @@ write_rxnorm_tty_lookup <-
             add = TRUE,
             after = TRUE)
 
-    if (missing(conn)) {
-      conn <- eval(rlang::parse_expr(conn_fun))
-      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
-              after = TRUE)
-    }
 
 
     sql_statement <-
       glue::glue(
         "
-      DROP TABLE IF EXISTS {target_schema}.lookup_tty;
-      CREATE TABLE {target_schema}.lookup_tty (
+      DROP TABLE IF EXISTS {target_schema}.tmp_lookup_tty;
+      CREATE TABLE {target_schema}.tmp_lookup_tty (
         tty varchar(10),
-        tty_expanded varchar(100)
+        tty_expanded varchar(100),
+        table_name varchar(63)
+
       );
 
-      COPY {target_schema}.lookup_tty
+      COPY {target_schema}.tmp_lookup_tty
       FROM '{tmp_csv}'
       CSV HEADER QUOTE E'\"';
+
+      DROP TABLE IF EXISTS {target_schema}.tmp_lookup_tty2;
+      CREATE TABLE {target_schema}.tmp_lookup_tty2 AS (
+        SELECT m.tty, COUNT(*) AS tty_count
+        FROM {schema}.mrconso m
+        WHERE m.sab = 'RXNORM'
+        GROUP BY tty
+      );
+
+      DROP TABLE IF EXISTS {target_schema}.lookup_tty;
+      CREATE TABLE {target_schema}.lookup_tty AS (
+      SELECT cnt.tty, cnt.tty_count, exp.tty_expanded, exp.table_name
+      FROM {target_schema}.tmp_lookup_tty2 cnt
+      LEFT JOIN {target_schema}.tmp_lookup_tty exp
+      ON exp.tty = cnt.tty
+      ORDER BY cnt.tty_count DESC
+      );
+
+      DROP TABLE {target_schema}.tmp_lookup_tty;
+      DROP TABLE {target_schema}.tmp_lookup_tty2;
+
       ")
 
     pg13::send(conn = conn,
@@ -838,7 +1051,37 @@ write_rxnorm_tty_lookup <-
                render_only = render_only)
 
 
+    process_stop <-
+      Sys.time()
 
+    target_table_rows <-
+      pg13::query(conn = conn,
+                  sql_statement = glue::glue("SELECT COUNT(*) FROM {target_schema}.lookup_tty;"),
+                  verbose = verbose,
+                  render_sql = render_sql,
+                  render_only = render_only,
+                  checks = checks) %>%
+      unlist() %>%
+      unname()
+
+
+    rxnorm_log_processing(
+      conn = conn,
+      process_start = process_start,
+      process_stop = process_stop,
+      mth_version = mth_version,
+      mth_release_dt = mth_release_dt,
+      target_schema = target_schema,
+      source_table = "",
+      target_table = "lookup_tty",
+      source_table_rows = 0,
+      target_table_rows = target_table_rows
+    )
+
+
+
+
+    }
 
   }
 
@@ -1116,3 +1359,246 @@ write_rxnorm_map <-
 
 
   }
+
+
+
+
+
+
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+#' @param conn PARAM_DESCRIPTION
+#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
+#' @param schema PARAM_DESCRIPTION, Default: 'mth'
+#' @param target_schema PARAM_DESCRIPTION, Default: 'rxclass'
+#' @param verbose PARAM_DESCRIPTION, Default: TRUE
+#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
+#' @param render_only PARAM_DESCRIPTION, Default: FALSE
+#' @param checks PARAM_DESCRIPTION, Default: ''
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[readr]{write_delim}}
+#'  \code{\link[glue]{glue}}
+#'  \code{\link[pg13]{send}}
+#' @rdname write_all_maps
+#' @export
+#' @importFrom readr write_csv
+#' @importFrom glue glue
+#' @importFrom pg13 send
+
+
+write_rxnorm_all_maps <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           schema = "mth",
+           target_schema = "rxmap",
+           mth_version,
+           mth_release_dt,
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+
+    sql_statement <-
+      glue::glue("SELECT * FROM {target_schema}.lookup_tty;")
+
+
+    tty_lookup <-
+      pg13::query(conn = conn,
+                  sql_statement = sql_statement,
+                  checks = checks,
+                  verbose = verbose,
+                  render_sql = render_sql,
+                  render_only = render_only)
+
+    tty_rxnorm_concept_map <-
+      read_rxnorm_paths()
+
+    start_ttys <-
+    tty_rxnorm_concept_map %>%
+      dplyr::select(start) %>%
+      unlist() %>%
+      unname() %>%
+      unique()
+
+
+    for (start_tty in start_ttys) {
+
+      target_table_name <-
+        tty_lookup %>%
+        dplyr::filter(tty == start_tty) %>%
+        dplyr::select(table_name) %>%
+        unlist() %>%
+        unname()
+
+      if (
+      rxnorm_requires_processing(
+        conn = conn,
+        mth_version = mth_version,
+        mth_release_dt = mth_release_dt,
+        target_table = target_table_name,
+        verbose = verbose,
+        render_sql = render_sql,
+        render_only = render_only,
+        checks = checks
+      )) {
+
+
+      process_start <- Sys.time()
+
+
+      rxnorm_concept_map <-
+        tty_rxnorm_concept_map %>%
+        dplyr::filter(start == start_tty)
+
+      to_ttys <-
+        unique(rxnorm_concept_map$end)
+
+      if (missing(conn)) {
+        conn <- eval(rlang::parse_expr(conn_fun))
+        on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+                after = TRUE)
+      }
+
+
+      rxnorm_tty_map <-
+        vector(mode = "list",
+               length = length(to_ttys))
+      names(rxnorm_tty_map) <-
+        to_ttys
+
+    for (to_tty in to_ttys) {
+
+      rxnorm_tty_map[[to_tty]] <-
+        get_rxnorm_map(from_tty =  start_tty,
+                       to_tty = to_tty,
+                       conn = conn,
+                       full_path = FALSE,
+                       schema = schema,
+                       verbose = verbose,
+                       render_sql = render_sql,
+                       render_only = render_only,
+                       checks = checks) %>%
+        rename_all(str_remove_all,
+                   pattern = paste0(tolower(to_tty), "_"))
+    }
+
+    rxnorm_tty_map2 <-
+      bind_rows(rxnorm_tty_map,
+                .id = "tty") %>%
+      select(
+        tty,
+        aui,
+        code,
+        str,
+        starts_with(start_tty)) %>%
+      distinct() %>%
+      arrange_at(vars(starts_with(start_tty), tty, aui))
+
+    # Add mappings to self
+    rxnorm_tty_map2_b <-
+      bind_cols(
+    rxnorm_tty_map2 %>%
+      dplyr::select_at(vars(starts_with(start_tty))) %>%
+      dplyr::rename_all(function(x) stringr::str_remove_all(x,
+                                                            pattern = sprintf("%s_", tolower(start_tty)))) %>%
+      mutate(tty = start_tty),
+    rxnorm_tty_map2 %>%
+      dplyr::select_at(vars(starts_with(start_tty))))
+    final_rxnorm_tty_map <-
+      bind_rows(rxnorm_tty_map2,
+                rxnorm_tty_map2_b) %>%
+      dplyr::filter_at(vars(c(aui, code, str)),
+                       all_vars(!is.na(.))) %>%
+      distinct()
+
+    tmp_csv <- tempfile(fileext = ".csv")
+
+    readr::write_csv(x = final_rxnorm_tty_map,
+                     file = tmp_csv,
+                     na = "",
+                     quote = "all",
+                     col_names = TRUE)
+
+    on.exit(expr = unlink(tmp_csv),
+            add = TRUE,
+            after = TRUE)
+
+
+    sql_statement <-
+      glue::glue(
+        "
+      DROP TABLE IF EXISTS {target_schema}.{target_table_name};
+      CREATE TABLE {target_schema}.{target_table_name} (
+        tty varchar(10),
+        aui varchar(9),
+        code integer,
+        str text,
+        {start_tty}_aui varchar(9),
+        {start_tty}_code integer,
+        {start_tty}_str text
+      );
+
+      COPY {target_schema}.{target_table_name}
+      FROM '{tmp_csv}'
+      CSV HEADER QUOTE E'\"';
+      ")
+
+
+    pg13::send(conn = conn,
+               sql_statement = sql_statement,
+               checks = checks,
+               verbose = verbose,
+               render_sql = render_sql,
+               render_only = render_only)
+
+
+    process_stop <- Sys.time()
+
+
+    target_table_rows <-
+      pg13::query(
+        conn = conn,
+        checks = checks,
+        sql_statement = glue::glue("SELECT COUNT(*) FROM {target_schema}.{target_table_name};"),
+        verbose = verbose,
+        render_sql = render_sql,
+        render_only = render_only) %>%
+      unlist() %>%
+      unname()
+
+
+    rxnorm_log_processing(
+      conn = conn,
+      process_start = process_start,
+      process_stop =  process_stop,
+      mth_version = mth_version,
+      mth_release_dt =  mth_release_dt,
+      target_schema = target_schema,
+      source_table = "",
+      target_table = target_table_name,
+      source_table_rows = 0,
+      target_table_rows = target_table_rows
+
+    )
+
+
+    }
+    }
+
+}
