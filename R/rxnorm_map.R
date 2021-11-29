@@ -27,23 +27,143 @@
 #' @importFrom glue glue
 
 read_rxnorm_paths <-
-        function(url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix") {
+        function(url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
+                 check_for_updates = FALSE) {
 
           cache_file <-
           R.cache::findCache(key = list(url = url),
-                             dirs = "metathesaurus")
+                             dirs = "metathesaurus/rxnorm_map")
 
 
           if (!is.null(cache_file)) {
 
-            cached_datetime <- file.info(cache_file)$ctime
-            secretary::typewrite(
-              glue::glue("Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}."))
-            R.cache::loadCache(key = list(url = url),
-                               dirs = "metathesaurus")
+            if (!check_for_updates) {
+
+              cached_datetime <- file.info(cache_file)$ctime
+              secretary::typewrite(
+                glue::glue("Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}. Rerun with `check_for_updates` set to TRUE to scrape the `url` and update the cache if a diff is detected."))
+
+              existing_tbl <-
+              R.cache::loadCache(key = list(url = url),
+                                 dirs = "metathesaurus/rxnorm_map")
+
+              return(existing_tbl)
+
+
+
+            } else {
+
+              secretary::typewrite(
+                glue::glue("Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}."))
+
+              existing_tbl <-
+                R.cache::loadCache(key = list(url = url),
+                                   dirs = "metathesaurus/rxnorm_map")
+
+
+              input <-
+                read_html(url) %>%
+                rvest::html_table() %>%
+                pluck(2)
+              # Limit overwhelming the server if run in multiple successions
+              Sys.sleep(3)
+              input <- input %>% as_tibble(.name_repair = "unique")
+              input_a <- input %>% select_at(vars(1:2)) %>% unname()
+              input_b <- input %>% select_at(vars(3:4)) %>% unname()
+              colnames(input_a) <- c("start_to_end", "path")
+              colnames(input_b) <- c("start_to_end", "path")
+              output <-
+                bind_rows(input_a, input_b) %>%
+                mutate(path = str_remove_all(path, pattern = "[\r\t\n]")) %>%
+                separate_rows(path,
+                              sep = "or")
+
+              output$path_count <-
+                output$path %>%
+                map(function(x) length(unlist(strsplit(x, split = "=>")))-1) %>%
+                unlist()
+              max_path_count <-
+                max(output$path_count)
+
+              output_cols <-
+                paste0("path_", 1:max_path_count)
+
+              output$station_count <-
+                output$path %>%
+                map(function(x) length(unlist(strsplit(x, split = "=>")))) %>%
+                unlist()
+
+              max_station_count <-
+                max(output$station_count)
+              output_station_cols <-
+                paste0("station_", 1:max_station_count)
+
+              output2 <-
+                output %>%
+                tidyr::separate(col = path,
+                                into = output_station_cols,
+                                sep = " => ")
+
+              output_list <-
+                vector(mode = "list",
+                       length = max_station_count)
+
+              for (i in 1:max_station_count) {
+
+                if (i != 1) {
+                  output_list[[i]] <-
+                    eval(
+                      rlang::parse_expr(
+                        as.character(
+                          glue::glue(
+                            "
+      output2 %>%
+      mutate(path_level = '{i-1}') %>%
+      select(start_to_end, path_level, from = station_{i-1}, to = station_{i}) %>%
+      distinct() %>%
+      dplyr::filter_all(all_vars(!is.na(.)))
+      "
+                          ))))
+
+                }
+
+              }
+
+              output_list2 <-
+                bind_rows(output_list) %>%
+                distinct() %>%
+                arrange(start_to_end, from, to) %>%
+                extract(col = start_to_end,
+                        into = c("start", "end"),
+                        regex = "([A-Z]{2,}) => ([A-Z]{2,})")
+
+
+              new_tbl <- output_list2
+
+              # List all the files
+              cache_folder_path <-
+              file.path(R.cache::getCachePath(),
+                        "metathesaurus/rxnorm_map")
+
+              new_cache_file_index <-
+                length(list.files(cache_folder_path))+1
+
+              R.cache::saveCache(object = existing_tbl,
+                                 key = list(index = new_cache_file_index, url = url),
+                                 dirs = "metathesaurus/rxnorm_map")
+
+              secretary::typewrite(
+                glue::glue(
+                  "Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}. Rerun with `check_for_updates` set to TRUE to scrape the `url` and update the cache if a diff is detected."))
+
+
+              R.cache::saveCache(object = new_tbl,
+                                 key = list(url = url),
+                                 dirs = "metathesaurus/rxnorm_map")
+
+            }
 
           } else {
-
 
                 input <-
                         read_html(url) %>%
@@ -123,113 +243,12 @@ read_rxnorm_paths <-
 
                 R.cache::saveCache(object = output_list2,
                                    key = list(url = url),
-                                   dirs = "metathesaurus")
+                                   dirs = "metathesaurus/rxnorm_map")
 
                 output_list2
           }
 
         }
-
-
-
-#' @title
-#' Write RxNorm Path Lookup
-#'
-#' @description
-#' Write the tibble returned by `read_rxnorm_paths()` to a
-#' Postgres table.
-#'
-#' @inheritParams pkg_args
-#' @inheritParams read_rxnorm_paths
-#' @inheritParams pg13::write_table
-#' @rdname write_rxnorm_path_lookup
-#' @family RxNorm Map
-#' @export
-#' @importFrom rlang parse_expr
-#' @importFrom pg13 dc write_table
-
-write_rxnorm_path_lookup <-
-  function(conn,
-           conn_fun = "pg13::local_connect()",
-           schema = "rxclass",
-           table_name = "lookup_rxnorm_paths",
-           url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
-           verbose = TRUE,
-           render_sql = TRUE,
-           render_only = FALSE,
-           checks = "") {
-
-
-
-    out <-
-      read_rxnorm_paths(url = url) %>%
-      dplyr::group_by(start, end) %>%
-      dplyr::arrange(as.integer(path_level),
-                     .by_group = TRUE) %>%
-      tibble::rowid_to_column()
-
-
-    if (missing(conn)) {
-      conn <- eval(rlang::parse_expr(conn_fun))
-      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
-              after = TRUE)
-    }
-
-
-    tmp_csv <- tempfile(fileext = ".csv")
-
-    readr::write_csv(x = out,
-                     file = tmp_csv,
-                     na = "",
-                     col_names = TRUE)
-
-    on.exit(expr = unlink(tmp_csv),
-            add = TRUE,
-            after = TRUE)
-
-    pg13::send(
-      conn = conn,
-      sql_statement =
-        glue::glue(
-        "
-        DROP TABLE IF EXISTS {schema}.tmp_{table_name};
-        CREATE TABLE {schema}.tmp_{table_name} (
-          rowid int NOT NULL,
-          rxnorm_start_tty varchar(10) NOT NULL,
-          rxnorm_end_tty varchar(10) NOT NULL,
-          path_level int NOT NULL,
-          from_tty varchar(10) NOT NULL,
-          to_tty varchar(10) NOT NULL
-        );
-
-        COPY {schema}.tmp_{table_name}
-        FROM '{tmp_csv}'
-        CSV HEADER QUOTE E'\\b';
-
-        DROP TABLE IF EXISTS {schema}.{table_name};
-        CREATE TABLE {schema}.{table_name} AS (
-          SELECT
-            tmp.rxnorm_start_tty,
-            tmp.rxnorm_end_tty,
-            tmp.path_level,
-            tmp.from_tty,
-            tmp.to_tty
-          FROM {schema}.tmp_{table_name} tmp
-          ORDER BY tmp.rowid
-        );
-
-        DROP TABLE {schema}.tmp_{table_name};
-        ",
-        checks = checks,
-        verbose = verbose,
-        render_sql = render_sql,
-        render_only = render_only)
-    )
-
-  }
-
-
-
 
 #' @title
 #' Get the RxNorm Map Between 2 TTY
@@ -416,6 +435,7 @@ get_rxnorm_ingredient_map <-
                  render_sql = TRUE,
                  render_only = FALSE,
                  checks = "") {
+
                 rxnorm_concept_map <-
                         read_rxnorm_paths()
 
@@ -445,9 +465,7 @@ get_rxnorm_ingredient_map <-
                                 get_rxnorm_map(from_tty =  "IN",
                                                to_tty = to_tty,
                                                conn = conn,
-                                               start_arg = start_arg,
-                                               end_arg = end_arg,
-                                               full_path = full_path,
+                                               full_path = FALSE,
                                                schema = schema,
                                                verbose = verbose,
                                                render_sql = render_sql,
@@ -491,6 +509,339 @@ get_rxnorm_ingredient_map <-
 
         }
 
+#' @title
+#' Get TTY Lookup
+#' @description
+#' Get custom expansions from tty derived from the
+#' MRDOC table as a data frame.
+#' @rdname get_rxnorm_tty_lookup
+#' @family RxNorm Map
+#' @export
+#' @importFrom tibble tribble
+#' @importFrom stringr str_replace_all
+#' @importFrom dplyr mutate
+
+get_rxnorm_tty_lookup <-
+  function() {
+    tibble::tribble(
+      ~`tty`, ~`tty_expanded`,
+      'BN',  'Brand Name',
+      'SBDC','Semantic Branded Drug Component',
+      'ET',  'Entry Term',
+      'DFG','Dose Form Group',
+      'MIN','Multi-Ingredient',
+      'TMSY','Tall Man Synonym',
+      'SBD','Semantic Branded Drug',
+      'SY','Synonym',
+      'SCDF','Semantic Clinical Drug and Form',
+      'SCD','Semantic Clinical Drug',
+      'SCDC','Semantic Drug Component',
+      'DF','Dose Form',
+      'PIN','Precise Ingredient',
+      'SCDG','Semantic Clinical Drug Group',
+      'GPCK','Generic Drug Delivery Device',
+      'PSN','Prescribable Name',
+      'IN','Ingredient',
+      'BPCK','Branded Drug Delivery Device',
+      'SBDG','Semantic Branded Drug Group',
+      'SBDF','Semantic Branded Drug and Form'
+    ) %>%
+      dplyr::mutate(table_name =
+                      tolower(
+                      stringr::str_replace_all(tty_expanded,
+                                               pattern = " |[[:punct:]]",
+                                               replacement = "_")))
+
+  }
+
+#' @title
+#' Write RxNorm Path Lookup
+#'
+#' @description
+#' Write the tibble returned by `read_rxnorm_paths()` to a
+#' Postgres table.
+#'
+#' @inheritParams pkg_args
+#' @inheritParams read_rxnorm_paths
+#' @inheritParams pg13::write_table
+#' @rdname write_rxnorm_path_lookup
+#' @family RxNorm Map
+#' @export
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc write_table
+
+write_rxnorm_path_lookup <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           schema = "rxmap",
+           table_name = "lookup_rxnorm_paths",
+           url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+
+
+    out <-
+      read_rxnorm_paths(url = url) %>%
+      dplyr::group_by(start, end) %>%
+      dplyr::arrange(as.integer(path_level),
+                     .by_group = TRUE) %>%
+      tibble::rowid_to_column()
+
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+
+    tmp_csv <- tempfile(fileext = ".csv")
+
+    readr::write_csv(x = out,
+                     file = tmp_csv,
+                     na = "",
+                     col_names = TRUE)
+
+    on.exit(expr = unlink(tmp_csv),
+            add = TRUE,
+            after = TRUE)
+
+    pg13::send(
+      conn = conn,
+      sql_statement =
+        glue::glue(
+          "
+        DROP TABLE IF EXISTS {schema}.tmp_{table_name};
+        CREATE TABLE {schema}.tmp_{table_name} (
+          rowid int NOT NULL,
+          rxnorm_start_tty varchar(10) NOT NULL,
+          rxnorm_end_tty varchar(10) NOT NULL,
+          path_level int NOT NULL,
+          from_tty varchar(10) NOT NULL,
+          to_tty varchar(10) NOT NULL
+        );
+
+        COPY {schema}.tmp_{table_name}
+        FROM '{tmp_csv}'
+        CSV HEADER QUOTE E'\\b';
+
+        DROP TABLE IF EXISTS {schema}.{table_name};
+        CREATE TABLE {schema}.{table_name} AS (
+          SELECT
+            tmp.rxnorm_start_tty,
+            tmp.rxnorm_end_tty,
+            tmp.path_level,
+            tmp.from_tty,
+            tmp.to_tty
+          FROM {schema}.tmp_{table_name} tmp
+          ORDER BY tmp.rowid
+        );
+
+        DROP TABLE {schema}.tmp_{table_name};
+        ",
+          checks = checks,
+          verbose = verbose,
+          render_sql = render_sql,
+          render_only = render_only)
+    )
+
+  }
+
+
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+#' @param conn PARAM_DESCRIPTION
+#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
+#' @param schema PARAM_DESCRIPTION, Default: 'mth'
+#' @param target_schema PARAM_DESCRIPTION, Default: 'rxclass'
+#' @param verbose PARAM_DESCRIPTION, Default: TRUE
+#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
+#' @param render_only PARAM_DESCRIPTION, Default: FALSE
+#' @param checks PARAM_DESCRIPTION, Default: ''
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[readr]{write_delim}}
+#'  \code{\link[glue]{glue}}
+#'  \code{\link[pg13]{send}}
+#' @rdname write_rxnorm_ingredient_map
+#' @export
+#' @importFrom readr write_csv
+#' @importFrom glue glue
+#' @importFrom pg13 send
+
+
+write_rxnorm_ingredient_map <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           schema = "mth",
+           target_schema = "rxmap",
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+
+    final_output <-
+      get_rxnorm_ingredient_map(
+        conn = conn,
+        conn_fun = conn_fun,
+        schema = schema,
+        verbose = verbose,
+        render_sql = render_sql,
+        render_only = render_only,
+        checks = checks
+      )
+
+    tmp_csv <- tempfile(fileext = ".csv")
+
+    readr::write_csv(x = final_output,
+                     file = tmp_csv,
+                     na = "",
+                     quote = "all",
+                     col_names = TRUE)
+
+    on.exit(expr = unlink(tmp_csv),
+            add = TRUE,
+            after = TRUE)
+
+
+    sql_statement <-
+    glue::glue(
+      "
+      DROP TABLE IF EXISTS {target_schema}.rxnorm_ingredient_map;
+      CREATE TABLE {target_schema}.rxnorm_ingredient_map (
+        tty varchar(10),
+        aui varchar(9),
+        code integer,
+        str text,
+        in_aui varchar(9),
+        in_code integer,
+        in_str text
+      );
+
+      COPY {target_schema}.rxnorm_ingredient_map
+      FROM '{tmp_csv}'
+      CSV HEADER QUOTE E'\"';
+      ")
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+      pg13::send(conn = conn,
+                 sql_statement = sql_statement,
+                 checks = checks,
+                 verbose = verbose,
+                 render_sql = render_sql,
+                 render_only = render_only)
+
+
+
+
+
+  }
+
+
+
+#' @title FUNCTION_TITLE
+#' @description FUNCTION_DESCRIPTION
+#' @param conn PARAM_DESCRIPTION
+#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
+#' @param schema PARAM_DESCRIPTION, Default: 'mth'
+#' @param target_schema PARAM_DESCRIPTION, Default: 'rxmap'
+#' @param verbose PARAM_DESCRIPTION, Default: TRUE
+#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
+#' @param render_only PARAM_DESCRIPTION, Default: FALSE
+#' @param checks PARAM_DESCRIPTION, Default: ''
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[readr]{write_delim}}
+#'  \code{\link[rlang]{parse_expr}}
+#'  \code{\link[pg13]{dc}},\code{\link[pg13]{send}}
+#' @rdname write_rxnorm_tty_lookup
+#' @export
+#' @importFrom readr write_csv
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc send
+
+
+write_rxnorm_tty_lookup <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           schema = "mth",
+           target_schema = "rxmap",
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+
+    final_output <- get_rxnorm_tty_lookup()
+
+    tmp_csv <- tempfile(fileext = ".csv")
+
+    readr::write_csv(x = final_output,
+                     file = tmp_csv,
+                     na = "",
+                     quote = "all",
+                     col_names = TRUE)
+
+    on.exit(expr = unlink(tmp_csv),
+            add = TRUE,
+            after = TRUE)
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+
+    sql_statement <-
+      glue::glue(
+        "
+      DROP TABLE IF EXISTS {target_schema}.lookup_tty;
+      CREATE TABLE {target_schema}.lookup_tty (
+        tty varchar(10),
+        tty_expanded varchar(100)
+      );
+
+      COPY {target_schema}.lookup_tty
+      FROM '{tmp_csv}'
+      CSV HEADER QUOTE E'\"';
+      ")
+
+    pg13::send(conn = conn,
+               sql_statement = sql_statement,
+               checks = checks,
+               verbose = verbose,
+               render_sql = render_sql,
+               render_only = render_only)
+
+
+
+
+  }
+
 
 #' @title FUNCTION_TITLE
 #' @description FUNCTION_DESCRIPTION
@@ -525,7 +876,7 @@ get_rxnorm_ingredient_map <-
 #'  \code{\link[glue]{glue}}
 #'  \code{\link[readr]{write_delim}}
 #' @rdname write_rxnorm_map
-#' @family RxNorm Class
+#' @family RxNorm Map
 #' @export
 #' @importFrom cli cli_alert_danger cli_inform
 #' @importFrom rlang parse_expr
@@ -543,7 +894,7 @@ write_rxnorm_map <-
            to_tty = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
            full_path = FALSE,
            schema = "mth",
-           target_schema = "rxclass",
+           target_schema = "rxmap",
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE,
