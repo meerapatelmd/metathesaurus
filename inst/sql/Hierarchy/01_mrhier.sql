@@ -21,12 +21,12 @@
 *     the progress log and annotations
 * [ ] After 2021AB update, see how the lookup and results tables can be
 *     renamed with a degree of provenance.
-* [ ] Add the `sab` field back to final MRHIER_STR table by doing a join 
+* [ ] Add the `sab` field back to final MRHIER_STR table by doing a join
 *     to the MRCONSO table at this stage
 * [X] Some log entries do not have target table row counts
 * [ ] Log entries from `ext_` to `pivot_` do not have `sab` value
 * [X] Re-imagine the RxClass log so that it is a 1-row entry per incidence (mimic setup_umls_class_log)
-* [X] Change sort order of final tables in RxClass 
+* [X] Change sort order of final tables in RxClass
 * [ ] Change sort order of final tables in UMLS Class
 * [ ] Add indexes to final UMLS Class tables
 * [X] Add indexes to final RxClass tables
@@ -139,7 +139,7 @@ END;
 $$;
 
 
-DROP FUNCTION check_if_requires_processing(character varying,character varying,character varying);
+-- DROP FUNCTION check_if_requires_processing(character varying,character varying,character varying);
 create or replace function check_if_requires_processing(umls_mth_version varchar, source_table varchar, target_table varchar)
 returns boolean
 language plpgsql
@@ -257,13 +257,13 @@ $$
 
 
 /**************************************************************************
-/ I. Transfer MRHIER to `umls_mrhier` Schema 
+/ I. Transfer MRHIER to `umls_mrhier` Schema
 / -------------------------------------------------------------------------
 / If the current UMLS Metathesaurus version is not logged for
 / the transfer of the MRHIER table, the `umls_mrhier` schema is dropped.
-/ The unique AUI-RELA-PTR from the MRHIER table in the `mth` schema 
-/ is then copied to the along with the AUI's CODE, SAB and STR in the MRCONSO 
-/ table. A `ptr_id` to serve as a unique identifier each row number, which 
+/ The unique AUI-RELA-PTR from the MRHIER table in the `mth` schema
+/ is then copied to the along with the AUI's CODE, SAB and STR in the MRCONSO
+/ table. A `ptr_id` to serve as a unique identifier each row number, which
 / represents a unique classification for the given AUI.
 **************************************************************************/
 
@@ -328,7 +328,7 @@ BEGIN
 		CREATE INDEX x_mrhier_code ON umls_mrhier.mrhier(code);
 
 		DROP TABLE umls_mrhier.tmp_mrhier;
-		
+
 		COMMIT;
 
 		PERFORM notify_completion('processing MRHIER');
@@ -375,9 +375,9 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
-			  
+
 		COMMIT;
-			  
+
 		PERFORM notify_timediff('processing MRHIER', start_timestamp, stop_timestamp);
 
 	END IF;
@@ -388,8 +388,8 @@ $$
 /**************************************************************************
 / II. CREATE LOOKUP TABLES `LOOKUP_ENG` and `LOOKUP_PARSE`
 / -------------------------------------------------------------------------
-/ `LOOKUP_ENG` is a single field of all SAB that have a LAT value of 'ENG' 
-/ in the MRCONSO table. 
+/ `LOOKUP_ENG` is a single field of all SAB that have a LAT value of 'ENG'
+/ in the MRCONSO table.
 **************************************************************************/
 
 
@@ -472,10 +472,10 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
-			  
+
 		COMMIT;
-			  
-		
+
+
 		PERFORM notify_timediff('processing LOOKUP_ENG', start_timestamp, stop_timestamp);
 
 
@@ -489,8 +489,8 @@ $$
 /**************************************************************************
 / II. CREATE LOOKUP TABLES `LOOKUP_ENG` and `LOOKUP_PARSE`
 / -------------------------------------------------------------------------
-/ `LOOKUP_PARSE` maps each SAB to its corresponding tablename because 
-/ some SABs contain punctuation that is forbidden in Postgres tablenames.  
+/ `LOOKUP_PARSE` maps each SAB to its corresponding tablename because
+/ some SABs contain punctuation that is forbidden in Postgres tablenames.
 **************************************************************************/
 
 DO
@@ -543,10 +543,10 @@ BEGIN
 		FROM df
 		ORDER BY count -- ordered so that when writing tables later on, can see that the script is working fine over multiple small tables at first
 		;
-		
+
 
 		PERFORM notify_completion('processing LOOKUP_PARSE');
-		
+
 		COMMIT;
 
 		SELECT get_log_timestamp()
@@ -591,10 +591,10 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
-			  
+
 		COMMIT;
-			  
-		
+
+
 		PERFORM notify_timediff('processing LOOKUP_PARSE', start_timestamp, stop_timestamp);
 
 
@@ -613,8 +613,8 @@ $$
 / For each unique SAB in the MRHIER table,
 / the decimal-separated PTR string is parsed along with its
 / ordinality as PTR_LEVEL. The parsed individual PTR_AUI
-/ is joined to MRCONSO to add the PTR_CODE and PTR. Each SAB is written to 
-/ its own table referenced in the `lookup_parse` table. 
+/ is joined to MRCONSO to add the PTR_CODE and PTR. Each SAB is written to
+/ its own table referenced in the `lookup_parse` table.
 **************************************************************************/
 
 
@@ -754,9 +754,9 @@ BEGIN
 			  	target_table,
 			  	target_table
 			  	);
-			  	
+
 			 -- COMMIT;
-			  
+
 
 
   		PERFORM notify_completion(CONCAT('processing', ' ', source_sab, ' into table ', target_table));
@@ -803,9 +803,9 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
-			  
+
 		-- COMMIT;
-		
+
 		PERFORM notify_timediff(CONCAT('processing', ' ', source_sab, ' into table ', target_table), start_timestamp, stop_timestamp);
 	END IF;
 	END LOOP;
@@ -815,7 +815,7 @@ $$
 
 
 /**************************************************************************
-/ IV. SPLIT SNOMEDCT_US TABLE BY ROOT 
+/ IV. SPLIT SNOMEDCT_US TABLE BY ROOT
 / -------------------------------------------------------------------------
 / The SNOMEDCT_US table is too large to work with downstream
 / and it is subset here by the 2nd level root concept to make it
@@ -921,9 +921,9 @@ BEGIN
 
 
 		PERFORM notify_completion('processing LOOKUP_SNOMED');
-		
+
 		COMMIT;
-		
+
 		PERFORM notify_timediff('processing LOOKUP_SNOMED', start_timestamp, stop_timestamp);
 
 	END IF;
@@ -1012,8 +1012,8 @@ BEGIN
 				  );
 
 
-			COMMIT; 
-			
+			COMMIT;
+
 			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
 
 
@@ -1057,9 +1057,9 @@ BEGIN
 				  target_table,
 				  source_rows,
 				  target_rows);
-				  
+
 		COMMIT;
-		
+
 		PERFORM notify_timediff(CONCAT('processing table ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
@@ -1073,9 +1073,9 @@ $$
 /**************************************************************************
 / V. EXTEND PATH TO ROOT WITH LEAF ('ext')
 / -------------------------------------------------------------------------
-/ The leaf of the hierarchy is represented by the AUI, CODE, and STR. 
-/ These leafs are added at the end of the path to root to get a complete 
-/ representation of the classification.  
+/ The leaf of the hierarchy is represented by the AUI, CODE, and STR.
+/ These leafs are added at the end of the path to root to get a complete
+/ representation of the classification.
 / Note that the RxClass subset are derived from this step.
 **************************************************************************/
 DO
@@ -1102,7 +1102,7 @@ BEGIN
   		;
 
   		PERFORM notify_start('processing LOOKUP_EXT');
-  		
+
 		DROP TABLE IF EXISTS umls_mrhier.tmp_lookup_ext;
 		CREATE TABLE umls_mrhier.tmp_lookup_ext AS (
 			SELECT
@@ -1125,11 +1125,11 @@ BEGIN
 		  FROM umls_mrhier.tmp_lookup_ext
 		);
 		DROP TABLE umls_mrhier.tmp_lookup_ext;
-		
+
 		COMMIT;
-		
-		
-		
+
+
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -1176,7 +1176,7 @@ BEGIN
 
 		PERFORM notify_completion('processing LOOKUP_EXT');
 
-		
+
 		PERFORM notify_timediff('processing LOOKUP_EXT', start_timestamp, stop_timestamp);
 
 	END IF;
@@ -1281,7 +1281,7 @@ BEGIN
 			  	source_table,
 			  	source_table,
 			  	target_table);
-			  	
+
 			COMMIT;
 
 			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
@@ -1330,9 +1330,9 @@ BEGIN
 				  source_rows,
 				  target_rows);
 
-			
+
 		COMMIT;
-		
+
 		PERFORM notify_timediff(CONCAT('processing table ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
@@ -1346,7 +1346,7 @@ $$
 /**************************************************************************
 / VI. PIVOT CLASSIFICATIONS ('pivot')
 / -------------------------------------------------------------------------
-/ Each table is pivoted on ptr_id to compile classifications in at 
+/ Each table is pivoted on ptr_id to compile classifications in at
 / the row level.
 **************************************************************************/
 
@@ -1375,7 +1375,7 @@ BEGIN
 
   		PERFORM notify_start('processing LOOKUP_PIVOT_TABLES');
 
-  		
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_tables;
 		CREATE TABLE umls_mrhier.lookup_pivot_tables AS (
 		  SELECT
@@ -1385,7 +1385,7 @@ BEGIN
 		  FROM umls_mrhier.lookup_ext
 		);
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -1431,9 +1431,9 @@ BEGIN
 
 
 		PERFORM notify_completion('processing LOOKUP_PIVOT_TABLES');
-		
+
 		COMMIT;
-		
+
 		PERFORM notify_timediff('processing LOOKUP_PIVOT_TABLES', start_timestamp, stop_timestamp);
 
 	END IF;
@@ -1442,7 +1442,7 @@ $$
 ;
 
 
--- A second pivot lookup is made to construct the crosstab 
+-- A second pivot lookup is made to construct the crosstab
 -- function call
 -- A crosstab function call is created to pivot each table
 -- based on the maximum `ptr_level` in that table. This is
@@ -1469,15 +1469,15 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_PIVOT_TABLES', 'LOOKUP_PIVOT_CROSSTAB')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
+	INTO requires_processing;
+
+	IF requires_processing THEN
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_crosstab;
 		CREATE TABLE  umls_mrhier.lookup_pivot_crosstab (
 		  extended_table varchar(255),
@@ -1486,9 +1486,9 @@ BEGIN
 		  sql_statement text
 		)
 		;
-		
+
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -1531,11 +1531,11 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
-			  
+
 		COMMIT;
-		
-		
-		
+
+
+
 	END IF;
 
 	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_tables WHERE hierarchy_sab <> 'SRC';
@@ -1656,9 +1656,9 @@ BEGIN
 			  sab,
 			  source_table,
 			  source_rows);
-			  
+
 		COMMIT;
-		
+
 		PERFORM notify_timediff(CONCAT('processing sql statement for ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
@@ -1669,7 +1669,7 @@ end;
 $$
 ;
 
--- The sql statements are executed from 
+-- The sql statements are executed from
 -- 'LOOKUP_PIVOT_CROSSTAB'
 DO
 $$
@@ -1700,7 +1700,7 @@ BEGIN
 		source_table := f.extended_table;
 		tmp_table    := f.tmp_pivot_table;
 		target_table := f.pivot_table;
-		
+
 		PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
 		SELECT check_if_requires_processing(mth_version, source_table, target_table)
@@ -1740,7 +1740,7 @@ BEGIN
 	      		source_table,
 	      		tmp_table,
 	      		tmp_table);
-	      		
+
 	    COMMIT;
 
 		PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
@@ -1789,11 +1789,11 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
-			  
-			  
+
+
 		COMMIT;
-		
-		
+
+
 		PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
@@ -1808,7 +1808,7 @@ $$
 /**************************************************************************
 / VIb. PIVOT CLASSIFICATIONS BY CODE ('pivot')
 / -------------------------------------------------------------------------
-/ Each table is pivoted on ptr_id to compile classifications in at 
+/ Each table is pivoted on ptr_id to compile classifications in at
 / the row level.
 **************************************************************************/
 
@@ -1837,7 +1837,7 @@ BEGIN
 
   		PERFORM notify_start('processing LOOKUP_PIVOT_TABLES_CODE');
 
-  		
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_tables_code;
 		CREATE TABLE umls_mrhier.lookup_pivot_tables_code AS (
 		  SELECT
@@ -1847,7 +1847,7 @@ BEGIN
 		  FROM umls_mrhier.lookup_ext
 		);
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -1893,7 +1893,7 @@ BEGIN
 
 
 		PERFORM notify_completion('processing LOOKUP_PIVOT_TABLES_CODE');
-		
+
 		PERFORM notify_timediff('processing LOOKUP_PIVOT_TABLES_CODE', start_timestamp, stop_timestamp);
 
 	END IF;
@@ -1902,7 +1902,7 @@ $$
 ;
 
 
--- A second pivot lookup is made to construct the crosstab 
+-- A second pivot lookup is made to construct the crosstab
 -- function call
 -- A crosstab function call is created to pivot each table
 -- based on the maximum `ptr_level` in that table. This is
@@ -1929,15 +1929,15 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_PIVOT_TABLES_CODE', 'LOOKUP_PIVOT_CROSSTAB_CODE')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
+	INTO requires_processing;
+
+	IF requires_processing THEN
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_pivot_crosstab_code;
 		CREATE TABLE  umls_mrhier.lookup_pivot_crosstab_code (
 		  extended_table varchar(255),
@@ -1946,9 +1946,9 @@ BEGIN
 		  sql_statement text
 		)
 		;
-		
+
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -1991,11 +1991,11 @@ BEGIN
 			  mth_date,
 			  source_rows,
 			  target_rows);
-			  
+
 		COMMIT;
-		
-		
-		
+
+
+
 	END IF;
 
 	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_tables_code WHERE hierarchy_sab <> 'SRC';
@@ -2116,9 +2116,9 @@ BEGIN
 			  sab,
 			  source_table,
 			  source_rows);
-			  
+
 		COMMIT;
-		
+
 		PERFORM notify_timediff(CONCAT('processing sql statement for ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
@@ -2130,7 +2130,7 @@ $$
 ;
 
 
--- The sql statements are executed from 
+-- The sql statements are executed from
 -- 'LOOKUP_PIVOT_CROSSTAB_CODE'
 DO
 $$
@@ -2161,7 +2161,7 @@ BEGIN
 		source_table := f.extended_table;
 		tmp_table    := f.tmp_pivot_code_table;
 		target_table := f.pivot_code_table;
-		
+
 		PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
 		SELECT check_if_requires_processing(mth_version, source_table, target_table)
@@ -2178,7 +2178,7 @@ BEGIN
 
 	    sql_statement := f.sql_statement;
 	    EXECUTE sql_statement;
-	    
+
 	    COMMIT;
 
 
@@ -2203,7 +2203,7 @@ BEGIN
 	      		source_table,
 	      		tmp_table,
 	      		tmp_table);
-	      		
+
 	    COMMIT;
 
 		PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
@@ -2252,11 +2252,11 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
-			  
-			  
+
+
 		COMMIT;
-		
-		
+
+
 		PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 
@@ -2275,7 +2275,7 @@ $$
 /**************************************************************************
 / VII. MRHIER_STR: UNION PIVOTED TABLES
 / -------------------------------------------------------------------------
-/ A MRHIER_STR table is written that is a union of all the pivoted 
+/ A MRHIER_STR table is written that is a union of all the pivoted
 / tables.
 / The absolute maximum ptr level across the entire MRHIER
 / is derived to generate the DDL for the column names of the
@@ -2302,24 +2302,24 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_EXT', 'LOOKUP_MRHIER_ABS_MAX')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_mrhier_abs_max;
 		CREATE TABLE umls_mrhier.lookup_mrhier_abs_max (
 		  extended_table varchar(255),
 		  max_ptr_level int
-		);	
-		
+		);
+
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -2359,31 +2359,31 @@ BEGIN
 			  'LOOKUP_MRHIER_ABS_MAX',
 			  source_rows,
 			  target_rows);
-			  
-			  
+
+
 		COMMIT;
-	
+
 	END IF;
-	
+
 	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_ext;
   	for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup_ext l
  	LOOP
  		iteration    := f.iteration;
 		source_table := f.extended_table;
-		
+
 		PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
 		SELECT check_if_requires_processing(mth_version, source_table, target_table)
 		INTO requires_processing;
 
   		IF requires_processing THEN
-  		
+
   			PERFORM notify_start(CONCAT('processing ', source_table, ' into table ', target_table));
 
 	  		SELECT get_log_timestamp()
 			INTO start_timestamp
 			;
-			
+
 			EXECUTE
 		      format(
 		      	'
@@ -2404,22 +2404,22 @@ BEGIN
 			SELECT get_log_timestamp()
 			INTO stop_timestamp
 			;
-	
+
 			SELECT get_umls_mth_version()
 			INTO mth_version
 			;
-	
+
 			SELECT get_umls_mth_dt()
 			INTO mth_date
 			;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table)
 			INTO target_rows;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', source_table)
 			INTO source_rows;
-	
-	
+
+
 			EXECUTE
 			  format(
 			    '
@@ -2444,11 +2444,11 @@ BEGIN
 				  target_table,
 				  source_rows,
 				  target_rows);
-				  
-				  
+
+
 			COMMIT;
-			
-			
+
+
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 	END IF;
@@ -2460,7 +2460,7 @@ $$
 
 
 
--- Write MRHIER_STR Table 
+-- Write MRHIER_STR Table
 DO
 $$
 DECLARE
@@ -2484,62 +2484,62 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_MRHIER_ABS_MAX', 'LOOKUP_MRHIER_DDL')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
-		SELECT MAX(max_ptr_level) INTO abs_max_ptr_level FROM umls_mrhier.lookup_mrhier_abs_max; 
-		
+
+		SELECT MAX(max_ptr_level) INTO abs_max_ptr_level FROM umls_mrhier.lookup_mrhier_abs_max;
+
 		EXECUTE
 		format(
 		'
-		DROP TABLE IF EXISTS umls_mrhier.lookup_mrhier_ddl; 
+		DROP TABLE IF EXISTS umls_mrhier.lookup_mrhier_ddl;
 		CREATE TABLE umls_mrhier.lookup_mrhier_ddl (
 			ddl text
 		);
 
-		
+
 		  WITH seq1 AS (SELECT generate_series(1, %s) AS series),
 		  seq2 AS (
 		    SELECT
 		      STRING_AGG(CONCAT(''level_'', series, ''_str text''), '', '') AS ddl
 		      FROM seq1
 		  )
-		
+
 		  INSERT INTO umls_mrhier.lookup_mrhier_ddl
 		  SELECT ddl
 		  FROM seq2
 		  ;',
 		  abs_max_ptr_level);
-		  
-		  
+
+
 		  COMMIT;
-		  
+
 		  	SELECT get_log_timestamp()
 			INTO stop_timestamp
 			;
-	
+
 			SELECT get_umls_mth_version()
 			INTO mth_version
 			;
-	
+
 			SELECT get_umls_mth_dt()
 			INTO mth_date
 			;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'LOOKUP_MRHIER_DDL')
 			INTO target_rows;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'LOOKUP_MRHIER_ABS_MAX')
 			INTO source_rows;
-	
-	
+
+
 			EXECUTE
 			  format(
 			    '
@@ -2564,22 +2564,22 @@ BEGIN
 				  'LOOKUP_MRHIER_DDL',
 				  source_rows,
 				  target_rows);
-		  
+
 	END IF;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_MRHIER_DDL', 'MRHIER_STR')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-	
+
 	  SELECT ddl
 	  INTO processed_mrhier_ddl
 	  FROM umls_mrhier.lookup_mrhier_ddl;
-	
+
 	  EXECUTE
 	    format(
 	    '
@@ -2594,10 +2594,10 @@ BEGIN
 	    ',
 	    processed_mrhier_ddl
 	    );
-	    
-		
+
+
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -2637,12 +2637,12 @@ BEGIN
 			  'MRHIER_STR',
 			  source_rows,
 			  target_rows);
-			  
-			  
+
+
 		COMMIT;
-	
+
 	END IF;
-	
+
   SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_crosstab;
   for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_pivot_crosstab pl
   loop
@@ -2650,20 +2650,20 @@ BEGIN
     pivot_table := f.pivot_table;
     source_table := f.pivot_table;
     target_table := 'MRHIER_STR';
-    
+
 	PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
 	INTO requires_processing;
 
   	IF requires_processing THEN
-    
+
 	    SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		PERFORM notify_start(CONCAT('Adding ' || source_table || ' to ' || target_table));
-		
+
 	    EXECUTE
 	      format('
 	      INSERT INTO umls_mrhier.mrhier_str
@@ -2671,9 +2671,9 @@ BEGIN
 	      ',
 	      pivot_table
 	      );
-	      
+
 	      		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -2713,26 +2713,26 @@ BEGIN
 			  'MRHIER_STR',
 			  source_rows,
 			  target_rows);
-			  
+
 			COMMIT;
-			
-			
+
+
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
-			
+
    END IF;
    END loop;
 
-	
-	
+
+
 END;
 $$
-; 
+;
 
 
 /**************************************************************************
 / VII. MRHIER_CODE: UNION PIVOTED TABLES
 / -------------------------------------------------------------------------
-/ A MRHIER_CODE table is written that is a union of all the pivoted 
+/ A MRHIER_CODE table is written that is a union of all the pivoted
 / tables.
 / The absolute maximum ptr level across the entire MRHIER
 / is derived to generate the DDL for the column names of the
@@ -2759,24 +2759,24 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_EXT', 'LOOKUP_MRHIER_ABS_MAX')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_mrhier_abs_max;
 		CREATE TABLE umls_mrhier.lookup_mrhier_abs_max (
 		  extended_table varchar(255),
 		  max_ptr_level int
-		);	
-		
+		);
+
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -2817,28 +2817,28 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-	
+
 	END IF;
-	
+
 	SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_ext;
   	for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup_ext l
  	LOOP
  		iteration    := f.iteration;
 		source_table := f.extended_table;
-		
+
 		PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
 		SELECT check_if_requires_processing(mth_version, source_table, target_table)
 		INTO requires_processing;
 
   		IF requires_processing THEN
-  		
+
   			PERFORM notify_start(CONCAT('processing ', source_table, ' into table ', target_table));
 
 	  		SELECT get_log_timestamp()
 			INTO start_timestamp
 			;
-			
+
 			EXECUTE
 		      format(
 		      	'
@@ -2859,22 +2859,22 @@ BEGIN
 			SELECT get_log_timestamp()
 			INTO stop_timestamp
 			;
-	
+
 			SELECT get_umls_mth_version()
 			INTO mth_version
 			;
-	
+
 			SELECT get_umls_mth_dt()
 			INTO mth_date
 			;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', target_table)
 			INTO target_rows;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', source_table)
 			INTO source_rows;
-	
-	
+
+
 			EXECUTE
 			  format(
 			    '
@@ -2899,11 +2899,11 @@ BEGIN
 				  target_table,
 				  source_rows,
 				  target_rows);
-				  
-				  
+
+
 			COMMIT;
-			
-			
+
+
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
 	END IF;
@@ -2915,7 +2915,7 @@ $$
 
 
 
--- Write MRHIER_CODE Table 
+-- Write MRHIER_CODE Table
 DO
 $$
 DECLARE
@@ -2939,62 +2939,62 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_MRHIER_ABS_MAX', 'LOOKUP_MRHIER_DDL_CODE')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
-		SELECT MAX(max_ptr_level) INTO abs_max_ptr_level FROM umls_mrhier.lookup_mrhier_abs_max; 
-		
+
+		SELECT MAX(max_ptr_level) INTO abs_max_ptr_level FROM umls_mrhier.lookup_mrhier_abs_max;
+
 		EXECUTE
 		format(
 		'
-		DROP TABLE IF EXISTS umls_mrhier.lookup_mrhier_ddl_code; 
+		DROP TABLE IF EXISTS umls_mrhier.lookup_mrhier_ddl_code;
 		CREATE TABLE umls_mrhier.lookup_mrhier_ddl_code (
 			ddl text
 		);
 
-		
+
 		  WITH seq1 AS (SELECT generate_series(1, %s) AS series),
 		  seq2 AS (
 		    SELECT
 		      STRING_AGG(CONCAT(''level_'', series, ''_code text''), '', '') AS ddl
 		      FROM seq1
 		  )
-		
+
 		  INSERT INTO umls_mrhier.lookup_mrhier_ddl_code
 		  SELECT ddl
 		  FROM seq2
 		  ;',
 		  abs_max_ptr_level);
-		  
-		  
+
+
 		  COMMIT;
-		  
+
 		  	SELECT get_log_timestamp()
 			INTO stop_timestamp
 			;
-	
+
 			SELECT get_umls_mth_version()
 			INTO mth_version
 			;
-	
+
 			SELECT get_umls_mth_dt()
 			INTO mth_date
 			;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'LOOKUP_MRHIER_DDL_CODE')
 			INTO target_rows;
-	
+
 			EXECUTE format('SELECT COUNT(*) FROM umls_mrhier.%s;', 'LOOKUP_MRHIER_ABS_MAX')
 			INTO source_rows;
-	
-	
+
+
 			EXECUTE
 			  format(
 			    '
@@ -3019,22 +3019,22 @@ BEGIN
 				  'LOOKUP_MRHIER_DDL_CODE',
 				  source_rows,
 				  target_rows);
-		  
+
 	END IF;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_MRHIER_DDL_CODE', 'MRHIER_CODE')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-	
+
 	  SELECT ddl
 	  INTO processed_mrhier_ddl
 	  FROM umls_mrhier.lookup_mrhier_ddl_code;
-	
+
 	  EXECUTE
 	    format(
 	    '
@@ -3049,10 +3049,10 @@ BEGIN
 	    ',
 	    processed_mrhier_ddl
 	    );
-	    
-		
+
+
 		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3092,12 +3092,12 @@ BEGIN
 			  'MRHIER_CODE',
 			  source_rows,
 			  target_rows);
-			  
-			  
+
+
 		COMMIT;
-	
+
 	END IF;
-	
+
   SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_pivot_crosstab_code;
   for f in select ROW_NUMBER() OVER() AS iteration, pl.* from umls_mrhier.lookup_pivot_crosstab_code pl
   loop
@@ -3105,20 +3105,20 @@ BEGIN
     pivot_table := f.pivot_code_table;
     source_table := f.pivot_code_table;
     target_table := 'MRHIER_CODE';
-    
+
 	PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
 
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
 	INTO requires_processing;
 
   	IF requires_processing THEN
-    
+
 	    SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		PERFORM notify_start(CONCAT('Adding ' || source_table || ' to ' || target_table));
-		
+
 	    EXECUTE
 	      format('
 	      INSERT INTO umls_mrhier.mrhier_code
@@ -3126,9 +3126,9 @@ BEGIN
 	      ',
 	      pivot_table
 	      );
-	      
+
 	      		COMMIT;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3168,28 +3168,28 @@ BEGIN
 			  'MRHIER_CODE',
 			  source_rows,
 			  target_rows);
-			  
+
 			COMMIT;
-			
-			
+
+
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
-			
+
    END IF;
    END loop;
 
-	
-	
+
+
 END;
 $$
-; 
+;
 
 
 /**************************************************************************
 / VIII. MRHIER_STR_EXCL: EXCLUDED PATH TO ROOT VALUES
 / -------------------------------------------------------------------------
 / Table that includes any source MRHIER `ptr` that did not make it
-/ to the `MRHIER_STR` table. Only vocabularies where `LAT = 'ENG'` and not 'SRC' 
-/ in the MRCONSO table are included.  
+/ to the `MRHIER_STR` table. Only vocabularies where `LAT = 'ENG'` and not 'SRC'
+/ in the MRCONSO table are included.
 **************************************************************************/
 DO
 $$
@@ -3214,19 +3214,19 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 	  	SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		PERFORM notify_start('Writing MRHIER_STR_EXCL Table');
-		
-		
+
+
 		DROP TABLE IF EXISTS umls_mrhier.mrhier_str_excl;
 		CREATE TABLE umls_mrhier.mrhier_str_excl AS (
 			SELECT m1.*
@@ -3241,7 +3241,7 @@ BEGIN
 			ORDER BY m1.sab DESC -- Arbitrarily in descending order to include SNOMEDCT_US first
 			)
 		;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3281,14 +3281,14 @@ BEGIN
 			  target_table,
 			  source_rows,
 			  target_rows);
-			  
+
 			COMMIT;
-			
-			
+
+
 			PERFORM notify_timediff('Writing MRHIER_STR_EXCL table', start_timestamp, stop_timestamp);
-	
-	END IF; 
-	
+
+	END IF;
+
 END;
 $$
 ;
@@ -3297,10 +3297,10 @@ $$
 /**************************************************************************
 / IX. UMLS_CLASS Schema
 / -------------------------------------------------------------------------
-/ A fresh UMLS_CLASS schema is created with copies of the MRHIER, MRHIER_STR, 
-/ and MRHIER_STR_EXCL tables to section them off from the processing tables in the 
-/ UMLS_MRHIER schema with a corresponding SETUP_UMLS_CLASS_LOG log table in 
-/ the public schema. 
+/ A fresh UMLS_CLASS schema is created with copies of the MRHIER, MRHIER_STR,
+/ and MRHIER_STR_EXCL tables to section them off from the processing tables in the
+/ UMLS_MRHIER schema with a corresponding SETUP_UMLS_CLASS_LOG log table in
+/ the public schema.
 **************************************************************************/
 DO
 $$
@@ -3309,7 +3309,7 @@ DECLARE
 	mth_version varchar;
 	mth_release_dt varchar;
 	target_schema varchar := 'umls_class';
-	source_table varchar := ''; 
+	source_table varchar := '';
 	target_table varchar := 'UMLS_CLASS Tables';
 	mrhier_rows bigint;
 	mrhier_str_rows bigint;
@@ -3325,19 +3325,19 @@ BEGIN
 	INTO mth_version;
 
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 	   	SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		
+
 		SELECT get_umls_mth_dt()
 		INTO mth_release_dt;
-		
+
 		PERFORM notify_start('writing umls_class schema');
-		
+
 		DROP TABLE IF EXISTS public.tmp_setup_umls_class_log;
 		CREATE TABLE IF NOT EXISTS public.tmp_setup_umls_class_log (
 		    mth_version character varying(255),
@@ -3359,12 +3359,12 @@ BEGIN
 		 	mth_release_dt,
 		 	target_schema
 		 	);
-		 	
-		DROP SCHEMA umls_class CASCADE; 
-		CREATE SCHEMA umls_class; 
-		
-		PERFORM notify_start('copying MRHIER table'); 
-		
+
+		DROP SCHEMA umls_class CASCADE;
+		CREATE SCHEMA umls_class;
+
+		PERFORM notify_start('copying MRHIER table');
+
 		DROP TABLE IF EXISTS umls_class.mrhier;
 		CREATE TABLE umls_class.mrhier AS (
 		SELECT *
@@ -3372,13 +3372,13 @@ BEGIN
 		)
 		;
 		-- COMMIT;
-		
-		SELECT COUNT(*) 
-		INTO mrhier_rows 
+
+		SELECT COUNT(*)
+		INTO mrhier_rows
 		FROM umls_class.mrhier;
-		
+
 		PERFORM notify_completion('copying MRHIER table');
-		
+
 		  EXECUTE
 		    format(
 		    '
@@ -3390,22 +3390,22 @@ BEGIN
 		    mth_version
 		    )
 		  ;
-		  
-		PERFORM notify_start('copying MRHIER_STR table'); 
-		
+
+		PERFORM notify_start('copying MRHIER_STR table');
+
 		DROP TABLE IF EXISTS umls_class.mrhier_str;
 		CREATE TABLE umls_class.mrhier_str AS (
 		SELECT *
 		FROM umls_mrhier.mrhier_str
 		)
 		;
-		
-		SELECT COUNT(*) 
-		INTO mrhier_str_rows 
+
+		SELECT COUNT(*)
+		INTO mrhier_str_rows
 		FROM umls_class.mrhier_str;
-		
+
 		PERFORM notify_completion('copying MRHIER_STR table');
-		
+
 		EXECUTE
 		    format(
 		    '
@@ -3418,8 +3418,8 @@ BEGIN
 		    )
 		 ;
 
-		PERFORM notify_start('copying MRHIER_CODE table'); 
-		
+		PERFORM notify_start('copying MRHIER_CODE table');
+
 		DROP TABLE IF EXISTS umls_class.mrhier_code;
 		CREATE TABLE umls_class.mrhier_code AS (
 		SELECT *
@@ -3427,13 +3427,13 @@ BEGIN
 		)
 		;
 		-- COMMIT;
-		
-		SELECT COUNT(*) 
-		INTO mrhier_code_rows 
+
+		SELECT COUNT(*)
+		INTO mrhier_code_rows
 		FROM umls_class.mrhier_code;
-		
+
 		PERFORM notify_completion('copying MRHIER_CODE table');
-		
+
 		EXECUTE
 		    format(
 		    '
@@ -3448,9 +3448,9 @@ BEGIN
 
 
 
-		 
+
 		PERFORM notify_start('copying MRHIER_STR_EXCL table');
-		
+
 	 	DROP TABLE IF EXISTS umls_class.mrhier_str_excl;
 		CREATE TABLE umls_class.mrhier_str_excl AS (
 		SELECT *
@@ -3458,13 +3458,13 @@ BEGIN
 		)
 		;
 		-- COMMIT;
-		
-		SELECT COUNT(*) 
-		INTO mrhier_str_excl_rows 
+
+		SELECT COUNT(*)
+		INTO mrhier_str_excl_rows
 		FROM umls_class.mrhier_str_excl;
-		
+
 		PERFORM notify_completion('copying MRHIER_STR_EXCL table');
-		
+
 		EXECUTE
 		    format(
 		    '
@@ -3476,45 +3476,45 @@ BEGIN
 		    mth_version
 		    )
 		 ;
-		
+
 		PERFORM notify_start('adding constraints');
 		ALTER TABLE umls_class.mrhier_str
 		ADD CONSTRAINT xpk_mrhier_str
 		PRIMARY KEY (ptr_id);
-		
+
 		CREATE INDEX x_mrhier_str_aui ON umls_class.mrhier_str(aui);
 		CREATE INDEX x_mrhier_str_code ON umls_class.mrhier_str(code);
-		
+
 		ALTER TABLE umls_class.mrhier_code
 		ADD CONSTRAINT xpk_mrhier_code
 		PRIMARY KEY (ptr_id);
-		
+
 		CREATE INDEX x_mrhier_code_aui ON umls_class.mrhier_code(aui);
 		CREATE INDEX x_mrhier_code_code ON umls_class.mrhier_code(code);
-		
-		
+
+
 		ALTER TABLE umls_class.mrhier_str_excl
 		ADD CONSTRAINT xpk_mrhier_str_excl
 		PRIMARY KEY (ptr_id);
-		
+
 		CREATE INDEX x_mrhier_str_excl_aui ON umls_class.mrhier_str_excl(aui);
 		CREATE INDEX x_mrhier_str_excl_code ON umls_class.mrhier_str_excl(code);
 		CREATE INDEX x_mrhier_str_excl_sab ON umls_class.mrhier_str_excl(sab);
-		 
+
 		PERFORM notify_completion('adding constraints');
-		
-		INSERT INTO public.setup_umls_class_log 
-		SELECT 
-		   TIMEOFDAY()::timestamp AS suc_datetime, 
-		   * 
+
+		INSERT INTO public.setup_umls_class_log
+		SELECT
+		   TIMEOFDAY()::timestamp AS suc_datetime,
+		   *
 		FROM public.tmp_setup_umls_class_log
-		; 
-		
-		
+		;
+
+
 		DROP TABLE public.tmp_setup_umls_class_log;
-		
+
 	    PERFORM notify_completion('writing umls_class schema');
-		 
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3547,10 +3547,10 @@ BEGIN
 			  mth_date,
 			  source_table,
 			  target_table);
-			  
+
 			-- COMMIT;
-	 	
-	end if; 	
+
+	end if;
 END;
 $$
 ;
@@ -3601,27 +3601,27 @@ DECLARE
 BEGIN
 	SELECT get_umls_mth_version()
 	INTO mth_version;
-	
+
 	source_table := '';
 	target_table := 'LOOKUP_RXCLASS';
-	
+
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
-	INTO requires_processing; 
-	
-	
-	IF requires_processing THEN 
-	
-		SELECT get_log_timestamp() 
+	INTO requires_processing;
+
+
+	IF requires_processing THEN
+
+		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-	
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass;
 		CREATE TABLE umls_mrhier.lookup_rxclass (
 		rxclass_sab varchar(255) NOT NULL,
 		rxclass_abbr varchar(255) NOT NULL,
 		rxclass_code varchar(255) NOT NULL
 		);
-		
+
 		INSERT INTO umls_mrhier.lookup_rxclass
 		VALUES
 		  ('MED-RT', 'EPC', 'N0000189939'),
@@ -3637,8 +3637,8 @@ BEGIN
 		  ('MSH', 'Substances', 'U000005'),
 		  ('SNOMEDCT_US', 'DISPOS', '766779001'),
 		  ('SNOMEDCT_US', 'STRUCT', '763760008');
-		  
-		  
+
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3671,34 +3671,34 @@ BEGIN
 			  mth_date,
 			  source_table,
 			  target_table);
-			  
+
 			COMMIT;
 	END IF;
-	
-	
+
+
 	source_table := '';
 	target_table := 'LOOKUP_RXCLASS_EXT';
-	
+
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
-	INTO requires_processing; 
-	
-	
-	IF requires_processing THEN 
-	
-		SELECT get_log_timestamp() 
+	INTO requires_processing;
+
+
+	IF requires_processing THEN
+
+		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-	
+
 		DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass_ext;
 		CREATE TABLE umls_mrhier.lookup_rxclass_ext AS (
 			SELECT DISTINCT ext.extended_table
-			FROM rxclass.lookup_rxclass l 
-			LEFT JOIN umls_mrhier.lookup_ext ext 
-			ON ext.hierarchy_sab = l.rxclass_sab 
+			FROM rxclass.lookup_rxclass l
+			LEFT JOIN umls_mrhier.lookup_ext ext
+			ON ext.hierarchy_sab = l.rxclass_sab
 			ORDER BY ext.extended_table
 		);
-		  
-		  
+
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3731,16 +3731,16 @@ BEGIN
 			  mth_date,
 			  source_table,
 			  target_table);
-			  
+
 			COMMIT;
-	END IF;	
-	
+	END IF;
+
 
 	SELECT check_if_requires_processing(mth_version, 'LOOKUP_RXCLASS_EXT', 'RXCLASS_EXT')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-	
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
@@ -3748,57 +3748,57 @@ BEGIN
 	    CREATE SCHEMA rxclass;
 		DROP TABLE IF EXISTS rxclass.tmp_rxclass0;
 		CREATE TABLE rxclass.tmp_rxclass0 (
-	        ptr_id INTEGER NOT NULL, 
-	        ptr text NOT NULL, 
+	        ptr_id INTEGER NOT NULL,
+	        ptr text NOT NULL,
 	        aui varchar(12) NOT NULL,
-	        code varchar(100) NOT NULL, 
-	        str text NOT NULL, 
-	        rela text, 
-	        ptr_level integer NOT NULL, 
-	        ptr_aui varchar(12) NOT NULL, 
-	        ptr_code varchar(100) NOT NULL, 
+	        code varchar(100) NOT NULL,
+	        str text NOT NULL,
+	        rela text,
+	        ptr_level integer NOT NULL,
+	        ptr_aui varchar(12) NOT NULL,
+	        ptr_code varchar(100) NOT NULL,
 	        ptr_str text NOT NULL
 	    );
-		
+
 	    SELECT COUNT(*) INTO total_iterations FROM umls_mrhier.lookup_rxclass_ext;
 		for f in select ROW_NUMBER() OVER() AS iteration, l.* from umls_mrhier.lookup_rxclass_ext l
 		  loop
 		    iteration := f.iteration;
 		    source_table := f.extended_table;
 		    target_table := 'TMP_RXCLASS0';
-		    
+
 		    PERFORM notify_iteration(iteration, total_iterations, source_table || ' --> ' || target_table);
-		    
+
 		    EXECUTE
 		      format(
 		      '
-		      INSERT INTO rxclass.tmp_rxclass0 
+		      INSERT INTO rxclass.tmp_rxclass0
 		      SELECT * FROM umls_mrhier.%s;
 		      ',
 		      source_table
 		      );
-		      
+
 		    COMMIT;
-		      
+
 		   end loop;
-		   
-		
-		
+
+
+
 		DROP TABLE IF EXISTS rxclass.rxclass_ext;
 		CREATE TABLE rxclass.rxclass_ext as (
 		        SELECT DISTINCT l.*, t0.*
 		        FROM rxclass.tmp_rxclass0 t0
 		        INNER JOIN umls_mrhier.lookup_rxclass l
-		        ON l.rxclass_code = t0.ptr_code 
-		        ORDER BY 
-		          l.rxclass_sab, 
-		          l.rxclass_abbr, 
-		          t0.ptr_id, 
+		        ON l.rxclass_code = t0.ptr_code
+		        ORDER BY
+		          l.rxclass_sab,
+		          l.rxclass_abbr,
+		          t0.ptr_id,
 		          t0.ptr_level
 		)
 		;
 		DROP TABLE rxclass.tmp_rxclass0;
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3831,38 +3831,38 @@ BEGIN
 			  mth_date,
 			  'LOOKUP_RXCLASS_EXT',
 			  'RXCLASS_EXT');
-			  
-			  
+
+
 	END IF;
-	
-	
+
+
 	SELECT check_if_requires_processing(mth_version, 'RXCLASS_EXT', 'RXCLASS_STR')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-		
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-	
+
 		DROP TABLE IF EXISTS rxclass.rxclass_str;
 		CREATE TABLE rxclass.rxclass_str as (
 		        SELECT DISTINCT
-		          t1.rxclass_sab, 
-		          t1.rxclass_abbr, 
-		          t1.rxclass_code, 
+		          t1.rxclass_sab,
+		          t1.rxclass_abbr,
+		          t1.rxclass_code,
 		          m.*
 		        FROM rxclass.rxclass_ext t1
 		        INNER JOIN umls_mrhier.mrhier_str m
-		        ON t1.ptr_id = m.ptr_id 
-		        ORDER BY 
-		          t1.rxclass_sab, 
-		          t1.rxclass_abbr, 
-		          m.aui, 
+		        ON t1.ptr_id = m.ptr_id
+		        ORDER BY
+		          t1.rxclass_sab,
+		          t1.rxclass_abbr,
+		          m.aui,
 		          m.ptr_id
 		)
 		;
-		
+
 		COMMIT;
 
 		CREATE INDEX x_rxclass_str_ptr_id ON rxclass.rxclass_str(ptr_id);
@@ -3871,8 +3871,8 @@ BEGIN
 		CREATE INDEX x_rxclass_str_rxclass_code ON rxclass.rxclass_str(rxclass_code);
 		CREATE INDEX x_rxclass_str_aui ON rxclass.rxclass_str(aui);
 		CREATE INDEX x_rxclass_str_code ON rxclass.rxclass_str(code);
-		
-		
+
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3905,59 +3905,59 @@ BEGIN
 			  mth_date,
 			  'RXCLASS_EXT',
 			  'RXCLASS_STR');
-	
+
 	END IF;
-	
-	
+
+
 	SELECT check_if_requires_processing(mth_version, 'RXCLASS_STR', 'RXCLASS_RXNORM_IN_PIN_MIN_MAP')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
+	INTO requires_processing;
+
+	IF requires_processing THEN
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-	
+
 		DROP TABLE IF EXISTS rxclass.rxclass_rxnorm_in_pin_min_map;
 		CREATE TABLE rxclass.rxclass_rxnorm_in_pin_min_map AS (
-			SELECT 
+			SELECT
 			 m.aui AS rxnorm_aui,
-			 m.code AS rxnorm_code, 
+			 m.code AS rxnorm_code,
 			 m.str  AS rxnorm_str,
-			 m.tty  AS rxnorm_tty, 
+			 m.tty  AS rxnorm_tty,
 			 doc.expl AS rxnorm_tty_name,
-			 r.rel  AS rel, 
+			 r.rel  AS rel,
 			 r.rela AS rela,
 			 rxclass.*
-			FROM rxclass.rxclass_str rxclass 
-			INNER JOIN mth.mrrel r 
-			ON r.aui1 = rxclass.aui 
-			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m0 WHERE m0.sab = 'RXNORM' AND m0.tty IN ('IN', 'PIN', 'MIN')) m 
-			ON r.aui2 = m.aui 
-			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc 
+			FROM rxclass.rxclass_str rxclass
+			INNER JOIN mth.mrrel r
+			ON r.aui1 = rxclass.aui
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m0 WHERE m0.sab = 'RXNORM' AND m0.tty IN ('IN', 'PIN', 'MIN')) m
+			ON r.aui2 = m.aui
+			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc
 			ON m.tty = doc.value
-			UNION 
-			SELECT 
+			UNION
+			SELECT
 			 m.aui AS rxnorm_aui,
-			 m.code AS rxnorm_code, 
+			 m.code AS rxnorm_code,
 			 m.str  AS rxnorm_str,
-			 m.tty  AS rxnorm_tty, 
+			 m.tty  AS rxnorm_tty,
 			 doc.expl AS rxnorm_tty_name,
-			 r.rel  AS rel, 
+			 r.rel  AS rel,
 			 r.rela AS rela,
 			 rxclass.*
-			FROM rxclass.rxclass_str rxclass 
-			INNER JOIN mth.mrrel r 
-			ON r.aui1 = rxclass.aui 
-			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m00 WHERE m00.sab = 'RXNORM' AND m00.tty NOT IN ('IN', 'PIN', 'MIN')) m0 
-			ON r.aui2 = m0.aui 
-			INNER JOIN mth.mrrel r2 
-			ON r2.aui1 = m0.aui 
-			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m000 WHERE m000.sab = 'RXNORM' AND m000.tty IN ('IN', 'PIN', 'MIN')) m 
-			ON m.aui = r2.aui2 
-			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc 
+			FROM rxclass.rxclass_str rxclass
+			INNER JOIN mth.mrrel r
+			ON r.aui1 = rxclass.aui
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m00 WHERE m00.sab = 'RXNORM' AND m00.tty NOT IN ('IN', 'PIN', 'MIN')) m0
+			ON r.aui2 = m0.aui
+			INNER JOIN mth.mrrel r2
+			ON r2.aui1 = m0.aui
+			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m000 WHERE m000.sab = 'RXNORM' AND m000.tty IN ('IN', 'PIN', 'MIN')) m
+			ON m.aui = r2.aui2
+			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc
 			ON m.tty = doc.value
 	);
-	
+
 
 		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_ptr_id ON rxclass.rxclass_rxnorm_in_pin_min_map(ptr_id);
 		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_sab ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_sab);
@@ -3965,8 +3965,8 @@ BEGIN
 		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_code ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_code);
 		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_aui ON rxclass.rxclass_rxnorm_in_pin_min_map(aui);
 		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_code ON rxclass.rxclass_rxnorm_in_pin_min_map(code);
-		
-		
+
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -3999,37 +3999,37 @@ BEGIN
 			  mth_date,
 			  'RXCLASS_STR',
 			  'RXCLASS_RXNORM_IN_PIN_MIN_MAP');
-	
+
 	END IF;
-	
+
 	SELECT check_if_requires_processing(mth_version, 'RXCLASS_EXT', 'RXCLASS_CODE')
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
-		
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-	
-	
+
+
 		DROP TABLE IF EXISTS rxclass.rxclass_code;
 		CREATE TABLE rxclass.rxclass_code as (
 		        SELECT DISTINCT
-		          t1.rxclass_sab, 
-		          t1.rxclass_abbr, 
-		          t1.rxclass_code, 
+		          t1.rxclass_sab,
+		          t1.rxclass_abbr,
+		          t1.rxclass_code,
 		          m.*
 		        FROM rxclass.rxclass_ext t1
 		        INNER JOIN umls_mrhier.mrhier_code m
-		        ON t1.ptr_id = m.ptr_id 
-		        ORDER BY 
-		          t1.rxclass_sab, 
-		          t1.rxclass_abbr, 
-		          m.aui, 
+		        ON t1.ptr_id = m.ptr_id
+		        ORDER BY
+		          t1.rxclass_sab,
+		          t1.rxclass_abbr,
+		          m.aui,
 		          m.ptr_id
 		)
 		;
-		
+
 		COMMIT;
 
 		CREATE INDEX x_rxclass_code_ptr_id ON rxclass.rxclass_code(ptr_id);
@@ -4038,7 +4038,7 @@ BEGIN
 		CREATE INDEX x_rxclass_code_rxclass_code ON rxclass.rxclass_code(rxclass_code);
 		CREATE INDEX x_rxclass_code_aui ON rxclass.rxclass_code(aui);
 		CREATE INDEX x_rxclass_code_code ON rxclass.rxclass_code(code);
-		
+
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
 		;
@@ -4071,38 +4071,38 @@ BEGIN
 			  mth_date,
 			  'RXCLASS_EXT',
 			  'RXCLASS_CODE');
-		
+
 	END IF;
-	
+
 	source_table := '';
 	target_table := 'SETUP_RXCLASS_LOG';
-	
+
 	SELECT check_if_requires_processing(mth_version, source_table, target_table)
-	INTO requires_processing; 
-	
-	
-	IF requires_processing THEN 	
-	
-	  SELECT COUNT(*) 
-	  INTO rxclass_ext_rows 
+	INTO requires_processing;
+
+
+	IF requires_processing THEN
+
+	  SELECT COUNT(*)
+	  INTO rxclass_ext_rows
 	  FROM rxclass.rxclass_ext;
-	  
-	  SELECT COUNT(*) 
-	  INTO rxclass_code_rows 
-	  FROM rxclass.rxclass_code; 
-	  
-	  SELECT COUNT(*) 
-	  INTO rxclass_str_rows 
+
+	  SELECT COUNT(*)
+	  INTO rxclass_code_rows
+	  FROM rxclass.rxclass_code;
+
+	  SELECT COUNT(*)
+	  INTO rxclass_str_rows
 	  FROM rxclass.rxclass_str;
-	  
-	  SELECT get_umls_mth_dt() 
+
+	  SELECT get_umls_mth_dt()
 	  INTO mth_date;
-	  
+
 	  EXECUTE
 	  format(
 	  '
-	  INSERT INTO public.setup_rxclass_log 
-	  VALUES 
+	  INSERT INTO public.setup_rxclass_log
+	  VALUES
 	   (
 	    ''%s'', --sr_datetime
 	    ''%s'', --sr_mth_version
@@ -4113,17 +4113,17 @@ BEGIN
 	    ''%s'' --rxclass_code
 	    )
 	    ',
-	    sr_datetime, 
+	    sr_datetime,
 	    mth_version,
-	    mth_date, 
+	    mth_date,
 	    'rxclass',
 	    rxclass_ext_rows,
 	    rxclass_str_rows,
 	    rxclass_code_rows
 	    );
-	    
+
 	    COMMIT;
-	    		
+
 	    EXECUTE
 	    format(
 	        '
@@ -4146,20 +4146,20 @@ BEGIN
 		  mth_date,
 		  source_table,
 		  target_table);
-	
-	
-	
+
+
+
 	END IF;
-	
+
 	source_table := '';
 	target_table := 'RXCLASS_LOOKUP';
-	
-	SELECT check_if_requires_processing(mth_version, source_table, target_table)
-	INTO requires_processing; 
-	
-	IF requires_processing THEN 
 
-	SELECT get_log_timestamp() 
+	SELECT check_if_requires_processing(mth_version, source_table, target_table)
+	INTO requires_processing;
+
+	IF requires_processing THEN
+
+	SELECT get_log_timestamp()
 	INTO start_timestamp
 	;
 
@@ -4168,8 +4168,8 @@ BEGIN
 	 SELECT * FROM umls_mrhier.lookup_rxclass
 	)
 	;
-	  
-	  
+
+
 	SELECT get_log_timestamp()
 	INTO stop_timestamp
 	;
@@ -4202,11 +4202,11 @@ BEGIN
 		  mth_date,
 		  source_table,
 		  target_table);
-		  
+
 		COMMIT;
 END IF;
 
-	    
+
 END;
 $$
 ;
