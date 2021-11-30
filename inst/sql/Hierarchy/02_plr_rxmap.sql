@@ -13,10 +13,11 @@ USE_PGXS=1 make install
 ```
 */
 
-CREATE OR REPLACE FUNCTION write_rxnorm_path_lookup() RETURNS void AS '
+CREATE OR REPLACE FUNCTION setup_rxmap(mth_version varchar, mth_release_dt varchar) RETURNS void AS '
 library(metathesaurus)
-setup_rxmap()
+setup_rxmap(mth_version = mth_version,
+mth_release_dt = mth_release_dt)
 ' LANGUAGE plr;
 
 
-SELECT setup_rxmap();
+SELECT setup_rxmap('{mth_version}', '{mth_release_dt}');

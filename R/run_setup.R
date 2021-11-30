@@ -373,5 +373,75 @@ run_setup <-
 
     }
 
+    if (postprocess) {
 
+      run_postprocessing(
+        conn = conn,
+        mth_version = log_version,
+        mth_release_dt = log_release_date,
+        verbose = verbose,
+        render_sql = render_sql,
+        render_only = render_only
+      )
+
+    }
+
+
+  }
+
+#' @title
+#' Run Postprocessing Only
+#' @rdname run_postprocessing
+#' @export
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc send
+
+run_postprocessing <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           mth_version,
+           mth_release_dt,
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE) {
+
+    if (missing(mth_version)|missing(mth_release_dt)) {
+      stop("`mth_version` and `mth_release_dt` are required.")
+    }
+
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+    postprocess_sqls <-
+      list.files(system.file(package = "metathesaurus",
+                             "sql",
+                             "Hierarchy"),
+                 full.names = TRUE,
+                 pattern = "[.]{1}sql$")
+
+    for (postprocess_sql in postprocess_sqls) {
+
+      sql_statement <-
+        paste(readLines(con = postprocess_sql),
+              collapse = "\n")
+
+
+      sql_statement <-
+        glue::glue(sql_statement)
+
+
+      pg13::send(
+        conn = conn,
+        sql_statement = sql_statement,
+        verbose = verbose,
+        render_sql = render_sql,
+        checks = ''
+      )
+
+
+    }
   }

@@ -11,6 +11,7 @@ run_setup(
   path_to_rrfs,
   steps = c("reset_schema", "ddl_tables", "copy_rrfs", "add_indexes", "log",
     "setup_crosswalk"),
+  postprocess = TRUE,
   mrconso_only = FALSE,
   omop_only = FALSE,
   english_only = TRUE,
