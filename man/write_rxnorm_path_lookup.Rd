@@ -7,9 +7,12 @@
 write_rxnorm_path_lookup(
   conn,
   conn_fun = "pg13::local_connect()",
-  schema = "rxclass",
+  target_schema = "rxmap",
   table_name = "lookup_rxnorm_paths",
+  mth_version,
+  mth_release_dt,
   url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
+  check_for_updates = FALSE,
   verbose = TRUE,
   render_sql = TRUE,
   render_only = FALSE,
@@ -26,9 +29,6 @@ database connection, an expression can be supplied that
 automatically connects and disconnects the connection
 once the function is run.}
 
-\item{schema}{For Postgres executions only, the
-schema to write all the tables to, Default: 'mth'}
-
 \item{url}{Source URL. It is not hardcoded in case the URL changes in the future.
 Default: 'https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix'}
 
@@ -37,13 +37,16 @@ Default: 'https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:ap
 \item{render_sql}{If TRUE, the SQL statement for the operation is returned in the console.}
 }
 \description{
-Write the tibble returned by \code{get_rxnorm_paths()} to a
+Write the tibble returned by \code{read_rxnorm_paths()} to a
 Postgres table.
 }
 \seealso{
 Other RxNorm Map: 
 \code{\link{get_rxnorm_ingredient_map}()},
 \code{\link{get_rxnorm_map}()},
-\code{\link{get_rxnorm_paths}()}
+\code{\link{get_rxnorm_tty_lookup}()},
+\code{\link{read_rxnorm_paths}()},
+\code{\link{setup_rxmap}()},
+\code{\link{write_rxnorm_map}()}
 }
 \concept{RxNorm Map}

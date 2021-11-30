@@ -47,7 +47,12 @@ read_rxnorm_paths <-
               R.cache::loadCache(key = list(url = url),
                                  dirs = "metathesaurus/rxnorm_map")
 
-              return(existing_tbl)
+              return(existing_tbl %>%
+                       mutate_all(stringr::str_replace_all,
+                                  pattern = "(^.*?)(\\[.*?$)",
+                                  replacement = "\\1") %>%
+                       rubix::rm_multibyte_chars() %>%
+                       mutate_all(trimws, "both"))
 
 
 
@@ -157,7 +162,12 @@ read_rxnorm_paths <-
                   "Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}. Rerun with `check_for_updates` set to TRUE to scrape the `url` and update the cache if a diff is detected."))
 
 
-              R.cache::saveCache(object = new_tbl,
+              R.cache::saveCache(object = new_tbl %>%
+                                   mutate_all(stringr::str_replace_all,
+                                              pattern = "(^.*?)(\\[.*?$)",
+                                              replacement = "\\1") %>%
+                                   rubix::rm_multibyte_chars() %>%
+                                   mutate_all(trimws, "both"),
                                  key = list(url = url),
                                  dirs = "metathesaurus/rxnorm_map")
 
@@ -245,7 +255,12 @@ read_rxnorm_paths <-
                                    key = list(url = url),
                                    dirs = "metathesaurus/rxnorm_map")
 
-                output_list2
+                output_list2 %>%
+                  mutate_all(stringr::str_replace_all,
+                             pattern = "(^.*?)(\\[.*?$)",
+                             replacement = "\\1") %>%
+                  rubix::rm_multibyte_chars() %>%
+                  mutate_all(trimws, "both")
           }
 
         }
@@ -550,7 +565,9 @@ get_rxnorm_tty_lookup <-
                       tolower(
                       stringr::str_replace_all(tty_expanded,
                                                pattern = " |[[:punct:]]",
-                                               replacement = "_")))
+                                               replacement = "_"))) %>%
+      dplyr::mutate(table_name =
+                      sprintf("rxnorm_%s_map", table_name))
 
   }
 
@@ -627,6 +644,62 @@ pg13::query(
 
 nrow(out)==0
 
+  }
+
+
+rxnorm_log_processing <-
+  function(process_start,
+           process_stop,
+           mth_version,
+           mth_release_dt,
+           target_schema,
+           source_table,
+           target_table,
+           source_table_rows,
+           target_table_rows,
+           conn,
+           conn_fun = "pg13::local_connect()",
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+
+
+    sql_statement <-
+      glue::glue(
+        "INSERT INTO public.process_rxmap_log
+        VALUES(
+          '{process_start}',
+          '{process_stop}',
+          '{mth_version}',
+          '{mth_release_dt}',
+          'RXNORM',
+          '{target_schema}',
+          '{source_table}',
+          '{target_table}',
+          '{source_table_rows}',
+          '{target_table_rows}'
+        );
+        "
+      )
+
+
+    pg13::send(
+      conn = conn,
+      sql_statement = sql_statement,
+      checks = checks,
+      verbose = verbose,
+      render_sql = render_sql,
+      render_only = render_only)
   }
 
 #' @title
@@ -770,28 +843,143 @@ write_rxnorm_path_lookup <-
   }
 
 
-#' @title FUNCTION_TITLE
-#' @description FUNCTION_DESCRIPTION
-#' @param conn PARAM_DESCRIPTION
-#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
-#' @param schema PARAM_DESCRIPTION, Default: 'mth'
-#' @param target_schema PARAM_DESCRIPTION, Default: 'rxclass'
-#' @param verbose PARAM_DESCRIPTION, Default: TRUE
-#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
-#' @param render_only PARAM_DESCRIPTION, Default: FALSE
-#' @param checks PARAM_DESCRIPTION, Default: ''
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @seealso
-#'  \code{\link[readr]{write_delim}}
-#'  \code{\link[glue]{glue}}
-#'  \code{\link[pg13]{send}}
+#' @title
+#' Write RxNorm TTY Lookup
+#' @rdname write_rxnorm_tty_lookup
+#' @export
+#' @importFrom readr write_csv
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc send
+
+
+write_rxnorm_tty_lookup <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           schema = "mth",
+           target_schema = "rxmap",
+           mth_version,
+           mth_release_dt,
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+    if (rxnorm_requires_processing(conn = conn,
+                                   mth_version = mth_version,
+                                   mth_release_dt = mth_release_dt,
+                                   target_table = "lookup_tty",
+                                   verbose = verbose,
+                                   render_sql = render_sql,
+                                   render_only = render_only,
+                                   checks = checks)) {
+
+
+      process_start <- Sys.time()
+
+      final_output <- get_rxnorm_tty_lookup()
+
+      tmp_csv <- tempfile(fileext = ".csv")
+
+      readr::write_csv(x = final_output,
+                       file = tmp_csv,
+                       na = "",
+                       quote = "all",
+                       col_names = TRUE)
+
+      on.exit(expr = unlink(tmp_csv),
+              add = TRUE,
+              after = TRUE)
+
+
+
+      sql_statement <-
+        glue::glue(
+          "
+      DROP TABLE IF EXISTS {target_schema}.tmp_lookup_tty;
+      CREATE TABLE {target_schema}.tmp_lookup_tty (
+        tty varchar(10),
+        tty_expanded varchar(100),
+        table_name varchar(63)
+
+      );
+
+      COPY {target_schema}.tmp_lookup_tty
+      FROM '{tmp_csv}'
+      CSV HEADER QUOTE E'\"';
+
+      DROP TABLE IF EXISTS {target_schema}.tmp_lookup_tty2;
+      CREATE TABLE {target_schema}.tmp_lookup_tty2 AS (
+        SELECT m.tty, COUNT(*) AS tty_count
+        FROM {schema}.mrconso m
+        WHERE m.sab = 'RXNORM'
+        GROUP BY tty
+      );
+
+      DROP TABLE IF EXISTS {target_schema}.lookup_tty;
+      CREATE TABLE {target_schema}.lookup_tty AS (
+      SELECT cnt.tty, cnt.tty_count, exp.tty_expanded, exp.table_name
+      FROM {target_schema}.tmp_lookup_tty2 cnt
+      LEFT JOIN {target_schema}.tmp_lookup_tty exp
+      ON exp.tty = cnt.tty
+      ORDER BY cnt.tty_count DESC
+      );
+
+      DROP TABLE {target_schema}.tmp_lookup_tty;
+      DROP TABLE {target_schema}.tmp_lookup_tty2;
+
+      ")
+
+      pg13::send(conn = conn,
+                 sql_statement = sql_statement,
+                 checks = checks,
+                 verbose = verbose,
+                 render_sql = render_sql,
+                 render_only = render_only)
+
+
+      process_stop <-
+        Sys.time()
+
+      target_table_rows <-
+        pg13::query(conn = conn,
+                    sql_statement = glue::glue("SELECT COUNT(*) FROM {target_schema}.lookup_tty;"),
+                    verbose = verbose,
+                    render_sql = render_sql,
+                    render_only = render_only,
+                    checks = checks) %>%
+        unlist() %>%
+        unname()
+
+
+      rxnorm_log_processing(
+        conn = conn,
+        process_start = process_start,
+        process_stop = process_stop,
+        mth_version = mth_version,
+        mth_release_dt = mth_release_dt,
+        target_schema = target_schema,
+        source_table = "",
+        target_table = "lookup_tty",
+        source_table_rows = 0,
+        target_table_rows = target_table_rows
+      )
+
+
+
+
+    }
+
+  }
+
+
+#' @title
+#' Write RxNorm Ingredient Map
 #' @rdname write_rxnorm_ingredient_map
 #' @export
 #' @importFrom readr write_csv
@@ -809,6 +997,7 @@ write_rxnorm_ingredient_map <-
            render_only = FALSE,
            checks = "") {
 
+    .Deprecated()
 
     final_output <-
       get_rxnorm_ingredient_map(
@@ -874,250 +1063,8 @@ write_rxnorm_ingredient_map <-
 
 
 
-rxnorm_log_processing <-
-  function(process_start,
-           process_stop,
-           mth_version,
-           mth_release_dt,
-           target_schema,
-           source_table,
-           target_table,
-           source_table_rows,
-           target_table_rows,
-           conn,
-           conn_fun = "pg13::local_connect()",
-           verbose = TRUE,
-           render_sql = TRUE,
-           render_only = FALSE,
-           checks = "") {
-
-
-
-    if (missing(conn)) {
-      conn <- eval(rlang::parse_expr(conn_fun))
-      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
-              after = TRUE)
-    }
-
-
-
-    sql_statement <-
-      glue::glue(
-        "INSERT INTO public.process_rxmap_log
-        VALUES(
-          '{process_start}',
-          '{process_stop}',
-          '{mth_version}',
-          '{mth_release_dt}',
-          'RXNORM',
-          '{target_schema}',
-          '{source_table}',
-          '{target_table}',
-          '{source_table_rows}',
-          '{target_table_rows}'
-        );
-        "
-      )
-
-
-    pg13::send(
-      conn = conn,
-      sql_statement = sql_statement,
-      checks = checks,
-      verbose = verbose,
-      render_sql = render_sql,
-      render_only = render_only)
-  }
-
-
-
-#' @title FUNCTION_TITLE
-#' @description FUNCTION_DESCRIPTION
-#' @param conn PARAM_DESCRIPTION
-#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
-#' @param schema PARAM_DESCRIPTION, Default: 'mth'
-#' @param target_schema PARAM_DESCRIPTION, Default: 'rxmap'
-#' @param verbose PARAM_DESCRIPTION, Default: TRUE
-#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
-#' @param render_only PARAM_DESCRIPTION, Default: FALSE
-#' @param checks PARAM_DESCRIPTION, Default: ''
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @seealso
-#'  \code{\link[readr]{write_delim}}
-#'  \code{\link[rlang]{parse_expr}}
-#'  \code{\link[pg13]{dc}},\code{\link[pg13]{send}}
-#' @rdname write_rxnorm_tty_lookup
-#' @export
-#' @importFrom readr write_csv
-#' @importFrom rlang parse_expr
-#' @importFrom pg13 dc send
-
-
-write_rxnorm_tty_lookup <-
-  function(conn,
-           conn_fun = "pg13::local_connect()",
-           schema = "mth",
-           target_schema = "rxmap",
-           mth_version,
-           mth_release_dt,
-           verbose = TRUE,
-           render_sql = TRUE,
-           render_only = FALSE,
-           checks = "") {
-
-    if (missing(conn)) {
-      conn <- eval(rlang::parse_expr(conn_fun))
-      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
-              after = TRUE)
-    }
-
-    if (rxnorm_requires_processing(conn = conn,
-                                   mth_version = mth_version,
-                                   mth_release_dt = mth_release_dt,
-                                   target_table = "lookup_tty",
-                                   verbose = verbose,
-                                   render_sql = render_sql,
-                                   render_only = render_only,
-                                   checks = checks)) {
-
-
-      process_start <- Sys.time()
-
-    final_output <- get_rxnorm_tty_lookup()
-
-    tmp_csv <- tempfile(fileext = ".csv")
-
-    readr::write_csv(x = final_output,
-                     file = tmp_csv,
-                     na = "",
-                     quote = "all",
-                     col_names = TRUE)
-
-    on.exit(expr = unlink(tmp_csv),
-            add = TRUE,
-            after = TRUE)
-
-
-
-    sql_statement <-
-      glue::glue(
-        "
-      DROP TABLE IF EXISTS {target_schema}.tmp_lookup_tty;
-      CREATE TABLE {target_schema}.tmp_lookup_tty (
-        tty varchar(10),
-        tty_expanded varchar(100),
-        table_name varchar(63)
-
-      );
-
-      COPY {target_schema}.tmp_lookup_tty
-      FROM '{tmp_csv}'
-      CSV HEADER QUOTE E'\"';
-
-      DROP TABLE IF EXISTS {target_schema}.tmp_lookup_tty2;
-      CREATE TABLE {target_schema}.tmp_lookup_tty2 AS (
-        SELECT m.tty, COUNT(*) AS tty_count
-        FROM {schema}.mrconso m
-        WHERE m.sab = 'RXNORM'
-        GROUP BY tty
-      );
-
-      DROP TABLE IF EXISTS {target_schema}.lookup_tty;
-      CREATE TABLE {target_schema}.lookup_tty AS (
-      SELECT cnt.tty, cnt.tty_count, exp.tty_expanded, exp.table_name
-      FROM {target_schema}.tmp_lookup_tty2 cnt
-      LEFT JOIN {target_schema}.tmp_lookup_tty exp
-      ON exp.tty = cnt.tty
-      ORDER BY cnt.tty_count DESC
-      );
-
-      DROP TABLE {target_schema}.tmp_lookup_tty;
-      DROP TABLE {target_schema}.tmp_lookup_tty2;
-
-      ")
-
-    pg13::send(conn = conn,
-               sql_statement = sql_statement,
-               checks = checks,
-               verbose = verbose,
-               render_sql = render_sql,
-               render_only = render_only)
-
-
-    process_stop <-
-      Sys.time()
-
-    target_table_rows <-
-      pg13::query(conn = conn,
-                  sql_statement = glue::glue("SELECT COUNT(*) FROM {target_schema}.lookup_tty;"),
-                  verbose = verbose,
-                  render_sql = render_sql,
-                  render_only = render_only,
-                  checks = checks) %>%
-      unlist() %>%
-      unname()
-
-
-    rxnorm_log_processing(
-      conn = conn,
-      process_start = process_start,
-      process_stop = process_stop,
-      mth_version = mth_version,
-      mth_release_dt = mth_release_dt,
-      target_schema = target_schema,
-      source_table = "",
-      target_table = "lookup_tty",
-      source_table_rows = 0,
-      target_table_rows = target_table_rows
-    )
-
-
-
-
-    }
-
-  }
-
-
-#' @title FUNCTION_TITLE
-#' @description FUNCTION_DESCRIPTION
-#' @param conn PARAM_DESCRIPTION
-#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
-#' @param from_tty PARAM_DESCRIPTION, Default: c("BN", "BPCK", "DF", "DFG", "ET", "GPCK", "IN", "MIN", "PIN",
-#'    "PSN", "SBD", "SBDC", "SBDF", "SBDG", "SCD", "SCDC", "SCDF",
-#'    "SCDG", "SY", "TMSY")
-#' @param to_tty PARAM_DESCRIPTION, Default: c("BN", "BPCK", "DF", "DFG", "ET", "GPCK", "IN", "MIN", "PIN",
-#'    "PSN", "SBD", "SBDC", "SBDF", "SBDG", "SCD", "SCDC", "SCDF",
-#'    "SCDG", "SY", "TMSY")
-#' @param full_path PARAM_DESCRIPTION, Default: FALSE
-#' @param schema PARAM_DESCRIPTION, Default: 'mth'
-#' @param target_schema PARAM_DESCRIPTION, Default: 'rxclass'
-#' @param verbose PARAM_DESCRIPTION, Default: TRUE
-#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
-#' @param render_only PARAM_DESCRIPTION, Default: FALSE
-#' @param checks PARAM_DESCRIPTION, Default: ''
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @seealso
-#'  \code{\link[cli]{cli_alert}},\code{\link[cli]{cli_abort}}
-#'  \code{\link[rlang]{parse_expr}}
-#'  \code{\link[pg13]{dc}},\code{\link[pg13]{c("query", "query")}},\code{\link[pg13]{send}}
-#'  \code{\link[dplyr]{filter}}
-#'  \code{\link[glue]{glue}}
-#'  \code{\link[readr]{write_delim}}
+#' @title
+#' Write RxNorm Map
 #' @rdname write_rxnorm_map
 #' @family RxNorm Map
 #' @export
@@ -1365,29 +1312,12 @@ write_rxnorm_map <-
 
 
 
-#' @title FUNCTION_TITLE
-#' @description FUNCTION_DESCRIPTION
-#' @param conn PARAM_DESCRIPTION
-#' @param conn_fun PARAM_DESCRIPTION, Default: 'pg13::local_connect()'
-#' @param schema PARAM_DESCRIPTION, Default: 'mth'
-#' @param target_schema PARAM_DESCRIPTION, Default: 'rxclass'
-#' @param verbose PARAM_DESCRIPTION, Default: TRUE
-#' @param render_sql PARAM_DESCRIPTION, Default: TRUE
-#' @param render_only PARAM_DESCRIPTION, Default: FALSE
-#' @param checks PARAM_DESCRIPTION, Default: ''
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @seealso
-#'  \code{\link[readr]{write_delim}}
-#'  \code{\link[glue]{glue}}
-#'  \code{\link[pg13]{send}}
-#' @rdname write_all_maps
+#' @title
+#' Write All RxNorm Maps
+#' @description
+#' Each map is written to the given schema.
+#' @rdname write_rxnorm_all_maps
+#' @family RxNorm Maps
 #' @export
 #' @importFrom readr write_csv
 #' @importFrom glue glue
@@ -1427,7 +1357,9 @@ write_rxnorm_all_maps <-
                   render_only = render_only)
 
     tty_rxnorm_concept_map <-
-      read_rxnorm_paths()
+      read_rxnorm_paths() %>%
+      rubix::rm_multibyte_chars() %>%
+      mutate_all(trimws, which = "both")
 
     start_ttys <-
     tty_rxnorm_concept_map %>%
@@ -1462,19 +1394,14 @@ write_rxnorm_all_maps <-
       process_start <- Sys.time()
 
 
-      rxnorm_concept_map <-
+      rxnorm_concept_map <<-
         tty_rxnorm_concept_map %>%
-        dplyr::filter(start == start_tty)
+        dplyr::filter(start == start_tty) %>%
+        dplyr::mutate_all(trimws, "both") %>%
+        dplyr::distinct()
 
       to_ttys <-
         unique(rxnorm_concept_map$end)
-
-      if (missing(conn)) {
-        conn <- eval(rlang::parse_expr(conn_fun))
-        on.exit(expr = pg13::dc(conn = conn), add = TRUE,
-                after = TRUE)
-      }
-
 
       rxnorm_tty_map <-
         vector(mode = "list",
@@ -1506,7 +1433,7 @@ write_rxnorm_all_maps <-
         aui,
         code,
         str,
-        starts_with(start_tty)) %>%
+        starts_with(sprintf("%s_", tolower(start_tty)))) %>%
       distinct() %>%
       arrange_at(vars(starts_with(start_tty), tty, aui))
 
@@ -1515,11 +1442,15 @@ write_rxnorm_all_maps <-
       bind_cols(
     rxnorm_tty_map2 %>%
       dplyr::select_at(vars(starts_with(start_tty))) %>%
-      dplyr::rename_all(function(x) stringr::str_remove_all(x,
-                                                            pattern = sprintf("%s_", tolower(start_tty)))) %>%
+      dplyr::rename_all(
+        function(x)
+          stringr::str_remove_all(
+            x,
+            pattern = sprintf("%s_", tolower(start_tty)))) %>%
       mutate(tty = start_tty),
     rxnorm_tty_map2 %>%
       dplyr::select_at(vars(starts_with(start_tty))))
+
     final_rxnorm_tty_map <-
       bind_rows(rxnorm_tty_map2,
                 rxnorm_tty_map2_b) %>%
@@ -1560,13 +1491,21 @@ write_rxnorm_all_maps <-
       ")
 
 
+    errors <- vector()
+    error_data <- list()
+    x <-
+    tryCatch(
     pg13::send(conn = conn,
                sql_statement = sql_statement,
                checks = checks,
                verbose = verbose,
                render_sql = render_sql,
-               render_only = render_only)
+               render_only = render_only),
+    error = function(e) "Error"
+    )
 
+
+    if (!identical(x, "Error")) {
 
     process_stop <- Sys.time()
 
@@ -1598,7 +1537,199 @@ write_rxnorm_all_maps <-
     )
 
 
-    }
+    sql_statement <-
+      "
+      CREATE TABLE IF NOT EXISTS public.setup_rxmap_log (
+        srl_datetime TIMESTAMP WITHOUT TIME ZONE,
+        mth_version varchar(25),
+        mth_release_dt varchar(12),
+        rxnorm_brand_name_map int,
+        rxnorm_branded_drug_delivery_device_map int,
+        rxnorm_generic_drug_delivery_device_map int,
+        rxnorm_ingredient_map int,
+        rxnorm_multi_ingredient_map int,
+        rxnorm_precise_ingredient_map int,
+        rxnorm_semantic_branded_drug_map int,
+        rxnorm_semantic_branded_drug_and_form_map int,
+        rxnorm_semantic_branded_drug_component_map int,
+        rxnorm_semantic_branded_drug_group_map int,
+        rxnorm_semantic_clinical_drug_map int,
+        rxnorm_semantic_clinical_drug_and_form_map int,
+        rxnorm_semantic_clinical_drug_group_map int,
+        rxnorm_semantic_drug_component_map int
+      );
+      "
+
+    pg13::send(conn = conn,
+               sql_statement = sql_statement,
+               checks = checks,
+               verbose = verbose,
+               render_sql = render_sql,
+               render_only = render_only)
+
+    sql_statement <-
+      glue::glue(
+        "
+          SELECT *
+          FROM public.setup_rxmap_log
+          WHERE
+            mth_version = '{mth_version}'
+            AND mth_release_dt = '{mth_release_dt}'
+          "
+      )
+
+    log_out <-
+      pg13::query(conn = conn,
+                  sql_statement = sql_statement,
+                  checks = checks,
+                  verbose = verbose,
+                  render_sql = render_sql,
+                  render_only = render_only)
+
+    if (nrow(log_out) == 0) {
+      sql_statement <-
+        glue::glue(
+          "
+            INSERT INTO public.setup_rxmap_log(srl_datetime,mth_version,mth_release_dt)
+            VALUES('{Sys.time()}', '{mth_version}', '{mth_release_dt}');
+            "
+        )
+
+      pg13::send(conn = conn,
+                 sql_statement = sql_statement,
+                 checks = checks,
+                 verbose = verbose,
+                 render_sql = render_sql,
+                 render_only = render_only)
+
+
     }
 
-}
+    sql_statement <-
+      glue::glue(
+        "
+          UPDATE public.setup_rxmap_log
+          SET {target_table_name} = {target_table_rows}
+          WHERE
+            mth_version = '{mth_version}'
+            AND mth_release_dt = '{mth_release_dt}'
+          "
+      )
+
+    pg13::send(conn = conn,
+               sql_statement = sql_statement,
+               checks = checks,
+               verbose = verbose,
+               render_sql = render_sql,
+               render_only = render_only)
+
+
+
+
+
+    } else {
+
+      errors <<-
+        unique(
+        c(target_table_name,
+          errors)
+        )
+
+      error_data[[length(error_data)+1]] <<-
+      final_rxnorm_tty_map
+
+    }
+
+    if (length(errors)>0) {
+
+      secretary::typewrite("The following maps did not load:")
+      secretary::typewrite(sprintf("\t\t\t%s,\n", errors),
+                           timepunched = FALSE)
+
+
+
+
+    }
+
+
+
+    }
+
+    }
+
+    }
+
+
+#' @title
+#' Setup RxMap
+#' @rdname setup_rxmap
+#' @family RxNorm Map
+#' @export
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc
+
+setup_rxmap <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           schema = "mth",
+           target_schema = "rxmap",
+           mth_version,
+           mth_release_dt,
+           url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
+           check_for_updates = FALSE,
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn),
+              add = TRUE,
+              after = TRUE)
+    }
+
+
+    write_rxnorm_path_lookup(
+      conn = conn,
+      target_schema = target_schema,
+      table_name = "lookup_rxnorm_paths",
+      mth_version = mth_version,
+      mth_release_dt = mth_release_dt,
+      url = url,
+      check_for_updates = check_for_updates,
+      verbose = verbose,
+      render_sql = render_sql,
+      render_only = render_only,
+      checks = checks)
+
+    write_rxnorm_tty_lookup(
+      conn = conn,
+      schema = schema,
+      target_schema = target_schema,
+      mth_version = mth_version,
+      mth_release_dt = mth_release_dt,
+      verbose = verbose,
+      render_sql = render_sql,
+      render_only = render_only,
+      checks = checks
+    )
+
+
+    write_rxnorm_all_maps(
+      conn = conn,
+      schema = schema,
+      target_schema = target_schema,
+      mth_version = mth_version,
+      mth_release_dt = mth_release_dt,
+      verbose = verbose,
+      render_sql = render_sql,
+      render_only = render_only,
+      checks = checks
+    )
+
+
+
+
+  }

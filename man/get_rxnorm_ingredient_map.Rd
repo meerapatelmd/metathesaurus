@@ -45,7 +45,10 @@ using the \code{get_rxnorm_map} function.
 \seealso{
 Other RxNorm Map: 
 \code{\link{get_rxnorm_map}()},
-\code{\link{get_rxnorm_paths}()},
+\code{\link{get_rxnorm_tty_lookup}()},
+\code{\link{read_rxnorm_paths}()},
+\code{\link{setup_rxmap}()},
+\code{\link{write_rxnorm_map}()},
 \code{\link{write_rxnorm_path_lookup}()}
 }
 \concept{RxNorm Map}

@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "patelmeeray@gmail.com",
            comment = c(ORCID = "0000-0002-3401-3948"))
-Description:  Setup UMLS Metathesaurus in MySQL5.5 or
+Description: Setup UMLS Metathesaurus in MySQL5.5 or
     Postgres. Metamorphosys can optionally be run from the console to
     customize UMLS Metathesaurus configurations prior to installation.  
 License: Apache License 2.0
@@ -43,4 +43,4 @@ Remotes:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
