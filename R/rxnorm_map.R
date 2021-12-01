@@ -1871,6 +1871,20 @@ if (nrow(log_out) == 0) {
 
 sql_statement <-
   glue::glue(
+    "SELECT COUNT(*) FROM {target_schema}.{target_table_name};")
+
+target_table_rows <-
+  pg13::query(conn = conn,
+             sql_statement = sql_statement,
+             checks = checks,
+             verbose = verbose,
+             render_sql = render_sql,
+             render_only = render_only) %>%
+  unlist() %>%
+  unname()
+
+sql_statement <-
+  glue::glue(
     "
           UPDATE public.setup_rxmap_log
           SET {target_table_name} = {target_table_rows}
