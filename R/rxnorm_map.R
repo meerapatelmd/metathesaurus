@@ -1800,6 +1800,13 @@ from {rxclass_schema}.rxclass_rxnorm_in_pin_min_map ingr
 "
 )
 
+pg13::send(conn = conn,
+           sql_statement = sql_statement,
+           checks = checks,
+           verbose = verbose,
+           render_sql = render_sql,
+           render_only = render_only)
+
 sql_statement <-
   "
       CREATE TABLE IF NOT EXISTS public.setup_rxmap_log (
