@@ -1661,6 +1661,239 @@ write_rxnorm_all_maps <-
 
 
 #' @title
+#' Write RxClass Table
+#' @description
+#' Take the RxClass classification table and map it to
+#' the Ingredient maps generated in RxMap.
+#' @rdname write_rxclass_table
+#' @export
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc send query
+#' @importFrom glue glue
+
+
+write_rxclass_table <-
+  function(conn,
+           conn_fun = "pg13::local_connect()",
+           schema = "mth",
+           target_schema = "rxmap",
+           rxclass_schema = "rxclass",
+           mth_version,
+           mth_release_dt,
+           verbose = TRUE,
+           render_sql = TRUE,
+           render_only = FALSE,
+           checks = "") {
+
+    target_table_name <-
+      "rxclass"
+
+    if (missing(conn)) {
+      conn <- eval(rlang::parse_expr(conn_fun))
+      on.exit(expr = pg13::dc(conn = conn), add = TRUE,
+              after = TRUE)
+    }
+
+    if (
+      rxnorm_requires_processing(
+        conn = conn,
+        mth_version = mth_version,
+        mth_release_dt = mth_release_dt,
+        target_table = target_table_name,
+        verbose = verbose,
+        render_sql = render_sql,
+        render_only = render_only,
+        checks = checks
+      )) {
+
+
+sql_statement <-
+  glue::glue(
+"
+DROP TABLE IF EXISTS {target_schema}.rxclass;
+CREATE TABLE {target_schema}.rxclass (
+    tty character varying(40),
+    aui character varying(12),
+    code character varying(255),
+    str text,
+    rxnorm_aui character varying(9),
+    rxnorm_code character varying(100),
+    rxnorm_str text,
+    rxnorm_tty character varying(40),
+    rxnorm_tty_name text,
+    rel character varying(4),
+    rela character varying(100),
+    rxclass_sab character varying(255),
+    rxclass_abbr character varying(255),
+    rxclass_code character varying(255),
+    rxnorm_in_pin_min_aui character varying(12),
+    rxnorm_in_pin_min_code text,
+    rxnorm_in_pin_min_str text,
+    ptr_id text,
+    level_1_str text,
+    level_2_str text,
+    level_3_str text,
+    level_4_str text,
+    level_5_str text,
+    level_6_str text,
+    level_7_str text,
+    level_8_str text,
+    level_9_str text,
+    level_10_str text,
+    level_11_str text,
+    level_12_str text,
+    level_13_str text,
+    level_14_str text,
+    level_15_str text,
+    level_16_str text,
+    level_17_str text,
+    level_18_str text,
+    level_19_str text,
+    level_20_str text,
+    level_21_str text,
+    level_22_str text,
+    level_23_str text,
+    level_24_str text,
+    level_25_str text,
+    level_26_str text,
+    level_27_str text,
+    level_28_str text,
+    level_29_str text,
+    level_30_str text,
+    level_31_str text,
+    level_32_str text,
+    level_33_str text,
+    level_34_str text,
+    level_35_str text,
+    level_36_str text,
+    level_37_str text
+);
+
+WITH compl AS (
+ SELECT tty,aui,code,str, in_aui AS ingr_aui FROM {target_schema}.rxnorm_ingredient_map
+ UNION
+ SELECT tty,aui,code,str, pin_aui AS ingr_aui FROM {target_schema}.rxnorm_precise_ingredient_map
+ UNION
+ SELECT tty,aui,code,str, min_aui AS ingr_aui FROM {target_schema}.rxnorm_multi_ingredient_map
+)
+
+insert into {target_schema}.rxclass
+select
+  map.tty,
+  map.aui,
+  map.code,
+  map.str,
+  ingr.*
+from {rxclass_schema}.rxclass_rxnorm_in_pin_min_map ingr
+LEFT JOIN compl map
+ON map.ingr_aui = ingr.rxnorm_in_pin_min_aui
+where map.aui IS NOT NULL
+UNION
+select
+  ingr.rxnorm_in_pin_min_tty as tty,
+  ingr.rxnorm_in_pin_min_aui AS aui,
+  ingr.rxnorm_in_pin_min_code::integer AS code,
+  ingr.rxnorm_in_pin_min_str AS str,
+  ingr.*
+from {rxclass_schema}.rxclass_rxnorm_in_pin_min_map ingr
+;
+"
+)
+
+sql_statement <-
+  "
+      CREATE TABLE IF NOT EXISTS public.setup_rxmap_log (
+        srl_datetime TIMESTAMP WITHOUT TIME ZONE,
+        mth_version varchar(25),
+        mth_release_dt varchar(12),
+        rxclass int,
+        rxnorm_brand_name_map int,
+        rxnorm_branded_drug_delivery_device_map int,
+        rxnorm_generic_drug_delivery_device_map int,
+        rxnorm_ingredient_map int,
+        rxnorm_multi_ingredient_map int,
+        rxnorm_precise_ingredient_map int,
+        rxnorm_semantic_branded_drug_map int,
+        rxnorm_semantic_branded_drug_and_form_map int,
+        rxnorm_semantic_branded_drug_component_map int,
+        rxnorm_semantic_branded_drug_group_map int,
+        rxnorm_semantic_clinical_drug_map int,
+        rxnorm_semantic_clinical_drug_and_form_map int,
+        rxnorm_semantic_clinical_drug_group_map int,
+        rxnorm_semantic_drug_component_map int
+      );
+      "
+
+pg13::send(conn = conn,
+           sql_statement = sql_statement,
+           checks = checks,
+           verbose = verbose,
+           render_sql = render_sql,
+           render_only = render_only)
+
+sql_statement <-
+  glue::glue(
+    "
+          SELECT *
+          FROM public.setup_rxmap_log
+          WHERE
+            mth_version = '{mth_version}'
+            AND mth_release_dt = '{mth_release_dt}'
+          "
+  )
+
+log_out <-
+  pg13::query(conn = conn,
+              sql_statement = sql_statement,
+              checks = checks,
+              verbose = verbose,
+              render_sql = render_sql,
+              render_only = render_only)
+
+if (nrow(log_out) == 0) {
+  sql_statement <-
+    glue::glue(
+      "
+            INSERT INTO public.setup_rxmap_log(srl_datetime,mth_version,mth_release_dt)
+            VALUES('{Sys.time()}', '{mth_version}', '{mth_release_dt}');
+            "
+    )
+
+  pg13::send(conn = conn,
+             sql_statement = sql_statement,
+             checks = checks,
+             verbose = verbose,
+             render_sql = render_sql,
+             render_only = render_only)
+
+
+}
+
+sql_statement <-
+  glue::glue(
+    "
+          UPDATE public.setup_rxmap_log
+          SET {target_table_name} = {target_table_rows}
+          WHERE
+            mth_version = '{mth_version}'
+            AND mth_release_dt = '{mth_release_dt}'
+          "
+  )
+
+pg13::send(conn = conn,
+           sql_statement = sql_statement,
+           checks = checks,
+           verbose = verbose,
+           render_sql = render_sql,
+           render_only = render_only)
+
+
+    }
+
+  }
+
+
+#' @title
 #' Setup RxMap
 #' @rdname setup_rxmap
 #' @family RxNorm Map
@@ -1721,6 +1954,20 @@ setup_rxmap <-
       conn = conn,
       schema = schema,
       target_schema = target_schema,
+      mth_version = mth_version,
+      mth_release_dt = mth_release_dt,
+      verbose = verbose,
+      render_sql = render_sql,
+      render_only = render_only,
+      checks = checks
+    )
+
+
+    write_rxclass_table(
+      conn = conn,
+      schema = schema,
+      target_schema = target_schema,
+      rxclass_schema = rxclass_schema,
       mth_version = mth_version,
       mth_release_dt = mth_release_dt,
       verbose = verbose,
