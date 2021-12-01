@@ -1721,7 +1721,7 @@ CREATE TABLE {target_schema}.rxclass (
     rxnorm_str text,
     rxnorm_tty character varying(40),
     rxnorm_tty_name text,
-    rel character varying(4),
+    rel character varying(20),
     rela character varying(100),
     rxclass_sab character varying(255),
     rxclass_abbr character varying(255),
