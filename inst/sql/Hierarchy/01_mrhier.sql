@@ -3920,11 +3920,10 @@ BEGIN
 		DROP TABLE IF EXISTS rxclass.rxclass_rxnorm_in_pin_min_map;
 		CREATE TABLE rxclass.rxclass_rxnorm_in_pin_min_map AS (
 			SELECT
-			 m.aui AS rxnorm_aui,
-			 m.code AS rxnorm_code,
-			 m.str  AS rxnorm_str,
-			 m.tty  AS rxnorm_tty,
-			 doc.expl AS rxnorm_tty_name,
+			 m.aui AS rxnorm_in_pin_min_aui,
+			 m.code AS rxnorm_in_pin_min_code,
+			 m.str  AS rxnorm_in_pin_min_str,
+			 m.tty  AS rxnorm_in_pin_min_tty,
 			 r.rel  AS rel,
 			 r.rela AS rela,
 			 rxclass.*
@@ -3933,8 +3932,6 @@ BEGIN
 			ON r.aui1 = rxclass.aui
 			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m0 WHERE m0.sab = 'RXNORM' AND m0.tty IN ('IN', 'PIN', 'MIN')) m
 			ON r.aui2 = m.aui
-			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc
-			ON m.tty = doc.value
 			UNION
 			SELECT
 			 m.aui AS rxnorm_aui,
@@ -3954,8 +3951,6 @@ BEGIN
 			ON r2.aui1 = m0.aui
 			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m000 WHERE m000.sab = 'RXNORM' AND m000.tty IN ('IN', 'PIN', 'MIN')) m
 			ON m.aui = r2.aui2
-			INNER JOIN (SELECT DISTINCT value, expl FROM mth.mrdoc WHERE type = 'expanded_form' AND dockey = 'TTY') doc
-			ON m.tty = doc.value
 	);
 
 
