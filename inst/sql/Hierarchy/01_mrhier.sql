@@ -3938,7 +3938,6 @@ BEGIN
 			 m.code AS rxnorm_code,
 			 m.str  AS rxnorm_str,
 			 m.tty  AS rxnorm_tty,
-			 doc.expl AS rxnorm_tty_name,
 			 r.rel  AS rel,
 			 r.rela AS rela,
 			 rxclass.*
