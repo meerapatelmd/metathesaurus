@@ -1706,6 +1706,7 @@ write_rxclass_table <-
         checks = checks
       )) {
 
+      process_start <- Sys.time()
 
 sql_statement <-
   glue::glue(
@@ -1713,7 +1714,7 @@ sql_statement <-
 DROP TABLE IF EXISTS {target_schema}.rxclass;
 CREATE TABLE {target_schema}.rxclass (
     tty character varying(40),
-    aui character varying(12),
+    aui text,
     code character varying(255),
     str text,
     rxnorm_aui character varying(9),
@@ -1726,7 +1727,7 @@ CREATE TABLE {target_schema}.rxclass (
     rxclass_sab character varying(255),
     rxclass_abbr character varying(255),
     rxclass_code character varying(255),
-    rxnorm_in_pin_min_aui character varying(12),
+    rxnorm_in_pin_min_aui text,
     rxnorm_in_pin_min_code text,
     rxnorm_in_pin_min_str text,
     ptr_id text,
@@ -1806,6 +1807,33 @@ pg13::send(conn = conn,
            verbose = verbose,
            render_sql = render_sql,
            render_only = render_only)
+
+process_stop <- Sys.time()
+
+target_table_rows <-
+  pg13::query(
+    conn = conn,
+    checks = checks,
+    sql_statement = glue::glue("SELECT COUNT(*) FROM {target_schema}.{target_table_name};"),
+    verbose = verbose,
+    render_sql = render_sql,
+    render_only = render_only) %>%
+  unlist() %>%
+  unname()
+
+rxnorm_log_processing(
+  conn = conn,
+  process_start = process_start,
+  process_stop = process_stop,
+  mth_version = mth_version,
+  mth_release_dt = mth_release_dt,
+  target_schema = target_schema,
+  source_table = "",
+  target_table = target_table_name,
+  source_table_rows = 0,
+  target_table_rows = target_table_rows
+)
+
 
 sql_statement <-
   "
