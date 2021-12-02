@@ -1717,19 +1717,15 @@ CREATE TABLE {target_schema}.rxclass (
     aui text,
     code character varying(255),
     str text,
-    rxnorm_aui character varying(9),
-    rxnorm_code character varying(100),
-    rxnorm_str text,
-    rxnorm_tty character varying(40),
-    rxnorm_tty_name text,
+    rxnorm_in_pin_min_tty text,
+    rxnorm_in_pin_min_aui text,
+    rxnorm_in_pin_min_code text,
+    rxnorm_in_pin_min_str text,
     rel text,
     rela character varying(100),
     rxclass_sab character varying(255),
     rxclass_abbr character varying(255),
     rxclass_code character varying(255),
-    rxnorm_in_pin_min_aui text,
-    rxnorm_in_pin_min_code text,
-    rxnorm_in_pin_min_str text,
     ptr_id text,
     level_1_str text,
     level_2_str text,
@@ -1770,12 +1766,12 @@ CREATE TABLE {target_schema}.rxclass (
     level_37_str text
 );
 
-WITH compl AS (
- SELECT tty,aui,code,str, in_aui AS ingr_aui FROM {target_schema}.rxnorm_ingredient_map
+WITH map AS (
+ SELECT tty,aui,code,str, 'IN' AS ingr_tty, in_aui AS ingr_aui FROM {target_schema}.rxnorm_ingredient_map
  UNION
- SELECT tty,aui,code,str, pin_aui AS ingr_aui FROM {target_schema}.rxnorm_precise_ingredient_map
+ SELECT tty,aui,code,str, 'PIN' AS ingr_tty, pin_aui AS ingr_aui FROM {target_schema}.rxnorm_precise_ingredient_map
  UNION
- SELECT tty,aui,code,str, min_aui AS ingr_aui FROM {target_schema}.rxnorm_multi_ingredient_map
+ SELECT tty,aui,code,str, 'MIN' AS ingr_tty, min_aui AS ingr_aui FROM {target_schema}.rxnorm_multi_ingredient_map
 )
 
 insert into {target_schema}.rxclass
@@ -1784,9 +1780,55 @@ select
   map.aui,
   map.code,
   map.str,
-  ingr.*
+  map.ingr_tty AS rxnorm_in_pin_min_tty,
+  ingr.rxnorm_in_pin_min_aui,
+  ingr.rxnorm_in_pin_min_code,
+  ingr.rxnorm_in_pin_min_str,
+  ingr.rel,
+  ingr.rela,
+  ingr.rxclass_sab,
+  ingr.rxclass_abbr,
+  ingr.rxclass_code,
+      ingr.ptr_id,
+    ingr.level_1_str,
+    ingr.level_2_str,
+    ingr.level_3_str,
+    ingr.level_4_str,
+    ingr.level_5_str,
+    ingr.level_6_str,
+    ingr.level_7_str,
+    ingr.level_8_str,
+    ingr.level_9_str,
+    ingr.level_10_str,
+    ingr.level_11_str,
+    ingr.level_12_str,
+    ingr.level_13_str,
+    ingr.level_14_str,
+    ingr.level_15_str,
+    ingr.level_16_str,
+    ingr.level_17_str,
+    ingr.level_18_str,
+    ingr.level_19_str,
+    ingr.level_20_str,
+    ingr.level_21_str,
+    ingr.level_22_str,
+    ingr.level_23_str,
+    ingr.level_24_str,
+    ingr.level_25_str,
+    ingr.level_26_str,
+    ingr.level_27_str,
+    ingr.level_28_str,
+    ingr.level_29_str,
+    ingr.level_30_str,
+    ingr.level_31_str,
+    ingr.level_32_str,
+    ingr.level_33_str,
+    ingr.level_34_str,
+    ingr.level_35_str,
+    ingr.level_36_str,
+    ingr.level_37_str
 from {rxclass_schema}.rxclass_rxnorm_in_pin_min_map ingr
-LEFT JOIN compl map
+LEFT JOIN map
 ON map.ingr_aui = ingr.rxnorm_in_pin_min_aui
 where map.aui IS NOT NULL
 UNION
@@ -1795,7 +1837,53 @@ select
   ingr.rxnorm_in_pin_min_aui AS aui,
   ingr.rxnorm_in_pin_min_code::integer AS code,
   ingr.rxnorm_in_pin_min_str AS str,
-  ingr.*
+  ingr.rxnorm_in_pin_min_tty,
+    ingr.rxnorm_in_pin_min_aui,
+  ingr.rxnorm_in_pin_min_code,
+  ingr.rxnorm_in_pin_min_str,
+  ingr.rel,
+  ingr.rela,
+  ingr.rxclass_sab,
+  ingr.rxclass_abbr,
+  ingr.rxclass_code,
+      ingr.ptr_id,
+    ingr.level_1_str,
+    ingr.level_2_str,
+    ingr.level_3_str,
+    ingr.level_4_str,
+    ingr.level_5_str,
+    ingr.level_6_str,
+    ingr.level_7_str,
+    ingr.level_8_str,
+    ingr.level_9_str,
+    ingr.level_10_str,
+    ingr.level_11_str,
+    ingr.level_12_str,
+    ingr.level_13_str,
+    ingr.level_14_str,
+    ingr.level_15_str,
+    ingr.level_16_str,
+    ingr.level_17_str,
+    ingr.level_18_str,
+    ingr.level_19_str,
+    ingr.level_20_str,
+    ingr.level_21_str,
+    ingr.level_22_str,
+    ingr.level_23_str,
+    ingr.level_24_str,
+    ingr.level_25_str,
+    ingr.level_26_str,
+    ingr.level_27_str,
+    ingr.level_28_str,
+    ingr.level_29_str,
+    ingr.level_30_str,
+    ingr.level_31_str,
+    ingr.level_32_str,
+    ingr.level_33_str,
+    ingr.level_34_str,
+    ingr.level_35_str,
+    ingr.level_36_str,
+    ingr.level_37_str
 from {rxclass_schema}.rxclass_rxnorm_in_pin_min_map ingr
 ;
 "
