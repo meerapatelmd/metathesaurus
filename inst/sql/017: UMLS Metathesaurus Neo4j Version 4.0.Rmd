@@ -1,0 +1,2061 @@
+---
+title: "017: UMLS Metathesaurus Neo4j Version 4.0"
+output: 
+  html_document:
+    css: style.css
+    theme: flatly
+    highlight: kate  
+    toc: yes
+    number_sections: false
+    toc_depth: 5 
+    toc_float: TRUE
+    collapsed: false
+    smooth_scroll: false
+#    code_folding: show
+    df_print: paged
+    fig_height: 5 
+    fig_width: 7 
+    fig_caption: true
+    dev: png
+params:  
+  # Settings 
+  issue_key: "017"  
+  report_title: "UMLS Metathesaurus Neo4j Version 4.0"  
+  # Process Control 
+  restage_umls_mth:     FALSE
+  rewrite_node_table:   FALSE
+  rewrite_edge_table:   FALSE
+  rewrite_import_files: FALSE
+  load_neo4j          : FALSE
+  zip_import_files:     TRUE
+  # Database 
+  staging_schema:   umls_neo4j_staging
+  node_edge_schema: umls_neo4j
+  # Neo4j Params
+  neo4j_db:   dbms-8d2a02e6-f101-49b9-a536-d2f8f9063606
+  dbmss_path: ~/Library/Application Support/com.Neo4j.Relate/Data/dbmss 
+  conn_fun: pg13::local_connect(verbose=verbose)  
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile,
+                    encoding = encoding,
+                    output_dir =
+                      file.path(getwd(), "output"))})
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  comment = "##",
+  tidy = FALSE, #`styler` to use styler:style_text() to reformat code
+  tidy.opts = list(blank = FALSE, width.cutoff = 60),
+  echo = TRUE,
+  eval = TRUE,
+  cache = FALSE,
+  cache.path = file.path(getwd(), "cache", sub("_cache/.*$", "", knitr::opts_chunk$get("cache.path")), "/"),
+  child = NULL, #file/s to knit and then include,
+  collapse = FALSE, #collapse all output into a single block,
+  error = FALSE, #display error messages in doc. FALSE stops render when error is thrown
+  fig.align = "center", #left, right, center, or default
+  fig.width = 7, #inches
+  fig.height = 7, #inches
+  fig.asp= 0.50, #adds whitespace around images
+  include = TRUE, #include chunk?
+  message = FALSE, #display code messages?
+  warning = FALSE, #include warnings?
+  results = "markup"
+    # "asis": passthrough results
+    # "hide": do not display results 
+    # "hold": put all results below all code
+)  
+```
+
+```{r libraries,eval=TRUE,message=FALSE,warning=FALSE,results='hide'}
+library(tidyverse)
+library(pg13)
+library(SqlRender)
+library(easyBakeOven)
+```
+
+```{r setup1,echo=FALSE,results='hide'}
+issue_key    <- params$issue_key  
+report_title <- params$report_title
+version      <- str_replace(report_title, 
+                            pattern = "UMLS Metathesaurus Neo4j Version ([0-9]{1}.*$)",
+                            replacement = "\\1")
+rmd_title    <- basename(knitr::opts_chunk$get("cache.path"))
+github_page  <- sprintf("https://PiriHealth.github.io/medportal-review/output/%s.html", rmd_title)
+source_code  <- sprintf("https://github.com/PiriHealth/medportal-review/blob/main/rmd/%s.Rmd", rmd_title)
+```
+
+**Last Updated On:** `r Sys.time()`  
+**GitHub Page:** `r github_page`  
+**Source Code:** `r source_code` 
+
+```{r setup2,eval=TRUE,message=FALSE,echo=FALSE,results='hide'}
+library(tidyverse)
+library(pg13)
+library(SqlRender)
+library(easyBakeOven)
+
+project_path <- "~/GitHub/projects/medportal-review"
+project_path <- path.expand(project_path)
+umls_version <- 
+  query(conn_fun = params$conn_fun,
+        sql_statement = 
+          "SELECT sm_version 
+           FROM public.setup_mth_log l
+           WHERE l.sm_datetime IN (
+               SELECT MAX(sm_datetime) 
+               FROM public.setup_mth_log 
+             )",
+        verbose = FALSE,
+        render_sql = FALSE) %>%
+  unlist() %>%
+  unname()
+```
+
+```{r folders,eval=TRUE,echo=FALSE,results='hide',message=FALSE}
+global_data_folder  <- file.path(project_path, "data", issue_key, report_title)
+raw_folder          <- file.path(global_data_folder, "raw")
+intermediate_folder <- file.path(global_data_folder, "intermediate")
+final_folder        <- file.path(global_data_folder, "final")
+outgoing_folder     <- file.path(global_data_folder, "outgoing") 
+
+
+global_rmd_folder   <- file.path(project_path, "rmd", issue_key)
+child_rmd_folder    <- file.path(global_rmd_folder, report_title)
+
+global_img_folder   <- file.path(project_path, "img", issue_key)
+img_folder          <- file.path(global_img_folder, report_title)
+
+cache_folder        <- file.path(project_path, "cache", issue_key, report_title)
+cache_folder        <- sprintf("%s/", cache_folder)
+
+sapply(c(global_data_folder,
+         raw_folder,
+         intermediate_folder,
+         final_folder,
+         outgoing_folder,
+         global_rmd_folder,
+         child_rmd_folder,
+         global_img_folder,
+         img_folder,
+         cache_folder),
+       create_path)
+
+
+log_file <- file.path(child_rmd_folder, "run.log")
+```
+
+
+# Summary  
+
+The following will be completed after the first test instantiation 
+of the UMLS Metathesaurus as a graph database is successful:  
+
+1. Find sed script that creates `UMLS_Version` field. Note: 
+2 separate values are created for the Concepts and the Relationships.  
+1. Logic for `isMergedConcept`, `isRetiredConcept`, `isMergedLexicalGroup`, 
+`isRetiredLexicalGroup`, `isRetiredLanguageSpecificTermID` (see [Glossary](#glossary)).  
+
+
+# Notes  
+
+* See [Glossary](#glossary) for field definitions.  
+
+* Semantic Type: since the semantic type 
+may have a one-to-many relationship with atoms, it is 
+concatenated with a semicolon, which is the array delimiter 
+in Neo4j. This aggregation is performed by `CUI`.  
+
+* Definitions: definitions are aggregated 
+by `CUI`. This is also the only field that is filtered for 
+unsuppressed values. All other suppressible fields are 
+brought over to Neo4j unfiltered. If the definition is from 
+a vocabulary that is different from the atom, `SAB` is 
+appended in parentheses to the definition.  
+
+* Atom Metadata: details 
+about the source vocabulary are added. The MRSAB table contains 
+an `RCUI` and a `VCUI` field that represent the [unique identifier for 
+the root SRC concept](#rcui) and [unique identifier for 
+versioned SRC concept](#vcui), respectively. 
+
+* [Issue V](#issue-v): This build assumes that as part of the 
+UMLS Instantiation that the MRCONSO table was filtered for 
+a single `STR` value per each unique `CODE` and `SAB` combination.  
+See `setup_mrconso_sab_subsets()` in the `metathesaurus` R 
+package for more information.  
+
+
+## Build UMLS_MultiYear.sql ([link](file:///Users/meerapatel/GitHub/projects/sqlpedia/_site%20copy/sql%202015-2021%2000%20Build%20UMLS_MultiYear.html))    
+
+- Inserts into the UMLS_MultiYear.MRCONSO Table anything that 
+does not already exist in the upcoming version  
+
+- Earliest version is imported last. Therefore, the definition of 
+this field is the last time it is seen. 
+
+
+
+# Changelog  
+
+## Version 4.0  
+
+### Improvements to Nodes and Edges Import  
+
+* Add Indexes  
+
+
+## Version 3.0  
+
+### Improvements to Nodes and Edges Import   
+
+* All STR values were either aggregated across an AUI 
+or an CUI as `AUI_STR` and `CUI_STR`, respectively. However, 
+the `NAME` field is actually the `AUI_STR` value. Therefore, 
+this field was eliminated and the `STR` values were aggregated 
+across the CUI into a `STR` field.  
+
+* Neo4j is failing to parse arrays that are separated by ';'. 
+The arrays in the `DEF`. `STY` and `STR` fields are tested with a 
+'|' delimiter, which is specified in the load.sh file along 
+with the ',' delimiter across the record. They were explicitly 
+assigned 'string[]' in the header file to be interpreted as 
+arrays in Neo4j.  
+
+
+## Version 2.0    
+
+### Improvements to Nodes and Edges Import   
+
+* [Issue VI](#issue-vi): 2 synonym properties have been 
+added. `aui_str` contains the `STR` across an atom and `cui_str` 
+is all the `STR` values associated with the CUI of 
+that concept.  
+
+* [Issue XIII](#issue-xiii): `STR` field is not included 
+as a property since it is duplicative of the `NAME` field.  
+
+* [Issue VII](#issue-vii): There can be more than 1 semantic type 
+`STY` to 1 `CODE`. These had been concatenated with " and " to allow for the 
+Version 1.0 import. The STY values were ordered prior to 
+string aggregation so that a semantic type of 'A & B' and 'B & A' 
+cannot occur in cases where the semantic type combination matched 
+for a concept. The " and " is now replaced with ";", which is the default 
+array delimiter for neo4j-admin.  
+
+* [Issue VIII](#issue-viii): duplicates Issue VII  
+
+* [Issue IX](#issue-ix): :ID was originally assigned to the 
+`CODE` field alone, but an error was thrown due to collisions 
+where the same `CODE` occurred in 2 or more `SAB`. Therefore the 
+Atom (`AUI`) is used since it is the unique identifier for any 
+given `SAB`-`CODE`-`STR` combination.   
+
+* [Issue XI](#issue-xi): a `label` column was meant to be used 
+as the main name for the concept and has been renamed to 
+`name` to match Neo4j's terminology. `Label` in Neo4j is a 
+grouper.  
+
+* [Issue XII](#issue-xii): resolved a bug where tagging a 
+definition with a '(`SAB`) ' preamble before a definition where 
+those where the definition `SAB` and concept `SAB` did not match. 
+To reduce data prep time, the logic to only tag the front of 
+a definition if the vocabularies differed was eliminated.  
+
+* [Issue XIX](#issue-xix): MRSAB was previously joined to 
+the Nodes table using CUI and Versioned CUI (`VCUI`) in the 
+MRSAB table. This was corrected to joining `SAB` to `RSAB`.  
+
+* [Issue XIII](#issue-xiii): Definitions from non-English 
+languages are causing problems on import due to the presence 
+of special characters. Definition rules were adjusted to 
+include only English language definitions.  
+
+
+
+### Technical  
+
+* Node SQL queries were optimized by removing `WITH` clauses 
+where possible.  
+
+* Any rules applied to the native Metathesaurus tables were 
+moved to prerequisite [Staging](#stage-metathesaurus-tables) 
+before the Node table is generated.  
+
+
+
+
+# Backlog      
+
+## 2021-06-13  
+
+* [Issue I](#issue-i): When hunting down the logic for `isMergedConcept`, 
+`isRetiredConcept`, `isMergedLexicalGroup`, `isRetiredLexicalGroup`, 
+`isRetiredLanguageSpecificTermID`, the SQL found operated on columns 
+prefixed with _Isa_ as opposed to _is_. It is possible that there 
+is a more updated version of this script that needs to be found.  
+
+* [Issue II](#issue-ii): Attempts at automating the direct download 
+of all the version of the UMLS Metathesaurus via the NIH API 
+failed according to their own instructions. I have skipped the 
+created of the `UMLS_Version` field for now until this is 
+troubleshooted.   
+
+* [Issue III](#issue-iii): In the [SQL script found for the 
+`is`-prefixed fields](#mrconso-custom-fields), a `TermLength` 
+field also exists that is not included in the list of MRCONSO 
+custom fields.  
+
+* [Issue IV](#issue-iv): Custom MRCONSO fields have been tabled 
+while conceptually exploring Neo4j. They will be reintroduced 
+after the POC in Neo4j has been completed.  
+
+
+
+## 2021-06-17  
+
+* [Issue X](#issue-x): When making the switch to using `AUI` 
+as :ID, null `RELA` values occurred in the Edge table and 
+an error was thrown on import. I need to investigate why 
+there are relationships that are null.  
+
+## 2021-06-20  
+
+* [Issue XIX](#issue-xix): When writing the Node table, 
+the left-most table is filtered for English and the 
+`LAT` needs to be joined on to allow for 
+the ability to search for language-specific `str` values.  
+
+
+
+# Workflow  
+
+## Parameters  
+
+```{r workflow_parameters,echo=FALSE,eval=TRUE}
+display_params <- params 
+names(display_params) <- 
+  names(display_params) %>%
+  str_replace_all(pattern = "_",
+                  replacement = " ") %>%
+  str_to_title()
+display_params[["UMLS Metathesaurus Version"]] <- umls_version
+print_list(display_params)
+```
+
+
+## Terminology  
+
+```{r terminology,echo=FALSE}
+print_list(`Base Tables` = "Refers to a Node and Edges table that is written to Postgres.",
+           `Import Files` = "The Node and Edges table are exported as csv along with header files for each.")
+```
+
+
+## Stage Metathesaurus Tables   
+
+Target Metathesaurus tables are first staged for transformation 
+into Node properties in the staging schema.  
+
+```{r stage_metathesaurus,echo=FALSE,results='hide'}
+stage_mth_rmd_dir <- file.path(child_rmd_folder, "stage_mth")
+create_path(stage_mth_rmd_dir)
+```
+
+
+```{r staging_schema1,echo=FALSE}
+if (params$restage_umls_mth) {
+  if (!schema_exists(conn_fun = params$conn_fun,
+                    schema   = params$staging_schema)) {
+  
+  create_schema(conn_fun = params$conn_fun,
+                schema   = params$staging_schema)
+  }
+}
+```
+
+
+### MRDOC Table  
+
+The MRDOC table is staged by pivoting the long table for 
+joins. Since it is small table, it is done in R.    
+
+```{r stage_mrdoc1,echo=FALSE,results='hide'}
+mrdoc_rmd <- file.path(stage_mth_rmd_dir, "mrdoc.Rmd")
+if (params$restage_umls_mth|!file.exists(mrdoc_rmd)) {
+  cat("```",
+      file = mrdoc_rmd,
+      append = FALSE,
+      sep = "\n")
+  mrdoc <- 
+    pg13::read_table(
+      conn_fun = params$conn_fun, 
+      schema   = "mth",
+      table    = "mrdoc",
+      log_file = mrdoc_rmd
+    )
+    cat("```",
+      "",
+    file = mrdoc_rmd,
+    append = TRUE,
+    sep = "\n")
+    
+  cat("#### Native MRDOC Table  ",
+      "```{r mrdoc_child1,echo=FALSE}",
+      "print_dt(mrdoc)",
+      "```",
+      "",
+    file = mrdoc_rmd,
+    append = TRUE,
+    sep = "\n")
+  
+  cat("#### Split MRDOC Table  ", 
+      "The MRDOC table is subset by the `DOCKEY` field value to store in a pivoted format for joins.  ",
+    file = mrdoc_rmd,
+    append = TRUE,
+    sep = "\n")
+
+  mrdoc_staged <-
+    split(mrdoc, 
+          mrdoc$dockey) %>%
+    map(function(x) 
+          x %>% 
+          pivot_wider( 
+            names_from = type, 
+            values_from = expl, 
+            values_fn   = list(expl = ~paste(., 
+                                            collapse = "; ")))) %>%
+    map(select, -filler_col)
+  
+  mrdoc_staged <- 
+    mrdoc_staged %>% 
+    map(function(x)
+         x %>% 
+          rename_at(vars(value), str_replace, pattern = "value", tolower(unique(x$dockey))) %>%
+          rename_at(vars(any_of("expanded_form")),
+                    ~paste0(tolower(unique(x$dockey)), "_expanded_form"))
+      ) %>%
+    map(select, -dockey)
+
+  for (i in seq_along(mrdoc_staged)) {
+    dockey_value <- names(mrdoc_staged)[i]
+    table_name   <- sprintf("mrdoc_staged_%s", dockey_value)
+    
+     cat(
+          "",
+          sprintf("##### %s  ", table_name), 
+          "```",
+      file = mrdoc_rmd,
+      append = TRUE,
+      sep = "\n")
+          
+      pg13::write_table(
+        conn_fun      = params$conn_fun,
+        schema        = params$staging_schema,
+        table_name    = table_name,
+        data          = mrdoc_staged[[i]],
+        drop_existing = TRUE,
+        log_file = mrdoc_rmd
+      )
+      
+     cat(
+          "```",
+          "",
+      file = mrdoc_rmd,
+      append = TRUE,
+      sep = "\n")
+    
+      cat(
+        "",
+        sprintf("```{r split_mrdoc%s, echo=FALSE}", i),
+        sprintf("print_dt(mrdoc_staged[[%s]])", i),
+        "```",
+      file = mrdoc_rmd,
+      append = TRUE,
+      sep = "\n")
+      
+  }
+  
+}
+```
+
+```{r stage_mrdoc1b,echo=FALSE,results='hide'}
+if (!(params$restage_umls_mth|!file.exists(mrdoc_rmd))) {
+  mrdoc <- 
+    pg13::read_table(
+      conn_fun = params$conn_fun, 
+      schema   = "mth",
+      table    = "mrdoc"
+    )
+
+  mrdoc_staged <-
+    split(mrdoc, 
+          mrdoc$dockey) %>%
+    map(function(x) 
+          x %>% 
+          pivot_wider( 
+            names_from = type, 
+            values_from = expl, 
+            values_fn   = list(expl = ~paste(., 
+                                            collapse = "; ")))) %>%
+    map(select, -filler_col)
+  
+  mrdoc_staged <- 
+    mrdoc_staged %>% 
+    map(function(x)
+         x %>% 
+          rename_at(vars(value), str_replace, pattern = "value", tolower(unique(x$dockey))) %>%
+          rename_at(vars(any_of("expanded_form")),
+                    ~paste0(tolower(unique(x$dockey)), "_expanded_form"))
+      ) %>%
+    map(select, -dockey)
+}
+```
+
+```{r stage_mrdoc2,child=mrdoc_rmd}
+```
+
+### MRSAB Table  
+
+The MRSAB Table is staged by filtering for root source 
+abbreviation `RSAB` that is flagged as the current version (`CURVER`).  
+
+```{r stage_mrsab1,echo=FALSE}
+mrsab_rmd <- file.path(stage_mth_rmd_dir, "mrsab.Rmd")
+
+if (params$restage_umls_mth|!file.exists(mrsab_rmd)) {
+  sql_statement <- 
+    render(
+    "
+    SET search_path TO @staging_schema;
+    DROP TABLE IF EXISTS mrsab_staged;
+    CREATE TABLE mrsab_staged AS (
+      SELECT * 
+      FROM mth.mrsab 
+      WHERE curver='Y'
+    );
+    ",
+    staging_schema = params$staging_schema
+    )
+  
+  cat(
+    "```sql",
+    sql_statement,
+    "```",
+      file = mrsab_rmd,
+      sep  = "\n",
+      append = FALSE
+  )
+  
+ cat(
+   "",
+    "```",
+      file = mrsab_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+ 
+  send(
+    conn_fun      = params$conn_fun,
+    sql_statement = sql_statement,
+    render_sql    = FALSE,
+    verbose       = TRUE, 
+    checks        = "",
+    log_file      = mrsab_rmd
+  )
+  
+   cat(
+    "```",
+    "",
+      file = mrsab_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+}
+```
+
+```{r stage_mrsab2,child=mrsab_rmd}
+```
+
+### MRDEF Table  
+
+The MRDEF Table is staged by filtering for definitions in 
+English only because the special characters in other languages 
+has led to import failure. The staged MRSAB table is used 
+to filter for these definitions.  
+
+```{r stage_mrdef1,echo=FALSE}
+mrdef_rmd <- file.path(stage_mth_rmd_dir, "mrdef.Rmd")
+if (params$restage_umls_mth|!file.exists(mrdef_rmd)) {
+sql_statement <- 
+  render(
+    "
+    SET search_path TO @staging_schema;
+    DROP TABLE IF EXISTS tmp_mrdef_staged;
+    CREATE TABLE tmp_mrdef_staged AS (
+      SELECT 
+        m.cui,
+        m.aui,
+        m.atui,
+        m.satui,
+        CONCAT('(', m.sab, ') ', m.def) AS def, 
+        m.cvf
+      FROM mth.mrdef m
+      INNER JOIN 
+        (SELECT DISTINCT rsab FROM mrsab_staged WHERE lat = 'ENG') a 
+      ON m.sab = a.rsab 
+      WHERE m.suppress = 'N'
+    );
+    
+    DROP TABLE IF EXISTS mrdef_staged;
+    CREATE TABLE mrdef_staged AS (
+      SELECT 
+        cui, 
+        STRING_AGG(def, '|') AS def 
+      FROM tmp_mrdef_staged 
+      GROUP BY cui
+    );
+    
+    DROP TABLE IF EXISTS tmp_mrdef_staged;
+    ", 
+    staging_schema = params$staging_schema
+  )
+
+cat(
+  "```sql",
+  sql_statement,
+  "```",
+    file = mrdef_rmd,
+    sep  = "\n",
+    append = FALSE
+)
+
+ cat(
+   "",
+    "```",
+      file = mrdef_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+ 
+  send(
+    conn_fun      = params$conn_fun,
+    sql_statement = sql_statement,
+    render_sql    = FALSE,
+    verbose       = TRUE, 
+    checks        = "",
+    log_file      = mrdef_rmd
+  )
+  
+   cat(
+    "```",
+    "",
+      file = mrdef_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+}
+```
+
+```{r stage_mrdef2,child=mrdef_rmd}
+```
+
+### MRSTY Table  
+
+The Semantic Types are aggregated by CUI.  
+
+```{r stage_mrsty1,echo=FALSE}
+mrsty_rmd <- file.path(stage_mth_rmd_dir, "mrsty.Rmd")
+
+if (params$restage_umls_mth|!file.exists(mrsty_rmd)) {
+sql_statement <- 
+  render(
+  "
+  SET search_path TO @staging_schema;
+  DROP TABLE IF EXISTS mrsty_staged;
+  CREATE TABLE mrsty_staged AS (
+    SELECT 
+      cui,
+      STRING_AGG(sty, '|') AS sty
+    FROM mth.mrsty 
+    GROUP BY cui
+  );
+  ",
+  staging_schema = params$staging_schema
+  )
+
+cat(
+  "```sql",
+  sql_statement,
+  "```",
+    file = mrsty_rmd,
+    sep  = "\n",
+    append = FALSE
+)
+
+ cat(
+   "",
+    "```",
+      file = mrsty_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+ 
+  send(
+    conn_fun      = params$conn_fun,
+    sql_statement = sql_statement,
+    render_sql    = FALSE,
+    verbose       = TRUE, 
+    checks        = "",
+    log_file      = mrsty_rmd
+  )
+  
+   cat(
+    "```",
+    "",
+      file = mrsty_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+}
+```
+
+```{r stage_mrsty2,child=mrsty_rmd}
+```
+
+### MRCONSO Table  
+
+```{r stage_mrconso1,echo=FALSE}
+mrconso_rmd <- file.path(stage_mth_rmd_dir, "mrconso.Rmd")
+
+if (params$restage_umls_mth|!file.exists(mrconso_rmd)) {
+sql_statement <- 
+  render(
+    "
+    SET search_path TO @staging_schema;
+    DROP TABLE IF EXISTS mrconso_staged; 
+    CREATE TABLE mrconso_staged AS (
+      SELECT 
+        cui,
+        lat,
+        STRING_AGG(DISTINCT str, '|') AS str 
+      FROM mth.mrconso
+      GROUP BY cui, lat
+    );
+    ",
+    staging_schema = params$staging_schema
+  )
+
+cat(
+  "```sql",
+  sql_statement,
+  "```",
+    file = mrconso_rmd,
+    sep  = "\n",
+    append = FALSE
+)
+
+ cat(
+   "",
+    "```",
+      file = mrconso_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+ 
+  send(
+    conn_fun      = params$conn_fun,
+    sql_statement = sql_statement,
+    render_sql    = FALSE,
+    verbose       = TRUE, 
+    checks        = "",
+    log_file      = mrconso_rmd
+  )
+  
+   cat(
+    "```",
+    "",
+      file = mrconso_rmd,
+      sep  = "\n",
+      append = TRUE
+  )
+
+}
+```
+
+```{r stage_mrconso2,child=mrconso_rmd}
+```
+
+
+## Base Tables  
+
+```{r node_edge_schema1,echo=FALSE,results='hide'}
+if (!schema_exists(conn_fun = params$conn_fun,
+                    schema   = params$node_edge_schema)) {
+  
+  create_schema(conn_fun = params$conn_fun,
+                schema   = params$node_edge_schema)
+}
+```
+
+### Nodes  
+
+```{r node_dir,echo=FALSE}
+node_rmd_dir <- file.path(child_rmd_folder, "node")
+create_path(node_rmd_dir)
+```
+
+
+#### Write Pre-Node Table  
+
+All the concepts in the MRCONSO table have already been subset 
+for the the top ranked `STR` values according to the MRRANK 
+table, grouped on the `SAB` and `CODE`. 
+The top ranked `STR` is renamed to `NAME`, flattening 
+the one-to-many relationship between `CODE` and `STR`. Each 
+table is inserted into the Pre-Node table.  
+
+
+```{r write_pre_node1,results='hide',echo=FALSE}
+prenode_rmd <- file.path(node_rmd_dir, "prenode.Rmd")
+if (params$rewrite_node_table|!file.exists(prenode_rmd)) {
+  sql_statement <-
+    SqlRender::render(
+        "
+        SET search_path TO @node_edge_schema;
+        DROP TABLE IF EXISTS pre_node;
+        CREATE TABLE pre_node (
+            CUI	  char(8) NOT NULL,
+            LAT	char(3) NOT NULL,
+            TS	  char(1) NOT NULL,
+            LUI	  varchar(10) NOT NULL,
+            STT	  varchar(3) NOT NULL,
+            SUI	  varchar(10) NOT NULL,
+            ISPREF	char(1) NOT NULL,
+            AUI	    varchar(9) NOT NULL,
+            SAUI	  varchar(50),
+            SCUI	  varchar(100),
+            SDUI	  varchar(100),
+            SAB	    varchar(40) NOT NULL,
+            TTY	    varchar(40) NOT NULL,
+            CODE	    varchar(100) NOT NULL,
+            SRL	integer NOT NULL,
+            SUPPRESS	char(1) NOT NULL,
+            CVF	integer,
+            FILLER_COL INTEGER,
+            NAME text NOT NULL
+        );
+        ",
+          node_edge_schema = params$node_edge_schema)
+  
+  cat_sql_chunk(sql_statement = sql_statement,
+                rmd_file = prenode_rmd,
+                append = FALSE)
+  
+  
+  cat("",
+      "```",
+      file = prenode_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+  send(
+    conn_fun = params$conn_fun,
+    sql_statement = sql_statement,
+    log_file = prenode_rmd,
+    append_log = TRUE,
+    render_sql = FALSE)
+  
+    cat("```",
+        "",
+      file = prenode_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+  subset_schema <- "mrconso_sab"  
+  subset_tables <- 
+    pg13::ls_tables(conn_fun = params$conn_fun,
+                    schema   = subset_schema)
+  
+  
+  subset_table_files <- list()
+  for (subset_table in subset_tables) {
+    
+     sql_statement <- 
+        SqlRender::render(
+          "
+          INSERT INTO @node_edge_schema.pre_node 
+          SELECT 
+            cui,
+            lat,
+            ts,
+            lui,
+            stt,
+            sui,
+            ispref,
+            aui,
+            saui,
+            scui,
+            sdui,
+            sab,
+            tty,
+            code,
+            srl,
+            suppress,
+            cvf,
+            filler_col,
+            str AS name
+          FROM @schema.@table;",
+            node_edge_schema = params$node_edge_schema,
+            schema   = subset_schema,
+            table    = subset_table
+        )
+     
+     cat_sql_chunk(sql_statement = sql_statement,
+                   rmd_file = prenode_rmd,
+                   append = TRUE)
+     
+       cat("",
+      "```",
+      file = prenode_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+    send(
+      conn_fun = params$conn_fun,
+      sql_statement = sql_statement,
+      log_file = prenode_rmd,
+      append_log = TRUE,
+      render_sql = FALSE)
+    
+      cat(
+      "```",
+      "",
+      file = prenode_rmd,
+      append = TRUE,
+      sep = "\n")
+  }
+}
+```
+
+```{r write_prenode2,child=prenode_rmd}
+```
+
+#### Write Node Table  
+
+```{r write_node1,echo=FALSE}
+sql_statement <- 
+  render(
+  "
+  SET search_path TO @node_edge_schema;
+  DROP TABLE IF EXISTS pre_node2;
+  CREATE TABLE pre_node2 (
+      CUI	char(8) NOT NULL,
+      LAT	char(3) NOT NULL,
+      TS	char(1) NOT NULL,
+      LUI	varchar(10) NOT NULL,
+      STT	varchar(3) NOT NULL,
+      SUI	varchar(10) NOT NULL,
+      ISPREF	char(1) NOT NULL,
+      AUI	varchar(9) NOT NULL,
+      SAUI	varchar(50),
+      SCUI	varchar(100),
+      SDUI	varchar(100),
+      SAB	varchar(40) NOT NULL,
+      TTY	varchar(40) NOT NULL,
+      CODE	varchar(100) NOT NULL,
+      SRL	integer NOT NULL,
+      SUPPRESS	char(1) NOT NULL,
+      CVF	integer,
+      FILLER_COL INTEGER,
+      NAME text NOT NULL,
+      STY   text NOT NULL
+  );
+  
+  
+  INSERT INTO pre_node2 
+  SELECT 
+    m.cui,
+    lat,
+    ts,
+    lui,
+    stt,
+    sui,
+    ispref,
+    aui,
+    saui,
+    scui,
+    sdui,
+    sab,
+    tty,
+    code,
+    srl,
+    suppress,
+    cvf,
+    filler_col,
+    name,
+    s.sty  
+  FROM pre_node m
+  LEFT JOIN @staging_schema.mrsty_staged s 
+  ON s.cui = m.cui  
+  ;
+  
+  DROP TABLE pre_node;
+  
+  DROP TABLE IF EXISTS pre_node3;
+  CREATE TABLE pre_node3 (
+      CUI	char(8) NOT NULL,
+      LAT	char(3) NOT NULL,
+      TS	char(1) NOT NULL,
+      LUI	varchar(10) NOT NULL,
+      STT	varchar(3) NOT NULL,
+      SUI	varchar(10) NOT NULL,
+      ISPREF	char(1) NOT NULL,
+      AUI	varchar(9) NOT NULL,
+      SAUI	varchar(50),
+      SCUI	varchar(100),
+      SDUI	varchar(100),
+      SAB	varchar(40) NOT NULL,
+      TTY	varchar(40) NOT NULL,
+      CODE	varchar(100) NOT NULL,
+      SRL	integer NOT NULL,
+      SUPPRESS	char(1) NOT NULL,
+      CVF	integer,
+      FILLER_COL INTEGER,
+      name text NOT NULL,
+      STY   text NOT NULL,
+      DEF   text 
+  );
+        
+        
+  INSERT INTO pre_node3
+  SELECT 
+    m.cui,
+    lat,
+    ts,
+    lui,
+    stt,
+    sui,
+    ispref,
+    aui,
+    saui,
+    scui,
+    sdui,
+    sab,
+    tty,
+    code,
+    srl,
+    suppress,
+    cvf,
+    filler_col,
+    name,
+    sty,  
+    s.def
+  FROM pre_node2 m 
+  LEFT JOIN @staging_schema.mrdef_staged s 
+  ON s.cui = m.cui
+  ;
+  
+  DROP TABLE pre_node2;
+        
+  DROP TABLE IF EXISTS pre_node4;
+  CREATE TABLE pre_node4 (
+      CUI	char(8) NOT NULL,
+      LAT	char(3) NOT NULL,
+      TS	char(1) NOT NULL,
+      LUI	varchar(10) NOT NULL,
+      STT	varchar(3) NOT NULL,
+      SUI	varchar(10) NOT NULL,
+      ISPREF	char(1) NOT NULL,
+      AUI	varchar(9) NOT NULL,
+      SAUI	varchar(50),
+      SCUI	varchar(100),
+      SDUI	varchar(100),
+      SAB	varchar(40) NOT NULL,
+      TTY	varchar(40) NOT NULL,
+      CODE	varchar(100) NOT NULL,
+      SRL	integer NOT NULL,
+      SUPPRESS	char(1) NOT NULL,
+      CVF	integer,
+      FILLER_COL INTEGER,
+      name text NOT NULL,
+      STY   text NOT NULL,
+      DEF   text,
+      VCUI	char(8),
+      RCUI	char(8),
+      VSAB	varchar(40) ,
+      RSAB	varchar(40) ,
+      SON	text,
+      SF	varchar(40),
+      SVER	varchar(40),
+      VSTART	char(8),
+      VEND	char(8),
+      IMETA	varchar(10),
+      RMETA	varchar(10),
+      SLC	text,
+      SCC	text,
+      TFR	integer,
+      CFR	integer,
+      CXTY	varchar(50),
+      TTYL	varchar(400),
+      ATNL	text,
+      CENC	varchar(40),
+      CURVER	char(1) ,
+      SABIN	char(1) ,
+      SSN	text ,
+      SCIT	text 
+  );
+  
+  INSERT INTO pre_node4 
+  SELECT 
+    m.*,
+    vcui,
+    rcui,
+    vsab,
+    rsab,
+    son,
+    sf,
+    sver,
+    vstart,
+    vend,
+    imeta,
+    rmeta,
+    slc,
+    scc,
+    tfr,
+    cfr,
+    cxty,
+    ttyl,
+    atnl,
+    cenc,
+    curver,
+    sabin,
+    ssn,
+    scit
+  FROM pre_node3 m 
+  LEFT JOIN @staging_schema.mrsab_staged s 
+  ON m.sab = s.rsab 
+  ;
+  
+  DROP TABLE pre_node3;
+  
+  
+  DROP TABLE IF EXISTS pre_node5;
+  CREATE TABLE pre_node5 (
+      CUI	char(8) NOT NULL,
+      LAT	char(3) NOT NULL,
+      TS	char(1) NOT NULL,
+      LUI	varchar(10) NOT NULL,
+      STT	varchar(3) NOT NULL,
+      SUI	varchar(10) NOT NULL,
+      ISPREF	char(1) NOT NULL,
+      AUI	varchar(9) NOT NULL,
+      SAUI	varchar(50),
+      SCUI	varchar(100),
+      SDUI	varchar(100),
+      SAB	varchar(40) NOT NULL,
+      TTY	varchar(40) NOT NULL,
+      CODE	varchar(100) NOT NULL,
+      STR	text NOT NULL,
+      SRL	integer NOT NULL,
+      SUPPRESS	char(1) NOT NULL,
+      CVF	integer,
+      FILLER_COL INTEGER,
+      name text NOT NULL,
+      STY   text NOT NULL,
+      DEF   text,
+      VCUI	char(8),
+      RCUI	char(8),
+      VSAB	varchar(40) ,
+      RSAB	varchar(40) ,
+      SON	text,
+      SF	varchar(40),
+      SVER	varchar(40),
+      VSTART	char(8),
+      VEND	char(8),
+      IMETA	varchar(10),
+      RMETA	varchar(10),
+      SLC	text,
+      SCC	text,
+      TFR	integer,
+      CFR	integer,
+      CXTY	varchar(50),
+      TTYL	varchar(400),
+      ATNL	text,
+      CENC	varchar(40),
+      CURVER	char(1) ,
+      SABIN	char(1) ,
+      SSN	text ,
+      SCIT	text 
+  );
+      
+  INSERT INTO pre_node5 
+  SELECT 
+    n4.cui,
+    n4.lat,
+    ts,
+    lui,
+    stt,
+    sui,
+    ispref,
+    n4.aui,
+    saui,
+    scui,
+    sdui,
+    sab,
+    tty,
+    code,
+    cui.str,
+    srl,
+    suppress,
+    cvf,
+    filler_col,
+    name,
+    sty,
+    def,
+    vcui,
+    rcui,
+    vsab,
+    rsab,
+    son,
+    sf,
+    sver,
+    vstart,
+    vend,
+    imeta,
+    rmeta,
+    slc,
+    scc,
+    tfr,
+    cfr,
+    cxty,
+    ttyl,
+    atnl,
+    cenc,
+    curver,
+    sabin,
+    ssn,
+    scit
+  FROM pre_node4 n4
+  LEFT JOIN @staging_schema.mrconso_staged cui 
+  ON cui.cui = n4.cui 
+    AND cui.lat = n4.lat
+  ;
+  
+  DROP TABLE pre_node4;
+  
+      
+  DROP TABLE IF EXISTS tmp_node; 
+  CREATE TABLE tmp_node AS (
+    SELECT * 
+    FROM pre_node5
+  );
+  DROP TABLE pre_node5;
+  
+  DROP TABLE IF EXISTS node; 
+  CREATE TABLE node AS ( 
+    SELECT 
+      sty AS label_col, 
+      aui AS id_col,
+      p.* 
+    FROM tmp_node p 
+  );
+  DROP TABLE tmp_node;
+  ",
+  staging_schema = params$staging_schema,
+  node_edge_schema = params$node_edge_schema
+  )
+```
+
+
+```{r write_node2,echo=FALSE,results='hide'}
+node_rmd <- file.path(node_rmd_dir, "node.Rmd")
+
+if (params$rewrite_node_table|!file.exists(node_rmd)) {
+  
+  cat_sql_chunk(sql_statement = 
+                  sql_statement,
+                rmd_file = node_rmd,
+                append = FALSE)
+  cat("",
+      "```",
+      file = node_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+    send(
+      conn_fun = params$conn_fun,
+      sql_statement = sql_statement,
+      log_file = node_rmd,
+      render_sql = FALSE
+    )
+
+  cat(
+    "```",
+    "",
+    file = node_rmd,
+    append = TRUE,
+    sep = "\n")
+  
+}
+```
+
+```{r write_node3,child=node_rmd}
+```
+
+#### Results  
+
+
+```{r node_results1,echo=FALSE,results='hide'}
+row_count <- 
+  query(
+    conn_fun = params$conn_fun,
+    sql_statement = 
+      render("SELECT COUNT(1) FROM @node_edge_schema.node;", 
+             node_edge_schema = params$node_edge_schema))
+```
+
+
+```{r node_results2,echo=FALSE,results='hide'}
+cui_count <- 
+  query(
+    conn_fun = params$conn_fun,
+    sql_statement = 
+      render("SELECT COUNT(DISTINCT cui) FROM @node_edge_schema.node;", 
+             node_edge_schema = params$node_edge_schema))
+```
+
+
+```{r node_results3,echo=FALSE,results='hide'}
+aui_count <- 
+  query(
+    conn_fun = params$conn_fun,
+    sql_statement = 
+      render("SELECT COUNT(DISTINCT aui) FROM @node_edge_schema.node;",
+             node_edge_schema = params$node_edge_schema))
+```
+
+```{r node_results4,echo=FALSE,results='hide'}
+cui_aui_count <- 
+  query(
+    conn_fun = params$conn_fun,
+    sql_statement = 
+      render("SELECT COUNT(1) FROM (SELECT DISTINCT cui,aui FROM @node_edge_schema.node) a;",
+             node_edge_schema = params$node_edge_schema))
+```
+
+
+```{r nodes_results5,echo=FALSE}
+print_list(
+  `Row Count`         = row_count$count, 
+  `CUI Count`         = cui_count$count,
+  `AUI Count`         = aui_count$count,
+  `CUI and AUI Count` = cui_aui_count$count
+)
+```
+
+
+```{r nodes_results6,echo=FALSE,results='asis'}
+if (row_count$count != aui_count$count) {
+  cat("##### Error",
+      "Row count must equal AUI count. Script terminated.",
+      sep = "  \n")
+  knitr::knit_exit()
+} 
+```
+
+
+
+### Edges  
+
+```{r edge_dir,echo=FALSE}
+edge_rmd_dir <- file.path(child_rmd_folder, "edge")
+create_path(edge_rmd_dir)
+```
+
+
+
+#### Write Edge Table   
+
+```{r write_edge1,echo=FALSE,results='hide'}
+edge_rmd <- file.path(edge_rmd_dir,
+                            "edge.Rmd")
+
+if (params$rewrite_edge_table|!file.exists(edge_rmd)) {
+sql_statement <- 
+  render(
+   "
+   SET search_path TO @node_edge_schema;
+    DROP TABLE IF EXISTS edge;
+    CREATE TABLE edge AS (
+      SELECT DISTINCT 
+        rel.aui1 AS source_atom, 
+        rel.aui2 AS target_atom, 
+        rel.rela AS relationship, 
+        rel.rela,
+        rel.rel,
+        rel.rg,
+        rel.dir, 
+        rel.sab,
+        rel.suppress
+      FROM mth.MRREL rel  
+      WHERE rel.rela IS NOT NULL
+    );",
+   node_edge_schema = params$node_edge_schema)
+
+cat_sql_chunk(
+  sql_statement = sql_statement,
+  rmd_file = edge_rmd,
+  append = FALSE
+)
+
+  cat("",
+      "```",
+      file = edge_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+    send(
+      conn_fun = params$conn_fun,
+      sql_statement = sql_statement,
+      log_file = edge_rmd,
+      render_sql = FALSE
+    )
+
+  cat(
+    "```",
+    "",
+    file = edge_rmd,
+    append = TRUE,
+    sep = "\n")
+
+}
+```
+
+```{r write_edge2,child=edge_rmd}
+```
+
+## Write CSV  
+
+```{r write_csv_dir,echo=FALSE}
+write_csv_rmd_dir <- file.path(child_rmd_folder, "write_csv")
+create_path(write_csv_rmd_dir)
+```
+
+
+### Node Header CSV
+
+```{r node_header_csv1,echo=FALSE}
+tmp_node_header_file <- tempfile(fileext = ".csv")
+node_header_rmd <- file.path(write_csv_rmd_dir, "node_header.Rmd")
+```
+
+```{r node_header_csv2,echo=FALSE}
+if (params$rewrite_import_files) {
+  sql_statement <- 
+    render("COPY (SELECT * FROM @node_edge_schema.node LIMIT 1) TO '@tmp_node_header_file' WITH DELIMITER ',' CSV HEADER FORCE QUOTE *;",
+           node_edge_schema = params$node_edge_schema,
+           tmp_node_header_file = tmp_node_header_file)
+  
+  cat_sql_chunk(
+    sql_statement = sql_statement,
+    rmd_file = node_header_rmd,
+    append = FALSE
+  )
+  
+  cat("",
+      "```",
+      file = node_header_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+  send(
+    conn_fun = params$conn_fun,
+    sql_statement = sql_statement,
+    log_file = node_header_rmd,
+    render_sql = FALSE
+  )
+
+  cat(
+    "```",
+    "",
+    file = node_header_rmd,
+    append = TRUE,
+    sep = "\n")
+}
+```
+
+```{r node_header_csv3,child=node_header_rmd}
+```
+
+```{r node_header_csv5}
+if (params$rewrite_import_files) {
+  
+  node_header <- 
+    read_csv(file = tmp_node_header_file) %>%
+    rename_at(vars(all_of("label_col")), 
+                ~str_replace(string = .,
+                             pattern = "^.*$",
+                             replacement = paste0("sty", ":LABEL"))) %>%
+    rename_at(vars(all_of("id_col")), 
+                ~str_replace(string = .,
+                             pattern = "^.*$",
+                             replacement = paste0("aui", ":ID"))) %>%
+    rename_at(vars(sty),
+                ~str_replace(string = .,
+                             pattern = "^.*$",
+                             replacement = "sty:string[]")) %>%
+    rename_at(vars(str),
+                ~str_replace(string = .,
+                             pattern = "^.*$",
+                             replacement = "str:string[]")) %>%
+    rename_at(vars(def),
+            ~str_replace(string = .,
+                         pattern = "^.*$",
+                         replacement = "def:string[]"))
+  
+  node_header <- 
+    node_header[-(1:nrow(node_header)),]
+  
+  node_header_file <- file.path(final_folder,
+                                "node_header.csv")
+  if (file.exists(node_header_file)) {file.remove(node_header_file)}
+  
+  write_csv(x    = node_header,
+            file = node_header_file)
+}
+unlink(tmp_node_header_file)
+```
+
+### Node CSV  
+
+```{r node_csv1,echo=FALSE}
+tmp_node_file <- tempfile(fileext = ".csv")
+node_rmd <- file.path(write_csv_rmd_dir, "node.Rmd")
+```
+
+```{r node_csv2,echo=FALSE}
+if (params$rewrite_import_files) {
+  sql_statement <- 
+    render("COPY @node_edge_schema.node TO '@tmp_node_file' WITH DELIMITER ',' CSV HEADER FORCE QUOTE *;",
+           node_edge_schema = params$node_edge_schema,
+           tmp_node_file = tmp_node_file)
+  
+  cat_sql_chunk(
+    sql_statement = sql_statement,
+    rmd_file = node_rmd,
+    append = FALSE
+  )
+  
+  cat("",
+      "```",
+      file = node_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+  send(
+    conn_fun = params$conn_fun,
+    sql_statement = sql_statement,
+    log_file = node_rmd,
+    render_sql = FALSE
+  )
+
+  cat(
+    "```",
+    "",
+    file = node_rmd,
+    append = TRUE,
+    sep = "\n")
+}
+```
+
+```{r node_csv3,child=node_rmd}
+```
+
+```{r node_csv5}
+if (params$rewrite_import_files) {
+  node_file <- file.path(final_folder,
+                         "node.csv")
+  if (file.exists(node_file)) {file.remove(node_file)}
+    system(
+      sprintf("sed 1d %s > %s", 
+                glitter::formatCli(tmp_node_file),
+                glitter::formatCli(node_file))
+      )
+}
+unlink(tmp_node_file)
+```
+
+
+### Edge Header CSV  
+
+```{r edge_header_csv1,echo=FALSE}
+tmp_edge_header_file <- tempfile(fileext = ".csv")
+edge_header_rmd <- file.path(write_csv_rmd_dir, "edge_header.Rmd")
+```
+
+```{r edge_header_csv2,echo=FALSE}
+if (params$rewrite_import_files) {
+  sql_statement <- 
+    render("COPY (SELECT * FROM @node_edge_schema.edge LIMIT 1) TO '@tmp_edge_header_file' WITH DELIMITER ',' CSV HEADER FORCE QUOTE *;", 
+           node_edge_schema = params$node_edge_schema,
+           tmp_edge_header_file = tmp_edge_header_file)
+
+  cat_sql_chunk(
+    sql_statement = sql_statement,
+    rmd_file = edge_header_rmd,
+    append = FALSE
+  )
+  
+  cat("",
+      "```",
+      file = edge_header_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+  send(
+    conn_fun = params$conn_fun,
+    sql_statement = sql_statement,
+    log_file = edge_header_rmd,
+    render_sql = FALSE
+  )
+
+  cat(
+    "```",
+    "",
+    file = edge_header_rmd,
+    append = TRUE,
+    sep = "\n")
+
+}
+```
+
+```{r edge_header_csv3,echo=FALSE,child=edge_header_rmd}
+```
+
+
+```{r edge_header_csv5,echo=FALSE}
+if (params$rewrite_import_files) {
+  edge_header <- 
+    read_csv(file = tmp_edge_header_file) %>%
+    rename(`source_atom:START_ID` = source_atom, 
+           `target_atom:END_ID`   = target_atom,
+           `:TYPE`                = relationship)
+  edge_header <- 
+    edge_header[-(1:nrow(edge_header)),]
+  
+  edge_header_file <- file.path(final_folder,
+                                "edge_header.csv")
+  if (file.exists(edge_header_file)) { file.remove(edge_header_file)}
+  write_csv(x    = edge_header,
+            file = edge_header_file)
+}
+unlink(tmp_edge_header_file)
+```
+
+### Edge CSV    
+
+```{r edge_csv1,echo=FALSE}
+tmp_edge_file <- tempfile(fileext = ".csv")
+edge_rmd <- file.path(write_csv_rmd_dir, "edge.Rmd")
+```
+
+```{r edge_csv2,echo=FALSE}
+if (params$rewrite_import_files) {
+  
+  sql_statement <- 
+    render("COPY @node_edge_schema.edge TO '@tmp_edge_file' WITH DELIMITER ',' CSV HEADER FORCE QUOTE *;",
+           node_edge_schema = params$node_edge_schema,
+           tmp_edge_file = tmp_edge_file)
+  
+  cat_sql_chunk(
+    sql_statement = sql_statement,
+    rmd_file = edge_rmd,
+    append = FALSE
+  )
+  
+  cat("",
+      "```",
+      file = edge_rmd,
+      append = TRUE,
+      sep = "\n")
+  
+  send(
+    conn_fun = params$conn_fun,
+    sql_statement = sql_statement,
+    log_file = edge_rmd,
+    render_sql = FALSE
+  )
+
+  cat(
+    "```",
+    "",
+    file = edge_rmd,
+    append = TRUE,
+    sep = "\n")
+}
+```
+
+```{r edge_csv3,echo=FALSE,child=edge_rmd}
+```
+
+```{r edge_csv5}
+if (params$rewrite_import_files) {
+edge_file <- file.path(final_folder,
+                       "edge.csv")
+if (file.exists(edge_file)) {file.remove(edge_file)}
+  system(
+    sprintf("sed 1d %s > %s", 
+              glitter::formatCli(tmp_edge_file),
+              glitter::formatCli(edge_file))
+    )
+}
+
+unlink(tmp_edge_file)
+```
+
+### Move CSV to Import Folder   
+
+```{r import_csv}
+final_files <- 
+  file.path(
+    final_folder,
+    c("node_header.csv",
+      "node.csv",
+      "edge_header.csv",
+      "edge.csv")
+  )
+  
+
+path_to_import <- 
+  file.path(params$dbmss_path, 
+                     params$neo4j_db, 
+                     "import")
+
+if (params$rewrite_import_files) {
+
+  unlink(path_to_import,
+         recursive = TRUE)
+  dir.create(path_to_import)
+  
+  import_files <- vector()
+  for (final_file in final_files) {
+   
+    import_file <- 
+      file.path(path_to_import,
+                basename(final_file))
+    if (file.exists(import_file)) {file.remove(import_file)}
+    
+    file.copy(from = final_file,
+              to   = import_file)
+    
+    import_files <- 
+      c(import_files,
+        import_file)
+     
+  }
+  
+} else {
+  
+  import_files <- 
+    list.files(path_to_import,
+               full.names = TRUE)
+}
+```
+
+#### Results  
+
+```{r import_results,echo=FALSE}
+import_results <- 
+left_join(
+  final_files %>% 
+    file.info() %>%
+    rownames_to_column("file_path") %>% 
+    transmute(file_path,
+              file = basename(file_path)) %>%
+    mutate(final_md5sum = tools::md5sum(file_path)) %>%
+    select(-file_path),
+  import_files %>% 
+    file.info() %>%
+    rownames_to_column("file_path") %>% 
+    transmute(file_path,
+              file = basename(file_path)) %>%
+    mutate(import_md5sum = tools::md5sum(file_path)) %>%
+    select(-file_path),
+  by = "file"
+)
+import_results
+```
+
+## Write Documentation  
+
+### Shell Script  
+
+```{r neo4j_load_sh1,echo=FALSE}
+load_shell_rmd <- 
+  file.path(child_rmd_folder, 
+            "load_shell.Rmd")
+
+if (params$rewrite_import_files|!file.exists(load_shell_rmd)) {
+  load_shell <- 
+      c("bin/neo4j-admin import --database neo4j",
+        "--array-delimiter='|' --delimiter=','",
+        "--nodes import/node_header.csv,import/node.csv",
+        "--relationships import/edge_header.csv,import/edge.csv",
+        "--skip-bad-relationships")
+
+  local_shell_file <- 
+    file.path(final_folder, 
+                       "load.sh")
+  
+  cat(
+    load_shell,
+    sep    = " ",
+    file   = local_shell_file, 
+    append = FALSE)
+    
+   dbmss_load_shell_file <- 
+     file.path(params$dbmss_path, 
+                       params$neo4j_db, 
+                       "load.sh")
+  if (file.exists(dbmss_load_shell_file)) {file.remove(dbmss_load_shell_file)}
+  file.copy(from = local_shell_file,
+            to   = dbmss_load_shell_file)
+  
+  cat(
+    "```bash",
+    load_shell,
+    "```",
+    sep = "\n",
+    file = load_shell_rmd,
+    append = FALSE
+  )
+  
+}
+```
+
+```{r neo4j_load_sh2,child=load_shell_rmd}
+```
+
+
+### README  
+
+```{r readme1,echo=FALSE,results='asis'}
+README_file <- file.path(final_folder, "README")  
+
+cat(
+        "UMLS Metathesaurus",
+sprintf("Version: %s Version %s", umls_version, version),    
+sprintf("Created On: %s", as.character(Sys.time())), 
+        "---",
+        "1. Create a new database in Neo4j Desktop.", 
+        "2. Copy the `node_header.csv`, `node.csv`, `edge_header.csv`, and `edge.csv` files to the Import folder.", 
+        "3. Copy load.sh to the folder above the Import folder, which is the root folder for the database.",
+        "4. cd into the same folder as above from the command line.",
+        "5. Run `sudo chmod +x load.sh`.",
+        "6. Run `./load.sh` which will load the data into Neo4j.",
+          append = FALSE, 
+          file   = README_file,
+          sep    = "  \n"
+    )
+
+
+cat(
+  "```",
+  read_lines(README_file),
+  "```",
+  sep = "\n")
+```
+
+
+# Neo4j  
+
+The shell script is executed.  
+
+```{r load_neo4j1,echo=FALSE,results='asis'}
+load_rmd <- file.path(child_rmd_folder, "load.Rmd")
+root_dir <- glitter::formatCli(file.path(params$dbmss_path, params$neo4j_db))
+command <- 
+  sprintf('cd\ncd %s\necho "%s" | sudo -S -k chmod +x load.sh\n.\\/load.sh', 
+                     root_dir,
+                     Sys.getenv("pw"))
+
+masked_command <- 
+  sprintf('cd\ncd %s\necho "%s" | sudo -S -k chmod +x load.sh\n.\\/load.sh', 
+                     root_dir,
+                     "PASSWORD")
+
+cat("```bash",
+    masked_command, 
+    "```",
+    sep = "\n")
+
+if (params$load_neo4j) {
+  
+  root_dir <- 
+    glitter::formatCli(
+      file.path(params$dbmss_path,
+                params$neo4j_db))
+  
+  response <- 
+    utils::capture.output(system(command = command,
+                                 intern = TRUE))
+  
+  cat("",
+      "```",
+      response,
+      "```",
+      sep = "\n",
+      file = load_rmd,
+      append = FALSE)
+  
+}
+```
+
+```{r load_neo4j2,child=load_rmd,eval=file.exists(load_rmd)}
+```
+
+# Manual Steps  
+
+## Add Indexes  
+
+```{r add_indexes1,results='hide',echo=FALSE}
+labels <- 
+  query(
+    conn_fun = "pg13::local_connect()",
+    sql_statement = "SELECT DISTINCT sty FROM mth.mrsty;"
+  ) %>%
+  unlist() %>%
+  unname()
+```
+
+```{r add_indexes2,echo=FALSE}
+indexes_cypher <- file.path(final_folder, "indexes.cypher")
+cypher_statements <- vector()
+for (label in labels) {
+  mr_label <- str_replace_all(label, " ", "_")
+  mr_label <- str_remove_all(mr_label, "[[:punct:]]")
+  cypher_statements <- 
+    c(cypher_statements,
+      sprintf("CREATE INDEX %s_str_x IF NOT EXISTS FOR (n:`%s`) ON (n.str);", mr_label, label),
+      sprintf("CREATE INDEX %s_cui_x IF NOT EXISTS FOR (n:`%s`) ON (n.cui);", mr_label, label),
+      sprintf("CREATE INDEX %s_aui_x IF NOT EXISTS FOR (n:`%s`) ON (n.aui);", mr_label, label),
+      sprintf("CREATE INDEX %s_code_x IF NOT EXISTS FOR (n:`%s`) ON (n.code,n.sab);", mr_label, label)
+    )
+}
+
+cat(cypher_statements,
+    sep = "\n",
+    file = indexes_cypher,
+    append = FALSE)
+```
+
+```{r add_indexes3,results='asis',echo=FALSE}
+cat("```",
+    cypher_statements,
+    "```",
+    "",
+    "```bash",
+    sprintf("cypher-shell -a {bolt protocol address} -u neo4j -p admin -f %s",
+            glitter::formatCli(indexes_cypher)),
+    "```",
+    sep = "\n")
+```
+
+
+```{r zip1,echo=FALSE,results='asis'}
+if (params$zip_import_files) {
+  cat("# Zip Data  \n")
+  zip_file <- file.path(outgoing_folder, 
+                      sprintf("UMLS Metathesaurus %s Version %s.zip", 
+                                umls_version,
+                                version))
+  
+    command <- 
+    sprintf("cd\ncd %s\nzip -r %s ./*",
+              glitter::formatCli(final_folder),
+              glitter::formatCli(zip_file))
+  
+  response <- 
+    utils::capture.output(
+    system(command = command))
+  
+  unlink(final_folder,
+         recursive = TRUE)
+  
+  cat("```bash",
+    command,
+    "```",
+    "",
+    "```",
+    response,
+    "```",
+    sep = "\n")
+}
+```
+
+
+
+
+# Glossary  
+
+## Nodes and Edges  
+
+### Node Table Field Definitions  
+
+```{r,echo=FALSE,results='hide'}
+node_fields <- 
+  query(
+    conn_fun = params$conn_fun,
+    sql_statement = render("SELECT * FROM @node_edge_schema.node LIMIT 1;", node_edge_schema = params$node_edge_schema),
+    verbose = FALSE) %>%
+  colnames() %>%
+  toupper() %>%
+  as_tibble_col("node_col") %>%
+  rowid_to_column("position")
+
+
+node_fields_table <- 
+  write_staging_table(
+    conn_fun = params$conn_fun,
+    schema   = "public",
+    data     = node_fields,
+    verbose  = FALSE
+  )
+
+node_fields_def <- 
+query(
+  conn_fun = params$conn_fun,
+  sql_statement = 
+    SqlRender::render(
+     "SELECT DISTINCT 
+       t.position,
+       m.col,
+       m.des 
+      FROM public.@node_fields_table t
+      INNER JOIN mth.MRCOLS m 
+      ON t.node_col = m.col 
+      ORDER BY t.position;",
+        node_fields_table = node_fields_table),
+  verbose = FALSE,
+  render_sql = FALSE
+    )
+```
+
+```{r,echo=FALSE}
+print_dt(node_fields_def)
+```
+
+
+# Cleanup  
+
+The `r print(params$staging_schema)` is dropped.  
+
+```{r cleanup1,echo=FALSE}
+drop_cascade(conn_fun = params$conn_fun,
+             schema   = params$staging_schema)
+```
+
