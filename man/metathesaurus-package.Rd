@@ -4,13 +4,12 @@
 \name{metathesaurus-package}
 \alias{metathesaurus}
 \alias{metathesaurus-package}
-\title{metathesaurus: Setup UMLS Metathesaurus in MySQL5.5 or Postgres}
+\title{metathesaurus: Setup UMLS Metathesaurus}
 \description{
 \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
 
 Setup UMLS Metathesaurus in MySQL5.5 or
-    Postgres. Metamorphosys can optionally be run from the console to
-    customize UMLS Metathesaurus configurations prior to installation.
+    Postgres along with optional postprocessing steps.
 }
 \seealso{
 Useful links:
