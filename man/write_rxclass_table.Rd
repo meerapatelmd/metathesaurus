@@ -9,7 +9,7 @@ write_rxclass_table(
   conn_fun = "pg13::local_connect()",
   schema = "mth",
   target_schema = "rxmap",
-  rxclass_schema = "rxclass",
+  rxclass_schema = "umls_rxclass",
   mth_version,
   mth_release_dt,
   verbose = TRUE,
