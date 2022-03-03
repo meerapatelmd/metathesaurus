@@ -3672,7 +3672,7 @@ BEGIN
 			  source_table,
 			  target_table);
 
-			COMMIT;
+			-- COMMIT;
 	END IF;
 
 
@@ -3692,7 +3692,7 @@ BEGIN
 		DROP TABLE IF EXISTS umls_mrhier.lookup_rxclass_ext;
 		CREATE TABLE umls_mrhier.lookup_rxclass_ext AS (
 			SELECT DISTINCT ext.extended_table
-			FROM rxclass.lookup_rxclass l
+			FROM umls_mrhier.lookup_rxclass l
 			LEFT JOIN umls_mrhier.lookup_ext ext
 			ON ext.hierarchy_sab = l.rxclass_sab
 			ORDER BY ext.extended_table
@@ -3732,7 +3732,7 @@ BEGIN
 			  source_table,
 			  target_table);
 
-			COMMIT;
+
 	END IF;
 
 
@@ -3778,7 +3778,7 @@ BEGIN
 		      source_table
 		      );
 
-		    COMMIT;
+		    -- COMMIT;
 
 		   end loop;
 
@@ -3863,7 +3863,7 @@ BEGIN
 		)
 		;
 
-		COMMIT;
+		-- COMMIT;
 
 		CREATE INDEX x_umls_rxclass_str_ptr_id ON umls_rxclass.rxclass_str(ptr_id);
 		CREATE INDEX x_umls_rxclass_str_rxclass_sab ON umls_rxclass.rxclass_str(rxclass_sab);
@@ -4024,7 +4024,7 @@ BEGIN
 		)
 		;
 
-		COMMIT;
+		-- COMMIT;
 
 		CREATE INDEX x_umls_rxclass_code_ptr_id ON umls_rxclass.rxclass_code(ptr_id);
 		CREATE INDEX x_umls_rxclass_code_rxclass_sab ON umls_rxclass.rxclass_code(rxclass_sab);
@@ -4116,7 +4116,7 @@ BEGIN
 	    rxclass_code_rows
 	    );
 
-	    COMMIT;
+	    -- COMMIT;
 
 	    EXECUTE
 	    format(
@@ -4197,7 +4197,7 @@ BEGIN
 		  source_table,
 		  target_table);
 
-		COMMIT;
+		-- COMMIT;
 END IF;
 
 
