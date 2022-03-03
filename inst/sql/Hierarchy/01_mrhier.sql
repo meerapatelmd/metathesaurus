@@ -3562,7 +3562,7 @@ $$
 / The extended tables are subset for the specific classes
 / below derived from RxNorm's RxClass Navigator.
 /-----------------------------------------------------------*/
-CREATE TABLE IF NOT EXISTS public.setup_rxclass_log (
+CREATE TABLE IF NOT EXISTS public.setup_umls_rxclass_log (
     sr_datetime timestamp without time zone,
     sr_mth_version character varying(255),
     sr_mth_release_dt character varying(255),
@@ -3596,7 +3596,7 @@ DECLARE
     rxclass_ext_rows bigint;
     rxclass_code_rows bigint;
     rxclass_str_rows bigint;
-    target_schema varchar(100) := 'rxclass';
+    target_schema varchar(100) := 'umls_rxclass';
     sr_datetime timestamp := TIMEOFDAY()::timestamp;
 BEGIN
 	SELECT get_umls_mth_version()
@@ -3744,10 +3744,10 @@ BEGIN
 		SELECT get_log_timestamp()
 		INTO start_timestamp
 		;
-		DROP SCHEMA rxclass CASCADE;
-	    CREATE SCHEMA rxclass;
-		DROP TABLE IF EXISTS rxclass.tmp_rxclass0;
-		CREATE TABLE rxclass.tmp_rxclass0 (
+		DROP SCHEMA umls_rxclass CASCADE;
+	    CREATE SCHEMA umls_rxclass;
+		DROP TABLE IF EXISTS umls_rxclass.tmp_rxclass0;
+		CREATE TABLE umls_rxclass.tmp_rxclass0 (
 	        ptr_id INTEGER NOT NULL,
 	        ptr text NOT NULL,
 	        aui varchar(12) NOT NULL,
@@ -3772,7 +3772,7 @@ BEGIN
 		    EXECUTE
 		      format(
 		      '
-		      INSERT INTO rxclass.tmp_rxclass0
+		      INSERT INTO umls_rxclass.tmp_rxclass0
 		      SELECT * FROM umls_mrhier.%s;
 		      ',
 		      source_table
@@ -3784,10 +3784,10 @@ BEGIN
 
 
 
-		DROP TABLE IF EXISTS rxclass.rxclass_ext;
-		CREATE TABLE rxclass.rxclass_ext as (
+		DROP TABLE IF EXISTS umls_rxclass.rxclass_ext;
+		CREATE TABLE umls_rxclass.rxclass_ext as (
 		        SELECT DISTINCT l.*, t0.*
-		        FROM rxclass.tmp_rxclass0 t0
+		        FROM umls_rxclass.tmp_rxclass0 t0
 		        INNER JOIN umls_mrhier.lookup_rxclass l
 		        ON l.rxclass_code = t0.ptr_code
 		        ORDER BY
@@ -3797,7 +3797,7 @@ BEGIN
 		          t0.ptr_level
 		)
 		;
-		DROP TABLE rxclass.tmp_rxclass0;
+		DROP TABLE umls_rxclass.tmp_rxclass0;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -3845,14 +3845,14 @@ BEGIN
 		INTO start_timestamp
 		;
 
-		DROP TABLE IF EXISTS rxclass.rxclass_str;
-		CREATE TABLE rxclass.rxclass_str as (
+		DROP TABLE IF EXISTS umls_rxclass.rxclass_str;
+		CREATE TABLE umls_rxclass.rxclass_str as (
 		        SELECT DISTINCT
 		          t1.rxclass_sab,
 		          t1.rxclass_abbr,
 		          t1.rxclass_code,
 		          m.*
-		        FROM rxclass.rxclass_ext t1
+		        FROM umls_rxclass.rxclass_ext t1
 		        INNER JOIN umls_mrhier.mrhier_str m
 		        ON t1.ptr_id = m.ptr_id
 		        ORDER BY
@@ -3865,12 +3865,12 @@ BEGIN
 
 		COMMIT;
 
-		CREATE INDEX x_rxclass_str_ptr_id ON rxclass.rxclass_str(ptr_id);
-		CREATE INDEX x_rxclass_str_rxclass_sab ON rxclass.rxclass_str(rxclass_sab);
-		CREATE INDEX x_rxclass_str_rxclass_abbr ON rxclass.rxclass_str(rxclass_abbr);
-		CREATE INDEX x_rxclass_str_rxclass_code ON rxclass.rxclass_str(rxclass_code);
-		CREATE INDEX x_rxclass_str_aui ON rxclass.rxclass_str(aui);
-		CREATE INDEX x_rxclass_str_code ON rxclass.rxclass_str(code);
+		CREATE INDEX x_umls_rxclass_str_ptr_id ON umls_rxclass.rxclass_str(ptr_id);
+		CREATE INDEX x_umls_rxclass_str_rxclass_sab ON umls_rxclass.rxclass_str(rxclass_sab);
+		CREATE INDEX x_umls_rxclass_str_rxclass_abbr ON umls_rxclass.rxclass_str(rxclass_abbr);
+		CREATE INDEX x_umls_rxclass_str_rxclass_code ON umls_rxclass.rxclass_str(rxclass_code);
+		CREATE INDEX x_umls_rxclass_str_aui ON umls_rxclass.rxclass_str(aui);
+		CREATE INDEX x_umls_rxclass_str_code ON umls_rxclass.rxclass_str(code);
 
 
 		SELECT get_log_timestamp()
@@ -3917,8 +3917,8 @@ BEGIN
 		INTO start_timestamp
 		;
 
-		DROP TABLE IF EXISTS rxclass.rxclass_rxnorm_in_pin_min_map;
-		CREATE TABLE rxclass.rxclass_rxnorm_in_pin_min_map AS (
+		DROP TABLE IF EXISTS umls_rxclass.rxclass_rxnorm_in_pin_min_map;
+		CREATE TABLE umls_rxclass.rxclass_rxnorm_in_pin_min_map AS (
 			SELECT
 			 m.aui AS rxnorm_in_pin_min_aui,
 			 m.code AS rxnorm_in_pin_min_code,
@@ -3927,7 +3927,7 @@ BEGIN
 			 r.rel  AS rel,
 			 r.rela AS rela,
 			 rxclass.*
-			FROM rxclass.rxclass_str rxclass
+			FROM umls_rxclass.rxclass_str rxclass
 			INNER JOIN mth.mrrel r
 			ON r.aui1 = rxclass.aui
 			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m0 WHERE m0.sab = 'RXNORM' AND m0.tty IN ('IN', 'PIN', 'MIN')) m
@@ -3941,7 +3941,7 @@ BEGIN
 			 r.rel  AS rel,
 			 r.rela AS rela,
 			 rxclass.*
-			FROM rxclass.rxclass_str rxclass
+			FROM umls_rxclass.rxclass_str rxclass
 			INNER JOIN mth.mrrel r
 			ON r.aui1 = rxclass.aui
 			INNER JOIN (SELECT aui,code,str,tty FROM mth.mrconso m00 WHERE m00.sab = 'RXNORM' AND m00.tty NOT IN ('IN', 'PIN', 'MIN')) m0
@@ -3953,12 +3953,12 @@ BEGIN
 	);
 
 
-		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_ptr_id ON rxclass.rxclass_rxnorm_in_pin_min_map(ptr_id);
-		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_sab ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_sab);
-		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_abbr ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_abbr);
-		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_rxclass_code ON rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_code);
-		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_aui ON rxclass.rxclass_rxnorm_in_pin_min_map(aui);
-		CREATE INDEX x_rxclass_rxnorm_in_pin_min_map_code ON rxclass.rxclass_rxnorm_in_pin_min_map(code);
+		CREATE INDEX x_umls_rxclass_rxnorm_in_pin_min_map_ptr_id ON umls_rxclass.rxclass_rxnorm_in_pin_min_map(ptr_id);
+		CREATE INDEX x_umls_rxclass_rxnorm_in_pin_min_map_rxclass_sab ON umls_rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_sab);
+		CREATE INDEX x_umls_rxclass_rxnorm_in_pin_min_map_rxclass_abbr ON umls_rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_abbr);
+		CREATE INDEX x_umls_rxclass_rxnorm_in_pin_min_map_rxclass_code ON umls_rxclass.rxclass_rxnorm_in_pin_min_map(rxclass_code);
+		CREATE INDEX x_umls_rxclass_rxnorm_in_pin_min_map_aui ON umls_rxclass.rxclass_rxnorm_in_pin_min_map(aui);
+		CREATE INDEX x_umls_rxclass_rxnorm_in_pin_min_map_code ON umls_rxclass.rxclass_rxnorm_in_pin_min_map(code);
 
 
 		SELECT get_log_timestamp()
@@ -3981,7 +3981,7 @@ BEGIN
 			  ''%s'',
 			  ''%s'',
 			  NULL,
-			  ''rxclass'',
+			  ''umls_rxclass'',
 			  ''%s'',
 			  ''%s'',
 			   NULL,
@@ -4006,14 +4006,14 @@ BEGIN
 		;
 
 
-		DROP TABLE IF EXISTS rxclass.rxclass_code;
-		CREATE TABLE rxclass.rxclass_code as (
+		DROP TABLE IF EXISTS umls_rxclass.rxclass_code;
+		CREATE TABLE umls_rxclass.rxclass_code as (
 		        SELECT DISTINCT
 		          t1.rxclass_sab,
 		          t1.rxclass_abbr,
 		          t1.rxclass_code,
 		          m.*
-		        FROM rxclass.rxclass_ext t1
+		        FROM umls_rxclass.rxclass_ext t1
 		        INNER JOIN umls_mrhier.mrhier_code m
 		        ON t1.ptr_id = m.ptr_id
 		        ORDER BY
@@ -4026,12 +4026,12 @@ BEGIN
 
 		COMMIT;
 
-		CREATE INDEX x_rxclass_code_ptr_id ON rxclass.rxclass_code(ptr_id);
-		CREATE INDEX x_rxclass_code_rxclass_sab ON rxclass.rxclass_code(rxclass_sab);
-		CREATE INDEX x_rxclass_code_rxclass_abbr ON rxclass.rxclass_code(rxclass_abbr);
-		CREATE INDEX x_rxclass_code_rxclass_code ON rxclass.rxclass_code(rxclass_code);
-		CREATE INDEX x_rxclass_code_aui ON rxclass.rxclass_code(aui);
-		CREATE INDEX x_rxclass_code_code ON rxclass.rxclass_code(code);
+		CREATE INDEX x_umls_rxclass_code_ptr_id ON umls_rxclass.rxclass_code(ptr_id);
+		CREATE INDEX x_umls_rxclass_code_rxclass_sab ON umls_rxclass.rxclass_code(rxclass_sab);
+		CREATE INDEX x_umls_rxclass_code_rxclass_abbr ON umls_rxclass.rxclass_code(rxclass_abbr);
+		CREATE INDEX x_umls_rxclass_code_rxclass_code ON umls_rxclass.rxclass_code(rxclass_code);
+		CREATE INDEX x_umls_rxclass_code_aui ON umls_rxclass.rxclass_code(aui);
+		CREATE INDEX x_umls_rxclass_code_code ON umls_rxclass.rxclass_code(code);
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -4079,15 +4079,15 @@ BEGIN
 
 	  SELECT COUNT(*)
 	  INTO rxclass_ext_rows
-	  FROM rxclass.rxclass_ext;
+	  FROM umls_rxclass.rxclass_ext;
 
 	  SELECT COUNT(*)
 	  INTO rxclass_code_rows
-	  FROM rxclass.rxclass_code;
+	  FROM umls_rxclass.rxclass_code;
 
 	  SELECT COUNT(*)
 	  INTO rxclass_str_rows
-	  FROM rxclass.rxclass_str;
+	  FROM umls_rxclass.rxclass_str;
 
 	  SELECT get_umls_mth_dt()
 	  INTO mth_date;
@@ -4095,7 +4095,7 @@ BEGIN
 	  EXECUTE
 	  format(
 	  '
-	  INSERT INTO public.setup_rxclass_log
+	  INSERT INTO public.setup_umls_rxclass_log
 	  VALUES
 	   (
 	    ''%s'', --sr_datetime
@@ -4110,7 +4110,7 @@ BEGIN
 	    sr_datetime,
 	    mth_version,
 	    mth_date,
-	    'rxclass',
+	    'umls_rxclass',
 	    rxclass_ext_rows,
 	    rxclass_str_rows,
 	    rxclass_code_rows
@@ -4157,8 +4157,8 @@ BEGIN
 	INTO start_timestamp
 	;
 
-	DROP TABLE IF EXISTS rxclass.rxclass_lookup;
-	CREATE TABLE rxclass.rxclass_lookup AS (
+	DROP TABLE IF EXISTS umls_rxclass.rxclass_lookup;
+	CREATE TABLE umls_rxclass.rxclass_lookup AS (
 	 SELECT * FROM umls_mrhier.lookup_rxclass
 	)
 	;
@@ -4184,7 +4184,7 @@ BEGIN
 		  ''%s'',
 		  ''%s'',
 		  NULL,
-		  ''rxclass'',
+		  ''umls_rxclass'',
 		  ''%s'',
 		  ''%s'',
 		   NULL,
