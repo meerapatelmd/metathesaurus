@@ -30,12 +30,15 @@
 #' @rdname write_crosswalk_table
 #' @export
 #' @importFrom stringr str_replace_all
+#' @importFrom pg13 schema_exists create_schema table_exists drop_table send query sQuo read_table write_table
 #' @importFrom SqlRender render
-#' @importFrom pg13 send query
-#' @importFrom dplyr transmute n
-#' @importFrom tibble tibble
-#' @import huxtable
-#' @import glue
+#' @importFrom dplyr n bind_rows
+#' @importFrom cli cli_inform
+#' @importFrom tibble tibble rowid_to_column tribble
+#' @importFrom utils capture.output
+#' @importFrom huxtable hux set_caption theme_compact huxtable number_format fmt_pretty
+#' @importFrom secretary typewrite
+#' @importFrom glue glue
 
 write_crosswalk_table <-
   function(sab,
@@ -443,6 +446,8 @@ write_crosswalk_table <-
 #' @rdname setup_crosswalk_Schema
 #' @export
 #' @importFrom pg13 drop_cascade create_schema query
+
+
 setup_crosswalk_schema <-
   function(sabs,
            conn_fun = "pg13::local_connect()",
