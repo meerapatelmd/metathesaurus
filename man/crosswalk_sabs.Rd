@@ -11,7 +11,7 @@ crosswalk_sabs(
   sab2,
   to_schema,
   to_table_name,
-  crosswalk_schema = "mth_crosswalk",
+  crosswalk_schema = "umls_crosswalk",
   verbose = TRUE,
   render_sql = TRUE
 )

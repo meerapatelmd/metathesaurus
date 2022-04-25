@@ -2,12 +2,12 @@
 % Please edit documentation in R/mth_docs.R
 \name{mth_fields_to_tables}
 \alias{mth_fields_to_tables}
-\title{Map all the MTH Fields to the Table
+\title{Map all the UMLS Metathesaurus Fields to the Table
 \code{\link[tibble]{tribble}}}
 \usage{
 mth_fields_to_tables()
 }
 \description{
-Map all the MTH Fields to the Table
+Map all the UMLS Metathesaurus Fields to the Table
 \code{\link[tibble]{tribble}}
 }

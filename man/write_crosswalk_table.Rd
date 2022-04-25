@@ -6,7 +6,7 @@
 \usage{
 write_crosswalk_table(
   sab,
-  crosswalk_schema = "mth_crosswalk",
+  crosswalk_schema = "umls_crosswalk",
   conn_fun = "pg13::local_connect(verbose = FALSE)",
   tty_ranking,
   log_schema = "public",
@@ -36,7 +36,7 @@ Subset the MRCONSO table by vocabulary and reduce the rows
 to 1 \code{str} per \code{code}. All original fields from the MRCONSO
 table are preserved. Crosswalks can then be performed by
 \code{cui} between vocabularies. This function assumes that the core metathesaurus
-tables are within a \code{mth} schema. Note that any source \code{sab}
+tables are within a \code{umls} schema. Note that any source \code{sab}
 value that contains punctuation other than an underscore
 is replaced with an underscore to write tables with names that
 Postgres can accept.

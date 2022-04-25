@@ -14,7 +14,7 @@ automatically connects and disconnects the connection
 once the function is run.}
 
 \item{schema}{For Postgres executions only, the
-schema to write all the tables to, Default: 'mth'}
+schema to write all the tables to, Default: 'umls'}
 
 \item{rrf_dir}{Path to directory to the RRF Files
 either unpackaged by direct download or produced by Metamorphosys}

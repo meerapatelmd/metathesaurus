@@ -7,6 +7,6 @@
 scrape_vocabulary_annotations()
 }
 \description{
-These functions scrape the UMLS Web Documentation to write the \code{\link{mth_documentation_functions}}. They have been kept to enable reproducibility and other long-term maintenance efforts.
+These functions scrape the UMLS Web Documentation to write the \code{\link{umls_documentation_functions}}. They have been kept to enable reproducibility and other long-term maintenance efforts.
 }
 \keyword{internal}

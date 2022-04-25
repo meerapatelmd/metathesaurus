@@ -16,7 +16,7 @@
 #' automatically connects and disconnects the connection
 #' once the function is run.
 #' @param schema        For Postgres executions only, the
-#' schema to write all the tables to, Default: 'mth'
+#' schema to write all the tables to, Default: 'umls'
 #' @param rrf_dir       Path to directory to the RRF Files
 #' either unpackaged by direct download or produced by Metamorphosys
 #' @param mrconso_only  Setup only the MRCONSO Table? Default: FALSE

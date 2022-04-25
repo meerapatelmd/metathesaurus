@@ -7,7 +7,7 @@
 run_setup(
   conn,
   conn_fun = "pg13::local_connect()",
-  schema = "mth",
+  schema = "umls",
   path_to_rrfs,
   steps = c("reset_schema", "ddl_tables", "copy_rrfs", "add_indexes", "log",
     "setup_crosswalk"),
@@ -16,7 +16,7 @@ run_setup(
   omop_only = FALSE,
   english_only = TRUE,
   log_schema = "public",
-  log_table_name = "setup_mth_log",
+  log_table_name = "setup_umls_log",
   log_version,
   log_release_date,
   verbose = TRUE,
@@ -35,7 +35,7 @@ automatically connects and disconnects the connection
 once the function is run.}
 
 \item{schema}{For Postgres executions only, the
-schema to write all the tables to, Default: 'mth'}
+schema to write all the tables to, Default: 'umls'}
 
 \item{mrconso_only}{Setup only the MRCONSO Table? Default: FALSE}
 
@@ -56,7 +56,6 @@ Instantiate Postgres
 \code{\link[progress]{progress_bar}}
 
 Other setup: 
-\code{\link{setup_mysql_mth}()},
-\code{\link{setup_pg_mth}()}
+\code{\link{setup_mysql_umls}()}
 }
 \concept{setup}

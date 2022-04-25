@@ -7,7 +7,7 @@
 get_rxnorm_ingredient_map(
   conn,
   conn_fun = "pg13::local_connect()",
-  schema = "mth",
+  schema = "umls",
   verbose = TRUE,
   render_sql = TRUE,
   render_only = FALSE,
@@ -25,7 +25,7 @@ automatically connects and disconnects the connection
 once the function is run.}
 
 \item{schema}{For Postgres executions only, the
-schema to write all the tables to, Default: 'mth'}
+schema to write all the tables to, Default: 'umls'}
 
 \item{verbose}{If TRUE, details on the activity are returned in the console, such as when the querying starting and was completed.}
 

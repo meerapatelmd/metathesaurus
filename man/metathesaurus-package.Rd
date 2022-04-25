@@ -8,8 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
 
-Setup UMLS Metathesaurus in MySQL5.5 or
-    Postgres along with optional postprocessing steps.
+Setup UMLS Metathesaurus in MySQL5.5 or Postgres along with optional postprocessing steps.
 }
 \seealso{
 Useful links:

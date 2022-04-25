@@ -7,10 +7,10 @@
 write_rxnorm_all_maps(
   conn,
   conn_fun = "pg13::local_connect()",
-  schema = "mth",
+  schema = "umls",
   target_schema = "rxmap",
-  mth_version,
-  mth_release_dt,
+  umls_version,
+  umls_release_dt,
   verbose = TRUE,
   render_sql = TRUE,
   render_only = FALSE,

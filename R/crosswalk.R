@@ -6,7 +6,7 @@
 #' to 1 `str` per `code`. All original fields from the MRCONSO
 #' table are preserved. Crosswalks can then be performed by
 #' `cui` between vocabularies. This function assumes that the core metathesaurus
-#' tables are within a `mth` schema. Note that any source `sab`
+#' tables are within a `umls` schema. Note that any source `sab`
 #' value that contains punctuation other than an underscore
 #' is replaced with an underscore to write tables with names that
 #' Postgres can accept.
@@ -42,7 +42,7 @@
 
 write_crosswalk_table <-
   function(sab,
-           crosswalk_schema = "mth_crosswalk",
+           crosswalk_schema = "umls_crosswalk",
            conn_fun = "pg13::local_connect(verbose = FALSE)",
            tty_ranking,
            log_schema = "public",
@@ -119,7 +119,7 @@ write_crosswalk_table <-
           sql_statement =
             SqlRender::render(
            "SELECT DISTINCT tty,mrrank_rank
-             FROM mth.MRRANK
+             FROM umls.MRRANK
              WHERE sab = '@sab'
             ORDER BY mrrank_rank DESC",
               sab = sab
@@ -146,7 +146,7 @@ write_crosswalk_table <-
                     sql_statement =
                             SqlRender::render(
                                     "SELECT DISTINCT tty
-     FROM mth.MRRANK
+     FROM umls.MRRANK
      WHERE sab = '@sab' AND tty IN (@tty_ranking)",
                                     sab = sab,
                                     tty_ranking = pg13::sQuo(tty_ranking)
@@ -175,7 +175,7 @@ write_crosswalk_table <-
                 sql_statement =
                         SqlRender::render(
                                 "SELECT DISTINCT tty,mrrank_rank
-             FROM mth.MRRANK
+             FROM umls.MRRANK
              WHERE sab = '@sab' AND tty NOT IN (@tty_ranking)
             ORDER BY mrrank_rank DESC",
                                 sab = sab,
@@ -229,7 +229,7 @@ write_crosswalk_table <-
         glue::glue("WHEN tty = '{tty_ranking_df$tty}' THEN {tty_ranking_df$rank}"),
         glue::glue("  ELSE {bottom_rank}"),
         "  END tty_rank",
-        "FROM mth.mrconso",
+        "FROM umls.mrconso",
         "WHERE sab = '@sab'",
         "AND lat = 'ENG'",
         "),",
@@ -313,7 +313,7 @@ write_crosswalk_table <-
     original_unique_code_ct <-
             pg13::query(
                     conn_fun = conn_fun,
-                    sql_statement = glue::glue("SELECT COUNT(DISTINCT code) FROM mth.mrconso WHERE sab = '{sab}';"),
+                    sql_statement = glue::glue("SELECT COUNT(DISTINCT code) FROM umls.mrconso WHERE sab = '{sab}';"),
                     verbose = verbose,
                     render_sql = render_sql,
                     checks = ""
@@ -372,8 +372,8 @@ write_crosswalk_table <-
     this_log_df <-
             tibble::tibble(
                     smc_datetime = Sys.time(),
-                    smc_mth_version  = source_metathesarus_version$sm_version,
-                    smc_mth_release_dt = source_metathesarus_version$sm_release_date,
+                    smc_umls_version  = source_metathesarus_version$sm_version,
+                    smc_umls_release_dt = source_metathesarus_version$sm_release_date,
                     sab    = sab,
                     crosswalk_schema = crosswalk_schema,
                     crosswalk_table  = sab_table,
@@ -435,7 +435,7 @@ write_crosswalk_table <-
 #'
 #' @param sabs (optional) Vector of SABs to write. If missing,
 #' all the sabs in the existing MRCONSO table are written.
-#' @param crosswalk_schema Schema to write these extension tables to. Default: 'mth_crosswalk'
+#' @param crosswalk_schema Schema to write these extension tables to. Default: 'umls_crosswalk'
 #' @return
 #' One or more tables of the sab subsets to the given schema. A new 'label'
 #' field is added to designate the core concept name for the given
@@ -451,7 +451,7 @@ write_crosswalk_table <-
 setup_crosswalk_schema <-
   function(sabs,
            conn_fun = "pg13::local_connect()",
-           crosswalk_schema = "mth_crosswalk") {
+           crosswalk_schema = "umls_crosswalk") {
 
     pg13::drop_cascade(
       conn_fun = conn_fun,
@@ -467,7 +467,7 @@ setup_crosswalk_schema <-
       sabs <-
         pg13::query(
           conn_fun = conn_fun,
-          sql_statement = "SELECT DISTINCT sab FROM mth.MRCONSO ORDER BY sab"
+          sql_statement = "SELECT DISTINCT sab FROM umls.MRCONSO ORDER BY sab"
         ) %>%
         unlist() %>%
         unname()
@@ -509,7 +509,7 @@ crosswalk_sabs <-
                  sab2,
                  to_schema,
                  to_table_name,
-                 crosswalk_schema = "mth_crosswalk",
+                 crosswalk_schema = "umls_crosswalk",
                  verbose = TRUE,
                  render_sql = TRUE) {
 

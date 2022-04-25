@@ -8,6 +8,8 @@ extension.
 was not utilized.  
 * Added SQL script for post-processing of the MRHIER 
 table. 
+* Removed deprecated `setup_pg()`  
+* Change default schema from `mth` to `umls`  
 
 # metathesaurus 4.0.0  
 

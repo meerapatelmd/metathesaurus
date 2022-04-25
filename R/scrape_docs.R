@@ -1,7 +1,7 @@
 #' @title
 #' Scrape UMLS Documentation into Tables
 #' @description
-#' These functions scrape the UMLS Web Documentation to write the \code{\link{mth_documentation_functions}}. They have been kept to enable reproducibility and other long-term maintenance efforts.
+#' These functions scrape the UMLS Web Documentation to write the \code{\link{umls_documentation_functions}}. They have been kept to enable reproducibility and other long-term maintenance efforts.
 #' @keywords internal
 #' @importFrom xml2 read_html
 #' @importFrom rvest html_nodes html_table

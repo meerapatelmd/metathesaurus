@@ -12,7 +12,7 @@ get_rxnorm_map(
   to_tty = c("BN", "BPCK", "DF", "DFG", "ET", "GPCK", "IN", "MIN", "PIN", "PSN", "SBD",
     "SBDC", "SBDF", "SBDG", "SCD", "SCDC", "SCDF", "SCDG", "SY", "TMSY"),
   full_path = FALSE,
-  schema = "mth",
+  schema = "umls",
   verbose = TRUE,
   render_sql = TRUE,
   render_only = FALSE,
@@ -37,7 +37,7 @@ once the function is run.}
 values are returned. If TRUE, the entire path is returned instead.}
 
 \item{schema}{For Postgres executions only, the
-schema to write all the tables to, Default: 'mth'}
+schema to write all the tables to, Default: 'umls'}
 
 \item{verbose}{If TRUE, details on the activity are returned in the console, such as when the querying starting and was completed.}
 

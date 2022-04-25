@@ -12,7 +12,7 @@
 #'  \code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
 #'  \code{\link[rubix]{filter_for}}
 #'  \code{\link[progress]{progress_bar}}
-#' @rdname setup_mysql_mth
+#' @rdname setup_mysql_umls
 #' @family setup
 #' @export
 #' @importFrom preQL query
@@ -24,7 +24,7 @@
 #' @importFrom dplyr mutate select distinct filter
 #' @importFrom progress progress_bar
 
-setup_mysql_mth <-
+setup_mysql_umls <-
   function(conn,
            mrconso_only = FALSE,
            omop_only = FALSE,

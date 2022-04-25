@@ -7,8 +7,8 @@
 run_postprocessing(
   conn,
   conn_fun = "pg13::local_connect()",
-  mth_version,
-  mth_release_dt,
+  umls_version,
+  umls_release_dt,
   verbose = TRUE,
   render_sql = TRUE,
   render_only = FALSE

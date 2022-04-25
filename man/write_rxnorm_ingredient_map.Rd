@@ -7,7 +7,7 @@
 write_rxnorm_ingredient_map(
   conn,
   conn_fun = "pg13::local_connect()",
-  schema = "mth",
+  schema = "umls",
   target_schema = "rxmap",
   verbose = TRUE,
   render_sql = TRUE,

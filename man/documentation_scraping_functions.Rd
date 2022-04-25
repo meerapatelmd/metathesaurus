@@ -4,6 +4,6 @@
 \alias{documentation_scraping_functions}
 \title{Scrape UMLS Documentation into Tables}
 \description{
-These functions scrape the UMLS Web Documentation to write the \code{\link{mth_documentation_functions}}. They have been kept to enable reproducibility and other long-term maintenance efforts.
+These functions scrape the UMLS Web Documentation to write the \code{\link{umls_documentation_functions}}. They have been kept to enable reproducibility and other long-term maintenance efforts.
 }
 \keyword{internal}

@@ -24,7 +24,7 @@
 run_setup <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           schema = "mth",
+           schema = "umls",
            path_to_rrfs,
            steps = c(
              "reset_schema",
@@ -38,7 +38,7 @@ run_setup <-
            omop_only = FALSE,
            english_only = TRUE,
            log_schema = "public",
-           log_table_name = "setup_mth_log",
+           log_table_name = "setup_umls_log",
            log_version,
            log_release_date,
            verbose = TRUE,
@@ -368,7 +368,7 @@ run_setup <-
 
       setup_crosswalk_schema(
         conn = conn,
-        crosswalk_schema = "mth_crosswalk"
+        crosswalk_schema = "umls_crosswalk"
       )
 
     }
@@ -377,8 +377,8 @@ run_setup <-
 
       run_postprocessing(
         conn = conn,
-        mth_version = log_version,
-        mth_release_dt = log_release_date,
+        umls_version = log_version,
+        umls_release_dt = log_release_date,
         verbose = verbose,
         render_sql = render_sql,
         render_only = render_only
@@ -399,14 +399,14 @@ run_setup <-
 run_postprocessing <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE) {
 
-    if (missing(mth_version)|missing(mth_release_dt)) {
-      stop("`mth_version` and `mth_release_dt` are required.")
+    if (missing(umls_version)|missing(umls_release_dt)) {
+      stop("`umls_version` and `umls_release_dt` are required.")
     }
 
 

@@ -12,7 +12,7 @@ write_rxnorm_map(
   to_tty = c("BN", "BPCK", "DF", "DFG", "ET", "GPCK", "IN", "MIN", "PIN", "PSN", "SBD",
     "SBDC", "SBDF", "SBDG", "SCD", "SCDC", "SCDF", "SCDG", "SY", "TMSY"),
   full_path = FALSE,
-  schema = "mth",
+  schema = "umls",
   target_schema = "rxmap",
   verbose = TRUE,
   render_sql = TRUE,

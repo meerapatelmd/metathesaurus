@@ -7,14 +7,14 @@
 setup_crosswalk_schema(
   sabs,
   conn_fun = "pg13::local_connect()",
-  crosswalk_schema = "mth_crosswalk"
+  crosswalk_schema = "umls_crosswalk"
 )
 }
 \arguments{
 \item{sabs}{(optional) Vector of SABs to write. If missing,
 all the sabs in the existing MRCONSO table are written.}
 
-\item{crosswalk_schema}{Schema to write these extension tables to. Default: 'mth_crosswalk'}
+\item{crosswalk_schema}{Schema to write these extension tables to. Default: 'umls_crosswalk'}
 }
 \value{
 One or more tables of the sab subsets to the given schema. A new 'label'

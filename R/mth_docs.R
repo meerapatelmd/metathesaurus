@@ -1,10 +1,10 @@
 #' @title
 #' Metathesaurus Data Definitions
-#' @name mth_data_definition_functions
+#' @name umls_data_definition_functions
 NULL
 
 #' @title
-#' List the Human Readable Names of MTH Tables
+#' List the Human Readable Names of UMLS Metathesaurus Tables
 #' @seealso
 #'  \code{\link[tibble]{tribble}}
 #' @export
@@ -82,7 +82,7 @@ Root Source Abbreviation (RSAB) — short form, no version information, for exam
 #' @export
 #' @importFrom tibble tribble
 
-all_mth_field_definitions <-
+all_umls_field_definitions <-
   function() {
     tibble::tribble(
       ~Abbreviation, ~Description, ~Datatype,
@@ -213,7 +213,7 @@ all_mth_field_definitions <-
   }
 
 #' @title
-#' Map all the MTH Fields to the Table
+#' Map all the UMLS Metathesaurus Fields to the Table
 #'  \code{\link[tibble]{tribble}}
 #' @export
 #' @importFrom tibble tribble

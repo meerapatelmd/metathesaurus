@@ -308,7 +308,7 @@ get_rxnorm_map <-
                  from_tty = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
                  to_tty = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
                  full_path = FALSE,
-                 schema = "mth",
+                 schema = "umls",
                  verbose = TRUE,
                  render_sql = TRUE,
                  render_only = FALSE,
@@ -445,7 +445,7 @@ get_rxnorm_map <-
 get_rxnorm_ingredient_map <-
         function(conn,
                  conn_fun = "pg13::local_connect()",
-                 schema = "mth",
+                 schema = "umls",
                  verbose = TRUE,
                  render_sql = TRUE,
                  render_only = FALSE,
@@ -578,16 +578,16 @@ get_rxnorm_tty_lookup <-
 rxnorm_requires_processing <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            target_table,
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE,
            checks = "") {
 
-    if (missing(mth_version)|missing(target_table)) {
-      stop("`mth_version` and `target_table` must be supplied!", call. = FALSE)
+    if (missing(umls_version)|missing(target_table)) {
+      stop("`umls_version` and `target_table` must be supplied!", call. = FALSE)
     }
 
 
@@ -603,8 +603,8 @@ sql_statement <-
   CREATE TABLE IF NOT EXISTS public.process_rxmap_log (
     process_start_datetime timestamp without time zone,
     process_stop_datetime timestamp without time zone,
-    mth_version character varying(255),
-    mth_release_dt character varying(255),
+    umls_version character varying(255),
+    umls_release_dt character varying(255),
     sab character varying(255),
     target_schema character varying(255),
     source_table character varying(255),
@@ -628,8 +628,8 @@ sql_statement <-
 SELECT *
 FROM public.process_rxmap_log
 WHERE
-  mth_version = '{mth_version}'
-  AND mth_release_dt = '{mth_release_dt}'
+  umls_version = '{umls_version}'
+  AND umls_release_dt = '{umls_release_dt}'
   AND target_table = '{target_table}'
 ")
 
@@ -650,8 +650,8 @@ nrow(out)==0
 rxnorm_log_processing <-
   function(process_start,
            process_stop,
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            target_schema,
            source_table,
            target_table,
@@ -680,8 +680,8 @@ rxnorm_log_processing <-
         VALUES(
           '{process_start}',
           '{process_stop}',
-          '{mth_version}',
-          '{mth_release_dt}',
+          '{umls_version}',
+          '{umls_release_dt}',
           'RXNORM',
           '{target_schema}',
           '{source_table}',
@@ -723,8 +723,8 @@ write_rxnorm_path_lookup <-
            conn_fun = "pg13::local_connect()",
            target_schema = "rxmap",
            table_name = "lookup_rxnorm_paths",
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
            check_for_updates = FALSE,
            verbose = TRUE,
@@ -748,8 +748,8 @@ write_rxnorm_path_lookup <-
     }
 
     if (rxnorm_requires_processing(conn = conn,
-                               mth_version = mth_version,
-                               mth_release_dt = mth_release_dt,
+                               umls_version = umls_version,
+                               umls_release_dt = umls_release_dt,
                                target_table = table_name,
                                verbose = verbose,
                                render_sql = render_sql,
@@ -829,8 +829,8 @@ write_rxnorm_path_lookup <-
       conn = conn,
       process_start = process_start,
       process_stop = process_stop,
-      mth_version = mth_version,
-      mth_release_dt = mth_release_dt,
+      umls_version = umls_version,
+      umls_release_dt = umls_release_dt,
       target_schema = target_schema,
       source_table = "",
       target_table = table_name,
@@ -855,10 +855,10 @@ write_rxnorm_path_lookup <-
 write_rxnorm_tty_lookup <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           schema = "mth",
+           schema = "umls",
            target_schema = "rxmap",
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE,
@@ -871,8 +871,8 @@ write_rxnorm_tty_lookup <-
     }
 
     if (rxnorm_requires_processing(conn = conn,
-                                   mth_version = mth_version,
-                                   mth_release_dt = mth_release_dt,
+                                   umls_version = umls_version,
+                                   umls_release_dt = umls_release_dt,
                                    target_table = "lookup_tty",
                                    verbose = verbose,
                                    render_sql = render_sql,
@@ -961,8 +961,8 @@ write_rxnorm_tty_lookup <-
         conn = conn,
         process_start = process_start,
         process_stop = process_stop,
-        mth_version = mth_version,
-        mth_release_dt = mth_release_dt,
+        umls_version = umls_version,
+        umls_release_dt = umls_release_dt,
         target_schema = target_schema,
         source_table = "",
         target_table = "lookup_tty",
@@ -990,7 +990,7 @@ write_rxnorm_tty_lookup <-
 write_rxnorm_ingredient_map <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           schema = "mth",
+           schema = "umls",
            target_schema = "rxmap",
            verbose = TRUE,
            render_sql = TRUE,
@@ -1083,7 +1083,7 @@ write_rxnorm_map <-
            from_tty = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
            to_tty = c('BN', 'BPCK', 'DF', 'DFG', 'ET', 'GPCK', 'IN', 'MIN', 'PIN', 'PSN', 'SBD', 'SBDC', 'SBDF', 'SBDG', 'SCD', 'SCDC', 'SCDF', 'SCDG', 'SY', 'TMSY'),
            full_path = FALSE,
-           schema = "mth",
+           schema = "umls",
            target_schema = "rxmap",
            verbose = TRUE,
            render_sql = TRUE,
@@ -1327,10 +1327,10 @@ write_rxnorm_map <-
 write_rxnorm_all_maps <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           schema = "mth",
+           schema = "umls",
            target_schema = "rxmap",
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE,
@@ -1381,8 +1381,8 @@ write_rxnorm_all_maps <-
       if (
       rxnorm_requires_processing(
         conn = conn,
-        mth_version = mth_version,
-        mth_release_dt = mth_release_dt,
+        umls_version = umls_version,
+        umls_release_dt = umls_release_dt,
         target_table = target_table_name,
         verbose = verbose,
         render_sql = render_sql,
@@ -1526,8 +1526,8 @@ write_rxnorm_all_maps <-
       conn = conn,
       process_start = process_start,
       process_stop =  process_stop,
-      mth_version = mth_version,
-      mth_release_dt =  mth_release_dt,
+      umls_version = umls_version,
+      umls_release_dt =  umls_release_dt,
       target_schema = target_schema,
       source_table = "",
       target_table = target_table_name,
@@ -1541,8 +1541,8 @@ write_rxnorm_all_maps <-
       "
       CREATE TABLE IF NOT EXISTS public.setup_rxmap_log (
         srl_datetime TIMESTAMP WITHOUT TIME ZONE,
-        mth_version varchar(25),
-        mth_release_dt varchar(12),
+        umls_version varchar(25),
+        umls_release_dt varchar(12),
         rxnorm_brand_name_map int,
         rxnorm_branded_drug_delivery_device_map int,
         rxnorm_generic_drug_delivery_device_map int,
@@ -1573,8 +1573,8 @@ write_rxnorm_all_maps <-
           SELECT *
           FROM public.setup_rxmap_log
           WHERE
-            mth_version = '{mth_version}'
-            AND mth_release_dt = '{mth_release_dt}'
+            umls_version = '{umls_version}'
+            AND umls_release_dt = '{umls_release_dt}'
           "
       )
 
@@ -1590,8 +1590,8 @@ write_rxnorm_all_maps <-
       sql_statement <-
         glue::glue(
           "
-            INSERT INTO public.setup_rxmap_log(srl_datetime,mth_version,mth_release_dt)
-            VALUES('{Sys.time()}', '{mth_version}', '{mth_release_dt}');
+            INSERT INTO public.setup_rxmap_log(srl_datetime,umls_version,umls_release_dt)
+            VALUES('{Sys.time()}', '{umls_version}', '{umls_release_dt}');
             "
         )
 
@@ -1611,8 +1611,8 @@ write_rxnorm_all_maps <-
           UPDATE public.setup_rxmap_log
           SET {target_table_name} = {target_table_rows}
           WHERE
-            mth_version = '{mth_version}'
-            AND mth_release_dt = '{mth_release_dt}'
+            umls_version = '{umls_version}'
+            AND umls_release_dt = '{umls_release_dt}'
           "
       )
 
@@ -1675,11 +1675,11 @@ write_rxnorm_all_maps <-
 write_rxclass_table <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           schema = "mth",
+           schema = "umls",
            target_schema = "rxmap",
            rxclass_schema = "umls_rxclass",
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            verbose = TRUE,
            render_sql = TRUE,
            render_only = FALSE,
@@ -1697,8 +1697,8 @@ write_rxclass_table <-
     if (
       rxnorm_requires_processing(
         conn = conn,
-        mth_version = mth_version,
-        mth_release_dt = mth_release_dt,
+        umls_version = umls_version,
+        umls_release_dt = umls_release_dt,
         target_table = target_table_name,
         verbose = verbose,
         render_sql = render_sql,
@@ -1913,8 +1913,8 @@ rxnorm_log_processing(
   conn = conn,
   process_start = process_start,
   process_stop = process_stop,
-  mth_version = mth_version,
-  mth_release_dt = mth_release_dt,
+  umls_version = umls_version,
+  umls_release_dt = umls_release_dt,
   target_schema = target_schema,
   source_table = "",
   target_table = target_table_name,
@@ -1927,8 +1927,8 @@ sql_statement <-
   "
       CREATE TABLE IF NOT EXISTS public.setup_rxmap_log (
         srl_datetime TIMESTAMP WITHOUT TIME ZONE,
-        mth_version varchar(25),
-        mth_release_dt varchar(12),
+        umls_version varchar(25),
+        umls_release_dt varchar(12),
         rxclass int,
         rxnorm_brand_name_map int,
         rxnorm_branded_drug_delivery_device_map int,
@@ -1960,8 +1960,8 @@ sql_statement <-
           SELECT *
           FROM public.setup_rxmap_log
           WHERE
-            mth_version = '{mth_version}'
-            AND mth_release_dt = '{mth_release_dt}'
+            umls_version = '{umls_version}'
+            AND umls_release_dt = '{umls_release_dt}'
           "
   )
 
@@ -1977,8 +1977,8 @@ if (nrow(log_out) == 0) {
   sql_statement <-
     glue::glue(
       "
-            INSERT INTO public.setup_rxmap_log(srl_datetime,mth_version,mth_release_dt)
-            VALUES('{Sys.time()}', '{mth_version}', '{mth_release_dt}');
+            INSERT INTO public.setup_rxmap_log(srl_datetime,umls_version,umls_release_dt)
+            VALUES('{Sys.time()}', '{umls_version}', '{umls_release_dt}');
             "
     )
 
@@ -2012,8 +2012,8 @@ sql_statement <-
           UPDATE public.setup_rxmap_log
           SET {target_table_name} = {target_table_rows}
           WHERE
-            mth_version = '{mth_version}'
-            AND mth_release_dt = '{mth_release_dt}'
+            umls_version = '{umls_version}'
+            AND umls_release_dt = '{umls_release_dt}'
           "
   )
 
@@ -2041,11 +2041,11 @@ pg13::send(conn = conn,
 setup_rxmap <-
   function(conn,
            conn_fun = "pg13::local_connect()",
-           schema = "mth",
+           schema = "umls",
            target_schema = "rxmap",
            rxclass_schema = "umls_rxclass",
-           mth_version,
-           mth_release_dt,
+           umls_version,
+           umls_release_dt,
            url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
            check_for_updates = FALSE,
            verbose = TRUE,
@@ -2066,8 +2066,8 @@ setup_rxmap <-
       conn = conn,
       target_schema = target_schema,
       table_name = "lookup_rxnorm_paths",
-      mth_version = mth_version,
-      mth_release_dt = mth_release_dt,
+      umls_version = umls_version,
+      umls_release_dt = umls_release_dt,
       url = url,
       check_for_updates = check_for_updates,
       verbose = verbose,
@@ -2079,8 +2079,8 @@ setup_rxmap <-
       conn = conn,
       schema = schema,
       target_schema = target_schema,
-      mth_version = mth_version,
-      mth_release_dt = mth_release_dt,
+      umls_version = umls_version,
+      umls_release_dt = umls_release_dt,
       verbose = verbose,
       render_sql = render_sql,
       render_only = render_only,
@@ -2092,8 +2092,8 @@ setup_rxmap <-
       conn = conn,
       schema = schema,
       target_schema = target_schema,
-      mth_version = mth_version,
-      mth_release_dt = mth_release_dt,
+      umls_version = umls_version,
+      umls_release_dt = umls_release_dt,
       verbose = verbose,
       render_sql = render_sql,
       render_only = render_only,
@@ -2106,8 +2106,8 @@ setup_rxmap <-
       schema = schema,
       target_schema = target_schema,
       rxclass_schema = rxclass_schema,
-      mth_version = mth_version,
-      mth_release_dt = mth_release_dt,
+      umls_version = umls_version,
+      umls_release_dt = umls_release_dt,
       verbose = verbose,
       render_sql = render_sql,
       render_only = render_only,
