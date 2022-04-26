@@ -1,6 +1,7 @@
 #' @description
 #' \itemize{
-#'   \item UMLS Reference Manual: https://www.ncbi.nlm.nih.gov/books/NBK9685/
+#'   \item \href{https://www.ncbi.nlm.nih.gov/books/NBK9685/}{UMLS Reference Manual}
+#'   \item \href{https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html}{UMLS File Downloads}
 #' }
 #' @keywords internal
 "_PACKAGE"
