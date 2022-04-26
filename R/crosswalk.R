@@ -23,15 +23,10 @@
 #' A table named by `sab` is written to the `crosswalk_schema`. If `sab`
 #' value contained any punctuation, it is replaced with an underscore.
 #'
-#' @seealso
-#'  \code{\link[stringr]{str_replace}}
-#'  \code{\link[SqlRender]{render}}
-#'  \code{\link[pg13]{send}},\code{\link[pg13]{query}}
 #' @rdname write_crosswalk_table
 #' @export
 #' @importFrom stringr str_replace_all
 #' @importFrom pg13 schema_exists create_schema table_exists drop_table send query sQuo read_table write_table
-#' @importFrom SqlRender render
 #' @importFrom dplyr n bind_rows
 #' @importFrom cli cli_inform
 #' @importFrom tibble tibble rowid_to_column tribble
@@ -75,10 +70,10 @@ write_crosswalk_table <-
     }
 
     ddl_statement <-
-      SqlRender::render(
+      render(
         "
-          DROP TABLE IF EXISTS @crosswalk_schema.@table;
-          CREATE TABLE @crosswalk_schema.@table (
+          DROP TABLE IF EXISTS {crosswalk_schema}.{table};
+          CREATE TABLE {crosswalk_schema}.{table} (
                   CUI	char(8) NOT NULL,
                   LAT	char(3) NOT NULL,
                   TS	char(1) NOT NULL,
@@ -116,10 +111,10 @@ write_crosswalk_table <-
         pg13::query(
           conn_fun = conn_fun,
           sql_statement =
-            SqlRender::render(
+            render(
            "SELECT DISTINCT tty,mrrank_rank
              FROM umls.MRRANK
-             WHERE sab = '@sab'
+             WHERE sab = '{sab}'
             ORDER BY mrrank_rank DESC",
               sab = sab
             ),
@@ -143,10 +138,10 @@ write_crosswalk_table <-
             pg13::query(
                     conn_fun = conn_fun,
                     sql_statement =
-                            SqlRender::render(
+                            render(
                                     "SELECT DISTINCT tty
      FROM umls.MRRANK
-     WHERE sab = '@sab' AND tty IN (@tty_ranking)",
+     WHERE sab = '{sab}' AND tty IN ({tty_ranking})",
                                     sab = sab,
                                     tty_ranking = pg13::sQuo(tty_ranking)
                             ),
@@ -172,10 +167,10 @@ write_crosswalk_table <-
         pg13::query(
                 conn_fun = conn_fun,
                 sql_statement =
-                        SqlRender::render(
+                        render(
                                 "SELECT DISTINCT tty,mrrank_rank
              FROM umls.MRRANK
-             WHERE sab = '@sab' AND tty NOT IN (@tty_ranking)
+             WHERE sab = '{sab}' AND tty NOT IN ({tty_ranking})
             ORDER BY mrrank_rank DESC",
                                 sab = sab,
                                 tty_ranking = pg13::sQuo(tty_ranking)
@@ -229,7 +224,7 @@ write_crosswalk_table <-
         glue::glue("  ELSE {bottom_rank}"),
         "  END tty_rank",
         "FROM umls.mrconso",
-        "WHERE sab = '@sab'",
+        "WHERE sab = '{sab}'",
         "AND lat = 'ENG'",
         "),",
         "top_rank AS (",
@@ -247,7 +242,7 @@ write_crosswalk_table <-
         ")",
         "",
         "",
-        "INSERT INTO @crosswalk_schema.@table ",
+        "INSERT INTO {crosswalk_schema}.{table} ",
         "  SELECT",
         "     a.cui,",
         "     a.lat,",
@@ -285,7 +280,7 @@ write_crosswalk_table <-
       )
 
     sql_statement <-
-      SqlRender::render(sql_statement,
+      render(sql_statement,
         sab = sab,
         crosswalk_schema = crosswalk_schema,
         table = sab_table
