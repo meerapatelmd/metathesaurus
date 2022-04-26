@@ -26,7 +26,6 @@ Imports:
     R.cache,
     readr,
     rlang,
-    RMySQL,
     rvest,
     SqlRender,
     stringr,
@@ -39,10 +38,8 @@ Suggests:
 VignetteBuilder: 
     knitr
 Remotes:
-    meerapatelmd/broca,
-    meerapatelmd/pg13,
-    meerapatelmd/preQL,
-    meerapatelmd/secretary
+    meerapatelmd/pg13, 
+    cli/cli
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

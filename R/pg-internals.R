@@ -691,15 +691,6 @@ ddl_tables <-
 
 #' @title
 #' Copy RRF to Table
-#' @seealso
-#'  \code{\link[tibble]{as_tibble}}
-#'  \code{\link[dplyr]{mutate}},\code{\link[dplyr]{filter}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
-#'  \code{\link[stringr]{str_remove}}
-#'  \code{\link[progress]{progress_bar}}
-#'  \code{\link[SqlRender]{render}}
-#'  \code{\link[pg13]{send}}
-#'  \code{\link[secretary]{c("typewrite", "typewrite")}},\code{\link[secretary]{typewrite_warning}},\code{\link[secretary]{italicize}}
-#'  \code{\link[purrr]{map}}
 #' @rdname copy_rrfs
 #' @export
 #' @importFrom tibble as_tibble_col
@@ -708,7 +699,6 @@ ddl_tables <-
 #' @importFrom progress progress_bar
 #' @importFrom SqlRender render
 #' @importFrom pg13 send
-#' @importFrom secretary typewrite typewrite_warning italicize
 #' @importFrom purrr map
 
 
@@ -792,35 +782,28 @@ copy_rrfs <-
     }
 
     if (length(errors) > 0) {
-      secretary::typewrite("Tables:")
+      typewrite("Tables:")
       tables %>%
-        purrr::map(~ secretary::typewrite(., tabs = 4, timepunched = FALSE))
+        purrr::map(~ typewrite(.))
 
-      secretary::typewrite_warning("Some tables did not copy:")
+      typewrite_warning("Some tables did not copy:")
       errors %>%
-        purrr::map(~ secretary::typewrite(secretary::italicize(.), tabs = 4, timepunched = FALSE))
+        purrr::map(~ typewrite(italicize(.)))
     } else {
-      secretary::typewrite("All tables copied:")
+      typewrite("All tables copied:")
       tables %>%
-        purrr::map(~ secretary::typewrite(., tabs = 4, timepunched = FALSE))
+        purrr::map(~ typewrite(.))
     }
   }
 
 
 #' @title
 #' Add Indexes
-#' @seealso
-#'  \code{\link[progress]{progress_bar}}
-#'  \code{\link[SqlRender]{render}}
-#'  \code{\link[pg13]{send}}
-#'  \code{\link[secretary]{typewrite_warning}},\code{\link[secretary]{c("typewrite", "typewrite")}},\code{\link[secretary]{italicize}}
-#'  \code{\link[purrr]{map}}
 #' @rdname add_indexes
 #' @export
 #' @importFrom progress progress_bar
 #' @importFrom SqlRender render
 #' @importFrom pg13 send
-#' @importFrom secretary typewrite_warning typewrite italicize
 #' @importFrom purrr map
 
 
@@ -945,8 +928,8 @@ add_indexes <-
     }
 
     if (length(errors) > 0) {
-      secretary::typewrite_warning("Some indexes failed:")
+      typewrite_warning("Some indexes failed:")
       errors %>%
-        purrr::map(~ secretary::typewrite(secretary::italicize(.), tabs = 4, timepunched = FALSE))
+        purrr::map(~ typewrite(italicize(.)))
     }
   }

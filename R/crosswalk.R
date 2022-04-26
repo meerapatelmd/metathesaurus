@@ -37,7 +37,6 @@
 #' @importFrom tibble tibble rowid_to_column tribble
 #' @importFrom utils capture.output
 #' @importFrom huxtable hux set_caption theme_compact huxtable number_format fmt_pretty
-#' @importFrom secretary typewrite
 #' @importFrom glue glue
 
 write_crosswalk_table <-
@@ -209,7 +208,7 @@ write_crosswalk_table <-
     console.tbl.print <-
             console.tbl.print[-length(console.tbl.print)]
 
-    secretary::typewrite()
+    typewrite()
     cat(console.tbl.print,
         sep = "\n")
 
@@ -353,7 +352,7 @@ write_crosswalk_table <-
     console.tbl.print2 <-
             console.tbl.print2[-length(console.tbl.print2)]
 
-    secretary::typewrite()
+    typewrite()
     cat(console.tbl.print2,
         sep = "\n")
 

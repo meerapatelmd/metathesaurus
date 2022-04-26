@@ -22,7 +22,6 @@
 #' @import tibble
 #' @import purrr
 #' @import R.cache
-#' @import secretary
 #' @importFrom rlang parse_expr
 #' @importFrom glue glue
 
@@ -40,7 +39,7 @@ read_rxnorm_paths <-
             if (!check_for_updates) {
 
               cached_datetime <- file.info(cache_file)$ctime
-              secretary::typewrite(
+              typewrite(
                 glue::glue("Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}. Rerun with `check_for_updates` set to TRUE to scrape the `url` and update the cache if a diff is detected."))
 
               existing_tbl <-
@@ -58,7 +57,7 @@ read_rxnorm_paths <-
 
             } else {
 
-              secretary::typewrite(
+              typewrite(
                 glue::glue("Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}."))
 
               existing_tbl <-
@@ -157,7 +156,7 @@ read_rxnorm_paths <-
                                  key = list(index = new_cache_file_index, url = url),
                                  dirs = "metathesaurus/rxnorm_map")
 
-              secretary::typewrite(
+              typewrite(
                 glue::glue(
                   "Loading RxNorm paths table that was cached {prettyunits::time_ago(cached_datetime)}. Rerun with `check_for_updates` set to TRUE to scrape the `url` and update the cache if a diff is detected."))
 
@@ -1642,9 +1641,8 @@ write_rxnorm_all_maps <-
 
     if (length(errors)>0) {
 
-      secretary::typewrite("The following maps did not load:")
-      secretary::typewrite(sprintf("\t\t\t%s,\n", errors),
-                           timepunched = FALSE)
+      typewrite("The following maps did not load:")
+      typewrite(sprintf("\t\t\t%s,\n", errors))
 
 
 
