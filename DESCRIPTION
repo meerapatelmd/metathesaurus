@@ -40,7 +40,6 @@ VignetteBuilder:
     knitr
 Remotes:
     meerapatelmd/pg13,
-    meerapatelmd/preQL,
     meerapatelmd/secretary
 Encoding: UTF-8
 LazyData: true
