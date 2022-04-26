@@ -8,9 +8,7 @@
 #' to note that the schemas are dropped and rewritten with the
 #' run and all present tables will be lost.
 #'
-#' @param conn          Database connection. For MySQL5.5,
-#' the connection made by RMySQL's dbConnect and for Postgres,
-#' the connection via DatabaseConnector.
+#' @param conn          Database connection via DatabaseConnector.
 #' @param conn_fun      Instead of supplying of a direct
 #' database connection, an expression can be supplied that
 #' automatically connects and disconnects the connection

@@ -8,8 +8,10 @@ extension.
 was not utilized.  
 * Added SQL script for post-processing of the MRHIER 
 table. 
-* Removed deprecated `setup_pg()`  
+* Removed deprecated `setup_pg()`, `scrape_*`  
+* Removed MySQL setup  
 * Change default schema from `mth` to `umls`  
+* Removed dependency on `secretary` pkg  
 
 # metathesaurus 4.0.0  
 
