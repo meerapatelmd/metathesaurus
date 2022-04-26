@@ -6,9 +6,9 @@
 \alias{metathesaurus-package}
 \title{metathesaurus: Setup UMLS Metathesaurus}
 \description{
-\if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
-
-Setup UMLS Metathesaurus in MySQL5.5 or Postgres along with optional postprocessing steps.
+\itemize{
+\item UMLS Reference Manual: https://www.ncbi.nlm.nih.gov/books/NBK9685/
+}
 }
 \seealso{
 Useful links:

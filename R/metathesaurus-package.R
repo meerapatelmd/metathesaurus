@@ -1,3 +1,7 @@
+#' @description
+#' \itemize{
+#'   \item UMLS Reference Manual: https://www.ncbi.nlm.nih.gov/books/NBK9685/
+#' }
 #' @keywords internal
 "_PACKAGE"
 
