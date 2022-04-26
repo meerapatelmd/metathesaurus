@@ -45,12 +45,4 @@ MRSMAP, MRSAT, AND MRREL Tables only? Default: FALSE}
 \description{
 Instantiate Postgres
 }
-\seealso{
-\code{\link[pg13]{lsSchema}},\code{\link[pg13]{send}},\code{\link[pg13]{lsTables}},\code{\link[pg13]{dropTable}}
-\code{\link[SqlRender]{render}}
-\code{\link[tibble]{as_tibble}}
-\code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
-\code{\link[stringr]{str_remove}}
-\code{\link[progress]{progress_bar}}
-}
 \concept{setup}

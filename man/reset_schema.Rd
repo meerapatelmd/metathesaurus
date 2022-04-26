@@ -9,7 +9,3 @@ reset_schema(conn, schema, verbose = TRUE, render_sql = TRUE)
 \description{
 Drop Cascade and Recreate Schema
 }
-\seealso{
-\code{\link[pg13]{lsSchema}},\code{\link[pg13]{send}}
-\code{\link[SqlRender]{render}}
-}

@@ -41,8 +41,3 @@ value that contains punctuation other than an underscore
 is replaced with an underscore to write tables with names that
 Postgres can accept.
 }
-\seealso{
-\code{\link[stringr]{str_replace}}
-\code{\link[SqlRender]{render}}
-\code{\link[pg13]{send}},\code{\link[pg13]{query}}
-}
