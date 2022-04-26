@@ -9,10 +9,3 @@ add_indexes(conn, schema, verbose = TRUE, render_sql = TRUE)
 \description{
 Add Indexes
 }
-\seealso{
-\code{\link[progress]{progress_bar}}
-\code{\link[SqlRender]{render}}
-\code{\link[pg13]{send}}
-\code{\link[secretary]{typewrite_warning}},\code{\link[secretary]{c("typewrite", "typewrite")}},\code{\link[secretary]{italicize}}
-\code{\link[purrr]{map}}
-}

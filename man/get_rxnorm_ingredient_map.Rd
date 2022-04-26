@@ -15,9 +15,7 @@ get_rxnorm_ingredient_map(
 )
 }
 \arguments{
-\item{conn}{Database connection. For MySQL5.5,
-the connection made by RMySQL's dbConnect and for Postgres,
-the connection via DatabaseConnector.}
+\item{conn}{Database connection via DatabaseConnector.}
 
 \item{conn_fun}{Instead of supplying of a direct
 database connection, an expression can be supplied that

@@ -25,9 +25,7 @@ run_setup(
 )
 }
 \arguments{
-\item{conn}{Database connection. For MySQL5.5,
-the connection made by RMySQL's dbConnect and for Postgres,
-the connection via DatabaseConnector.}
+\item{conn}{Database connection via DatabaseConnector.}
 
 \item{conn_fun}{Instead of supplying of a direct
 database connection, an expression can be supplied that
@@ -54,8 +52,5 @@ Instantiate Postgres
 \code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
 \code{\link[stringr]{str_remove}}
 \code{\link[progress]{progress_bar}}
-
-Other setup: 
-\code{\link{setup_mysql_umls}()}
 }
 \concept{setup}
