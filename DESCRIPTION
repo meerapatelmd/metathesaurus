@@ -39,7 +39,6 @@ Suggests:
 VignetteBuilder: 
     knitr
 Remotes:
-    meerapatelmd/broca,
     meerapatelmd/pg13,
     meerapatelmd/preQL,
     meerapatelmd/secretary
