@@ -12,9 +12,7 @@ reset_schema <-
     if (schema %in% pg13::lsSchema(conn = conn)) {
       pg13::send(
         conn = conn,
-        sql_statement = render("DROP SCHEMA {schema} CASCADE;",
-          schema = schema
-        ),
+        sql_statement = render("DROP SCHEMA {schema} CASCADE;"),
         verbose = verbose,
         render_sql = render_sql
       )
@@ -22,9 +20,7 @@ reset_schema <-
 
     pg13::send(
       conn = conn,
-      sql_statement = render("CREATE SCHEMA {schema};",
-        schema = schema
-      ),
+      sql_statement = render("CREATE SCHEMA {schema};"),
       verbose = verbose,
       render_sql = render_sql
     )
@@ -675,7 +671,7 @@ ddl_tables <-
     for (i in 1:length(ddl)) {
       pg13::send(
         conn = conn,
-        sql_statement = render(ddl[[i]], schema = schema),
+        sql_statement = render(ddl[[i]]),
         verbose = verbose,
         render_sql = render_sql
       )
@@ -746,11 +742,7 @@ copy_rrfs <-
       cat("\n")
 
       sql <- render(
-        "COPY {schema}.{tableName} FROM '{rrf_path}' WITH DELIMITER E'|' CSV QUOTE E'\b';",
-        schema = schema,
-        tableName = table,
-        rrf_path = rrf_path
-      )
+        "COPY {schema}.{tableName} FROM '{rrf_path}' WITH DELIMITER E'|' CSV QUOTE E'\b';")
 
 
       output <-
@@ -889,9 +881,7 @@ add_indexes <-
 
     errors <- vector()
     for (i in 1:length(indexes)) {
-      index <- render(indexes[i],
-        schema = schema
-      )
+      index <- render(indexes[i])
 
       pb$tick()
       Sys.sleep(1)

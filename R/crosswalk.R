@@ -93,9 +93,7 @@ write_crosswalk_table <-
                   SUPPRESS	char(1) NOT NULL,
                   CVF	integer,
                   FILLER_COL INTEGER
-                                  )",
-        crosswalk_schema = crosswalk_schema,
-        table = sab_table
+                                  )"
       )
 
     pg13::send(
@@ -115,8 +113,7 @@ write_crosswalk_table <-
            "SELECT DISTINCT tty,mrrank_rank
              FROM umls.MRRANK
              WHERE sab = '{sab}'
-            ORDER BY mrrank_rank DESC",
-              sab = sab
+            ORDER BY mrrank_rank DESC"
             ),
           verbose = verbose,
           render_sql = render_sql,
@@ -134,6 +131,7 @@ write_crosswalk_table <-
   tty_ranking <- toupper(tty_ranking)
 
   # Checking if user-provider tty are valid
+  squo_tty_ranking <- pg13::sQuo(tty_ranking)
     valid_tty <-
             pg13::query(
                     conn_fun = conn_fun,
@@ -141,10 +139,7 @@ write_crosswalk_table <-
                             render(
                                     "SELECT DISTINCT tty
      FROM umls.MRRANK
-     WHERE sab = '{sab}' AND tty IN ({tty_ranking})",
-                                    sab = sab,
-                                    tty_ranking = pg13::sQuo(tty_ranking)
-                            ),
+     WHERE sab = '{sab}' AND tty IN ({squo_tty_ranking})"),
                     verbose = verbose,
                     render_sql = render_sql,
                     checks = ""
@@ -170,10 +165,8 @@ write_crosswalk_table <-
                         render(
                                 "SELECT DISTINCT tty,mrrank_rank
              FROM umls.MRRANK
-             WHERE sab = '{sab}' AND tty NOT IN ({tty_ranking})
-            ORDER BY mrrank_rank DESC",
-                                sab = sab,
-                                tty_ranking = pg13::sQuo(tty_ranking)
+             WHERE sab = '{sab}' AND tty NOT IN ({squo_tty_ranking})
+            ORDER BY mrrank_rank DESC"
                         ),
                 verbose = verbose,
                 render_sql = render_sql,
@@ -280,11 +273,7 @@ write_crosswalk_table <-
       )
 
     sql_statement <-
-      render(sql_statement,
-        sab = sab,
-        crosswalk_schema = crosswalk_schema,
-        table = sab_table
-      )
+      render(sql_statement)
 
     pg13::send(
       conn_fun = conn_fun,
