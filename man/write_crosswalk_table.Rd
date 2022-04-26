@@ -10,8 +10,8 @@ write_crosswalk_table(
   conn_fun = "pg13::local_connect(verbose = FALSE)",
   tty_ranking,
   log_schema = "public",
-  log_table_name = "setup_mth_log",
-  crosswalk_log_table_name = "setup_mth_crosswalk_log",
+  log_table_name = "setup_umls_log",
+  crosswalk_log_table_name = "setup_umls_crosswalk_log",
   verbose = TRUE,
   render_sql = TRUE
 )

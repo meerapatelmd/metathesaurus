@@ -40,8 +40,8 @@ write_crosswalk_table <-
            conn_fun = "pg13::local_connect(verbose = FALSE)",
            tty_ranking,
            log_schema = "public",
-           log_table_name = "setup_mth_log",
-           crosswalk_log_table_name = "setup_mth_crosswalk_log",
+           log_table_name = "setup_umls_log",
+           crosswalk_log_table_name = "setup_umls_crosswalk_log",
            verbose = TRUE,
            render_sql = TRUE) {
     sab_table <- stringr::str_replace_all(sab,
@@ -426,7 +426,7 @@ write_crosswalk_table <-
 
 #' @seealso
 #'  \code{\link[pg13]{drop_cascade}},\code{\link[pg13]{create_schema}}
-#' @rdname setup_crosswalk_Schema
+#' @rdname setup_crosswalk_schema
 #' @export
 #' @importFrom pg13 drop_cascade create_schema query
 

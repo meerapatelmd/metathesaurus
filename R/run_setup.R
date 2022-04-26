@@ -3,7 +3,6 @@
 #' @inherit setup description
 #' @inheritParams pkg_args
 #' @rdname run_setup
-#' @family setup
 #' @export
 #' @importFrom pg13 lsSchema send lsTables dropTable
 #' @importFrom tibble as_tibble_col
