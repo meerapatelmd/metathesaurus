@@ -52,22 +52,7 @@ in the tibble.
 Get the RxNorm Map Between 2 TTY. This map
 ignores any variability from the rel/rela.
 }
-\details{
-DETAILS
-}
-\examples{
-\dontrun{
-if(interactive()){
- #EXAMPLE1
- }
-}
-}
 \seealso{
-\code{\link[dplyr]{filter}}
-\code{\link[glue]{glue}}
-\code{\link[cli]{cli_abort}}
-\code{\link[pg13]{query}}
-
 Other RxNorm Map: 
 \code{\link{get_rxnorm_ingredient_map}()},
 \code{\link{get_rxnorm_tty_lookup}()},

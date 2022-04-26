@@ -280,18 +280,6 @@ read_rxnorm_paths <-
 #' values are also provided. Every set is prefixed with the tty value. The returned map
 #' is derived from a full join and therefore, blank mappings between tty are also included
 #' in the tibble.
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @seealso
-#'  \code{\link[dplyr]{filter}}
-#'  \code{\link[glue]{glue}}
-#'  \code{\link[cli]{cli_abort}}
-#'  \code{\link[pg13]{query}}
 #' @rdname get_rxnorm_map
 #' @family RxNorm Map
 #' @export
@@ -434,10 +422,9 @@ get_rxnorm_map <-
 #' @rdname get_rxnorm_ingredient_map
 #' @family RxNorm Map
 #' @export
-#' @import dplyr
-#' @import tidyr
-#' @import purrr
-#' @import pg13
+#' @importFrom dplyr filter transmute filter_at
+#' @importFrom rlang parse_expr
+#' @importFrom pg13 dc
 
 get_rxnorm_ingredient_map <-
         function(conn,
