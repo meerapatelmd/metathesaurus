@@ -15,15 +15,13 @@
 #' @rdname read_rxnorm_paths
 #' @family RxNorm Map
 #' @export
-#' @import rvest
-#' @import tidyr
-#' @import dplyr
-#' @import pg13
-#' @import tibble
-#' @import purrr
-#' @import R.cache
-#' @importFrom rlang parse_expr
+#' @importFrom R.cache findCache loadCache getCachePath saveCache
 #' @importFrom glue glue
+#' @importFrom stringr str_replace_all
+#' @importFrom rubix rm_multibyte_chars
+#' @importFrom rvest html_table
+#' @importFrom tidyr separate
+#' @importFrom rlang parse_expr
 
 read_rxnorm_paths <-
         function(url = "https://lhncbc.nlm.nih.gov/RxNav/applications/RxNavViews.html#label:appendix",
