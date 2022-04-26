@@ -2,18 +2,10 @@
 #' Instantiate Postgres
 #' @inherit setup description
 #' @inheritParams pkg_args
-#' @seealso
-#'  \code{\link[pg13]{lsSchema}},\code{\link[pg13]{send}},\code{\link[pg13]{lsTables}},\code{\link[pg13]{dropTable}}
-#'  \code{\link[SqlRender]{render}}
-#'  \code{\link[tibble]{as_tibble}}
-#'  \code{\link[dplyr]{mutate}},\code{\link[dplyr]{select}},\code{\link[dplyr]{distinct}}
-#'  \code{\link[stringr]{str_remove}}
-#'  \code{\link[progress]{progress_bar}}
 #' @rdname run_setup
 #' @family setup
 #' @export
 #' @importFrom pg13 lsSchema send lsTables dropTable
-#' @importFrom SqlRender render
 #' @importFrom tibble as_tibble_col
 #' @importFrom dplyr mutate select distinct filter
 #' @importFrom stringr str_remove_all

@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "patelmeeray@gmail.com",
            comment = c(ORCID = "0000-0002-3401-3948"))
-Description: Setup UMLS Metathesaurus in MySQL5.5 or
+Description: Setup UMLS Metathesaurus in 
     Postgres along with optional postprocessing steps. 
 License: Apache License 2.0
 URL: https://meerapatelmd.github.io/metathesaurus/,
@@ -27,7 +27,6 @@ Imports:
     readr,
     rlang,
     rvest,
-    SqlRender,
     stringr,
     tibble,
     tidyr,
