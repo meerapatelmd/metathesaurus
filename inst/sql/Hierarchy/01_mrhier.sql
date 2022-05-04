@@ -288,7 +288,7 @@ BEGIN
 
   		DROP SCHEMA IF EXISTS umls_mrhier CASCADE;
 		CREATE SCHEMA umls_mrhier;
-		COMMIT;
+		-- COMMIT;
 
   		SELECT get_log_timestamp()
   		INTO start_timestamp
@@ -329,7 +329,7 @@ BEGIN
 
 		DROP TABLE umls_mrhier.tmp_mrhier;
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_completion('processing MRHIER');
 
@@ -376,7 +376,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_timediff('processing MRHIER', start_timestamp, stop_timestamp);
 
@@ -473,7 +473,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 
 		PERFORM notify_timediff('processing LOOKUP_ENG', start_timestamp, stop_timestamp);
@@ -547,7 +547,7 @@ BEGIN
 
 		PERFORM notify_completion('processing LOOKUP_PARSE');
 
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -592,7 +592,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 
 		PERFORM notify_timediff('processing LOOKUP_PARSE', start_timestamp, stop_timestamp);
@@ -922,7 +922,7 @@ BEGIN
 
 		PERFORM notify_completion('processing LOOKUP_SNOMED');
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_timediff('processing LOOKUP_SNOMED', start_timestamp, stop_timestamp);
 
@@ -1012,7 +1012,7 @@ BEGIN
 				  );
 
 
-			COMMIT;
+			-- COMMIT;
 
 			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
 
@@ -1058,7 +1058,7 @@ BEGIN
 				  source_rows,
 				  target_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_timediff(CONCAT('processing table ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
@@ -1126,7 +1126,7 @@ BEGIN
 		);
 		DROP TABLE umls_mrhier.tmp_lookup_ext;
 
-		COMMIT;
+		-- COMMIT;
 
 
 
@@ -1282,7 +1282,7 @@ BEGIN
 			  	source_table,
 			  	target_table);
 
-			COMMIT;
+			-- COMMIT;
 
 			PERFORM notify_completion(CONCAT('processing table ', source_table, ' into table ', target_table));
 
@@ -1331,7 +1331,7 @@ BEGIN
 				  target_rows);
 
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_timediff(CONCAT('processing table ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
@@ -1384,7 +1384,7 @@ BEGIN
 		  	SUBSTRING(CONCAT('pivot_', hierarchy_table), 1, 60) AS pivot_table
 		  FROM umls_mrhier.lookup_ext
 		);
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -1432,7 +1432,7 @@ BEGIN
 
 		PERFORM notify_completion('processing LOOKUP_PIVOT_TABLES');
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_timediff('processing LOOKUP_PIVOT_TABLES', start_timestamp, stop_timestamp);
 
@@ -1487,7 +1487,7 @@ BEGIN
 		)
 		;
 
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -1532,7 +1532,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 
 
@@ -1615,7 +1615,7 @@ BEGIN
 	      target_table,
 	      pivot_table);
 
-	      COMMIT;
+	      -- COMMIT;
 
 		PERFORM notify_completion(CONCAT('processing sql statement for ', source_table, ' into table ', target_table));
 
@@ -1657,7 +1657,7 @@ BEGIN
 			  source_table,
 			  source_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_timediff(CONCAT('processing sql statement for ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
@@ -1741,7 +1741,7 @@ BEGIN
 	      		tmp_table,
 	      		tmp_table);
 
-	    COMMIT;
+	    -- COMMIT;
 
 		PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
 
@@ -1791,7 +1791,7 @@ BEGIN
 			  target_rows);
 
 
-		COMMIT;
+		-- COMMIT;
 
 
 		PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
@@ -1846,7 +1846,7 @@ BEGIN
 		  	SUBSTRING(CONCAT('pivot_code_', hierarchy_table), 1, 60) AS pivot_code_table
 		  FROM umls_mrhier.lookup_ext
 		);
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -1947,7 +1947,7 @@ BEGIN
 		)
 		;
 
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -1992,7 +1992,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 
 
@@ -2075,7 +2075,7 @@ BEGIN
 	      target_table,
 	      pivot_table);
 
-	      COMMIT;
+	      -- COMMIT;
 
 		PERFORM notify_completion(CONCAT('processing sql statement for ', source_table, ' into table ', target_table));
 
@@ -2117,7 +2117,7 @@ BEGIN
 			  source_table,
 			  source_rows);
 
-		COMMIT;
+		-- COMMIT;
 
 		PERFORM notify_timediff(CONCAT('processing sql statement for ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
 
@@ -2179,7 +2179,7 @@ BEGIN
 	    sql_statement := f.sql_statement;
 	    EXECUTE sql_statement;
 
-	    COMMIT;
+	    -- COMMIT;
 
 
 	    EXECUTE
@@ -2204,7 +2204,7 @@ BEGIN
 	      		tmp_table,
 	      		tmp_table);
 
-	    COMMIT;
+	    -- COMMIT;
 
 		PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
 
@@ -2254,7 +2254,7 @@ BEGIN
 			  target_rows);
 
 
-		COMMIT;
+		-- COMMIT;
 
 
 		PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
@@ -2318,7 +2318,7 @@ BEGIN
 		  max_ptr_level int
 		);
 
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -2361,7 +2361,7 @@ BEGIN
 			  target_rows);
 
 
-		COMMIT;
+		-- COMMIT;
 
 	END IF;
 
@@ -2396,7 +2396,7 @@ BEGIN
 		      	',
 		      		source_table,
 		      		source_table);
-		    	    COMMIT;
+		    	    -- COMMIT;
 
 			PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
 
@@ -2446,7 +2446,7 @@ BEGIN
 				  target_rows);
 
 
-			COMMIT;
+			-- COMMIT;
 
 
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
@@ -2519,7 +2519,7 @@ BEGIN
 		  abs_max_ptr_level);
 
 
-		  COMMIT;
+		  -- COMMIT;
 
 		  	SELECT get_log_timestamp()
 			INTO stop_timestamp
@@ -2596,7 +2596,7 @@ BEGIN
 	    );
 
 
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -2639,7 +2639,7 @@ BEGIN
 			  target_rows);
 
 
-		COMMIT;
+		-- COMMIT;
 
 	END IF;
 
@@ -2672,7 +2672,7 @@ BEGIN
 	      pivot_table
 	      );
 
-	      		COMMIT;
+	      		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -2714,7 +2714,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-			COMMIT;
+			-- COMMIT;
 
 
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
@@ -2775,7 +2775,7 @@ BEGIN
 		  max_ptr_level int
 		);
 
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -2851,7 +2851,7 @@ BEGIN
 		      	',
 		      		source_table,
 		      		source_table);
-		    	    COMMIT;
+		    	    -- COMMIT;
 
 			PERFORM notify_completion(CONCAT('processing ', source_table, ' into table ', target_table));
 
@@ -2901,7 +2901,7 @@ BEGIN
 				  target_rows);
 
 
-			COMMIT;
+			-- COMMIT;
 
 
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
@@ -2974,7 +2974,7 @@ BEGIN
 		  abs_max_ptr_level);
 
 
-		  COMMIT;
+		  -- COMMIT;
 
 		  	SELECT get_log_timestamp()
 			INTO stop_timestamp
@@ -3051,7 +3051,7 @@ BEGIN
 	    );
 
 
-		COMMIT;
+		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -3094,7 +3094,7 @@ BEGIN
 			  target_rows);
 
 
-		COMMIT;
+		-- COMMIT;
 
 	END IF;
 
@@ -3127,7 +3127,7 @@ BEGIN
 	      pivot_table
 	      );
 
-	      		COMMIT;
+	      		-- COMMIT;
 
 		SELECT get_log_timestamp()
 		INTO stop_timestamp
@@ -3169,7 +3169,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-			COMMIT;
+			-- COMMIT;
 
 
 			PERFORM notify_timediff(CONCAT('processing ', source_table, ' into table ', target_table), start_timestamp, stop_timestamp);
@@ -3282,7 +3282,7 @@ BEGIN
 			  source_rows,
 			  target_rows);
 
-			COMMIT;
+			-- COMMIT;
 
 
 			PERFORM notify_timediff('Writing MRHIER_STR_EXCL table', start_timestamp, stop_timestamp);
@@ -3371,7 +3371,7 @@ BEGIN
 		FROM umls_mrhier.mrhier
 		)
 		;
-		-- COMMIT;
+		-- -- COMMIT;
 
 		SELECT COUNT(*)
 		INTO mrhier_rows
