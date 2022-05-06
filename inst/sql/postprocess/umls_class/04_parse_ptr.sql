@@ -35,7 +35,7 @@ BEGIN
 		target_table := f.hierarchy_table;
 		source_sab := f.hierarchy_sab;
 
-		SELECT check_if_requires_processing(mth_version, 'MRHIER', target_table)
+		SELECT {postprocess_schema}.check_if_requires_processing(mth_version, 'MRHIER', target_table)
 		INTO requires_processing;
 
   		IF requires_processing THEN
