@@ -875,136 +875,12 @@ for (i in seq_along(ddl)) {
       }
     }
 
-
-    if ("add_indexes" %in% steps) {
-
-
-      indexes <-
-        c(
-          "CREATE INDEX X_MRCOC_CUI1 ON {schema}.MRCOC(CUI1);",
-          "CREATE INDEX X_MRCOC_AUI1 ON {schema}.MRCOC(AUI1);",
-          "CREATE INDEX X_MRCOC_CUI2 ON {schema}.MRCOC(CUI2);",
-          "CREATE INDEX X_MRCOC_AUI2 ON {schema}.MRCOC(AUI2);",
-          "CREATE INDEX X_MRCOC_SAB ON {schema}.MRCOC(SAB);",
-          "CREATE INDEX X_MRCONSO_CUI ON {schema}.MRCONSO(CUI);",
-          "ALTER TABLE {schema}.MRCONSO ADD CONSTRAINT X_MRCONSO_PK PRIMARY KEY (AUI);",
-          "CREATE INDEX X_MRCONSO_SUI ON {schema}.MRCONSO(SUI);",
-          "CREATE INDEX X_MRCONSO_LUI ON {schema}.MRCONSO(LUI);",
-          "CREATE INDEX X_MRCONSO_CODE ON {schema}.MRCONSO(CODE);",
-          "CREATE INDEX X_MRCONSO_SAB_TTY ON {schema}.MRCONSO(SAB,TTY);",
-          "CREATE INDEX X_MRCONSO_SCUI ON {schema}.MRCONSO(SCUI);",
-          "CREATE INDEX X_MRCONSO_STR ON {schema}.MRCONSO(STR);",
-          "CREATE INDEX X_MRCXT_CUI ON {schema}.MRCXT(CUI);",
-          "CREATE INDEX X_MRCXT_AUI ON {schema}.MRCXT(AUI);",
-          "CREATE INDEX X_MRCXT_SAB ON {schema}.MRCXT(SAB);",
-          "CREATE INDEX X_MRDEF_CUI ON {schema}.MRDEF(CUI);",
-          "CREATE INDEX X_MRDEF_AUI ON {schema}.MRDEF(AUI);",
-          "ALTER TABLE {schema}.MRDEF ADD CONSTRAINT X_MRDEF_PK PRIMARY KEY (ATUI);",
-          "CREATE INDEX X_MRDEF_SAB ON {schema}.MRDEF(SAB);",
-          "CREATE INDEX X_MRHIER_CUI ON {schema}.MRHIER(CUI);",
-          "CREATE INDEX X_MRHIER_AUI ON {schema}.MRHIER(AUI);",
-          "CREATE INDEX X_MRHIER_SAB ON {schema}.MRHIER(SAB);",
-          "CREATE INDEX X_MRHIER_PTR ON {schema}.MRHIER(PTR);",
-          "CREATE INDEX X_MRHIER_PAUI ON {schema}.MRHIER(PAUI);",
-          "CREATE INDEX X_MRHIST_CUI ON {schema}.MRHIST(CUI);",
-          "CREATE INDEX X_MRHIST_SOURCEUI ON {schema}.MRHIST(SOURCEUI);",
-          "CREATE INDEX X_MRHIST_SAB ON {schema}.MRHIST(SAB);",
-          "ALTER TABLE {schema}.MRRANK ADD CONSTRAINT X_MRRANK_PK PRIMARY KEY (SAB,TTY);",
-          "CREATE INDEX X_MRREL_CUI1 ON {schema}.MRREL(CUI1);",
-          "CREATE INDEX X_MRREL_AUI1 ON {schema}.MRREL(AUI1);",
-          "CREATE INDEX X_MRREL_CUI2 ON {schema}.MRREL(CUI2);",
-          "CREATE INDEX X_MRREL_AUI2 ON {schema}.MRREL(AUI2);",
-          "ALTER TABLE {schema}.MRREL ADD CONSTRAINT X_MRREL_PK PRIMARY KEY (RUI);",
-          "CREATE INDEX X_MRREL_SAB ON {schema}.MRREL(SAB);",
-          "ALTER TABLE {schema}.MRSAB ADD CONSTRAINT X_MRSAB_PK PRIMARY KEY (VSAB);",
-          "CREATE INDEX X_MRSAB_RSAB ON {schema}.MRSAB(RSAB);",
-          "CREATE INDEX X_MRSAT_CUI ON {schema}.MRSAT(CUI);",
-          "CREATE INDEX X_MRSAT_METAUI ON {schema}.MRSAT(METAUI);",
-          "ALTER TABLE {schema}.MRSAT ADD CONSTRAINT X_MRSAT_PK PRIMARY KEY (ATUI);",
-          "CREATE INDEX X_MRSAT_SAB ON {schema}.MRSAT(SAB);",
-          "CREATE INDEX X_MRSAT_ATN ON {schema}.MRSAT(ATN);",
-          "CREATE INDEX X_MRSTY_CUI ON {schema}.MRSTY(CUI);",
-          "ALTER TABLE {schema}.MRSTY ADD CONSTRAINT X_MRSTY_PK PRIMARY KEY (ATUI);",
-          "CREATE INDEX X_MRSTY_STY ON {schema}.MRSTY(STY);",
-          "CREATE INDEX X_MRXNS_ENG_NSTR ON {schema}.MRXNS_ENG(NSTR);",
-          "CREATE INDEX X_MRXNW_ENG_NWD ON {schema}.MRXNW_ENG(NWD);",
-          "CREATE INDEX X_MRXW_BAQ_WD ON {schema}.MRXW_BAQ(WD);",
-          "CREATE INDEX X_MRXW_CZE_WD ON {schema}.MRXW_CZE(WD);",
-          "CREATE INDEX X_MRXW_DAN_WD ON {schema}.MRXW_DAN(WD);",
-          "CREATE INDEX X_MRXW_DUT_WD ON {schema}.MRXW_DUT(WD);",
-          "CREATE INDEX X_MRXW_ENG_WD ON {schema}.MRXW_ENG(WD);",
-          "CREATE INDEX X_MRXW_FIN_WD ON {schema}.MRXW_FIN(WD);",
-          "CREATE INDEX X_MRXW_FRE_WD ON {schema}.MRXW_FRE(WD);",
-          "CREATE INDEX X_MRXW_GER_WD ON {schema}.MRXW_GER(WD);",
-          "CREATE INDEX X_MRXW_HEB_WD ON {schema}.MRXW_HEB(WD);",
-          "CREATE INDEX X_MRXW_HUN_WD ON {schema}.MRXW_HUN(WD);",
-          "CREATE INDEX X_MRXW_ITA_WD ON {schema}.MRXW_ITA(WD);",
-          "CREATE INDEX X_MRXW_JPN_WD ON {schema}.MRXW_JPN(WD);",
-          "CREATE INDEX X_MRXW_NOR_WD ON {schema}.MRXW_NOR(WD);",
-          "CREATE INDEX X_MRXW_POR_WD ON {schema}.MRXW_POR(WD);",
-          "CREATE INDEX X_MRXW_RUS_WD ON {schema}.MRXW_RUS(WD);",
-          "CREATE INDEX X_MRXW_SPA_WD ON {schema}.MRXW_SPA(WD);",
-          "CREATE INDEX X_MRXW_SWE_WD ON {schema}.MRXW_SWE(WD);",
-          "CREATE INDEX X_AMBIGSUI_SUI ON {schema}.AMBIGSUI(SUI);",
-          "CREATE INDEX X_AMBIGLUI_LUI ON {schema}.AMBIGLUI(LUI);"
-        )
-
-
-      pb <- progress::progress_bar$new(
-        format = "    [:bar] :current/:total :percent :elapsedfull",
-        total = length(indexes),
-        clear = FALSE,
-        width = 60
-      )
-
-      pb$tick(0)
-      Sys.sleep(0.2)
-
-
-      errors <- vector()
-      for (i in 1:length(indexes)) {
-        index <- glue::glue(indexes[i])
-
-        pb$tick()
-        Sys.sleep(1)
-        cat("\n")
-
-        output <-
-          tryCatch(
-            pg13::send(
-              conn = conn,
-              sql_statement = index,
-              verbose = verbose,
-              render_sql = render_sql
-            ),
-            error = function(e) "Error"
-          )
-
-
-        if (identical(output, "Error")) {
-            errors <-
-              c(
-                errors,
-                index
-              )
-        }
-      }
-
-      if (length(errors) > 0) {
-        typewrite_warning("Some indexes failed:")
-        errors %>%
-          purrr::map(~ typewrite(italicize(.)))
-      }
-
-
-    }
-
     # Log
     if ("log" %in% steps) {
 
       sql_statement <-
         glue::glue(
-      "
+          "
       CREATE TABLE IF NOT EXISTS {log_schema}.{log_table_name} (
           sm_datetime timestamp without time zone NOT NULL,
           sm_version varchar(100) NOT NULL,
@@ -1135,7 +1011,7 @@ for (i in seq_along(ddl)) {
 
       cli::cat_line()
       cli::cat_boxx("Log Results",
-        float = "center"
+                    float = "center"
       )
 
       sql_statement <-
@@ -1148,18 +1024,143 @@ for (i in seq_along(ddl)) {
         )
 
       updated_log <-
-      pg13::query(
-        conn = conn,
-        sql_statement = sql_statement,
-        verbose = verbose,
-        render_sql = render_sql,
-        checks = ''
-      )
+        pg13::query(
+          conn = conn,
+          sql_statement = sql_statement,
+          verbose = verbose,
+          render_sql = render_sql,
+          checks = ''
+        )
 
 
       print(tibble::as_tibble(updated_log))
       cli::cat_line()
     }
+
+
+    if ("add_indexes" %in% steps) {
+
+
+      indexes <-
+        c(
+          "CREATE INDEX X_MRCOC_CUI1 ON {schema}.MRCOC(CUI1);",
+          "CREATE INDEX X_MRCOC_AUI1 ON {schema}.MRCOC(AUI1);",
+          "CREATE INDEX X_MRCOC_CUI2 ON {schema}.MRCOC(CUI2);",
+          "CREATE INDEX X_MRCOC_AUI2 ON {schema}.MRCOC(AUI2);",
+          "CREATE INDEX X_MRCOC_SAB ON {schema}.MRCOC(SAB);",
+          "CREATE INDEX X_MRCONSO_CUI ON {schema}.MRCONSO(CUI);",
+          "ALTER TABLE {schema}.MRCONSO ADD CONSTRAINT X_MRCONSO_PK PRIMARY KEY (AUI);",
+          "CREATE INDEX X_MRCONSO_SUI ON {schema}.MRCONSO(SUI);",
+          "CREATE INDEX X_MRCONSO_LUI ON {schema}.MRCONSO(LUI);",
+          "CREATE INDEX X_MRCONSO_CODE ON {schema}.MRCONSO(CODE);",
+          "CREATE INDEX X_MRCONSO_SAB_TTY ON {schema}.MRCONSO(SAB,TTY);",
+          "CREATE INDEX X_MRCONSO_SCUI ON {schema}.MRCONSO(SCUI);",
+          "CREATE INDEX X_MRCONSO_STR ON {schema}.MRCONSO(STR);",
+          "CREATE INDEX X_MRCXT_CUI ON {schema}.MRCXT(CUI);",
+          "CREATE INDEX X_MRCXT_AUI ON {schema}.MRCXT(AUI);",
+          "CREATE INDEX X_MRCXT_SAB ON {schema}.MRCXT(SAB);",
+          "CREATE INDEX X_MRDEF_CUI ON {schema}.MRDEF(CUI);",
+          "CREATE INDEX X_MRDEF_AUI ON {schema}.MRDEF(AUI);",
+          "ALTER TABLE {schema}.MRDEF ADD CONSTRAINT X_MRDEF_PK PRIMARY KEY (ATUI);",
+          "CREATE INDEX X_MRDEF_SAB ON {schema}.MRDEF(SAB);",
+          "CREATE INDEX X_MRHIER_CUI ON {schema}.MRHIER(CUI);",
+          "CREATE INDEX X_MRHIER_AUI ON {schema}.MRHIER(AUI);",
+          "CREATE INDEX X_MRHIER_SAB ON {schema}.MRHIER(SAB);",
+          "CREATE INDEX X_MRHIER_PTR ON {schema}.MRHIER(PTR);",
+          "CREATE INDEX X_MRHIER_PAUI ON {schema}.MRHIER(PAUI);",
+          "CREATE INDEX X_MRHIST_CUI ON {schema}.MRHIST(CUI);",
+          "CREATE INDEX X_MRHIST_SOURCEUI ON {schema}.MRHIST(SOURCEUI);",
+          "CREATE INDEX X_MRHIST_SAB ON {schema}.MRHIST(SAB);",
+          "ALTER TABLE {schema}.MRRANK ADD CONSTRAINT X_MRRANK_PK PRIMARY KEY (SAB,TTY);",
+          "CREATE INDEX X_MRREL_CUI1 ON {schema}.MRREL(CUI1);",
+          "CREATE INDEX X_MRREL_AUI1 ON {schema}.MRREL(AUI1);",
+          "CREATE INDEX X_MRREL_CUI2 ON {schema}.MRREL(CUI2);",
+          "CREATE INDEX X_MRREL_AUI2 ON {schema}.MRREL(AUI2);",
+          "ALTER TABLE {schema}.MRREL ADD CONSTRAINT X_MRREL_PK PRIMARY KEY (RUI);",
+          "CREATE INDEX X_MRREL_SAB ON {schema}.MRREL(SAB);",
+          "ALTER TABLE {schema}.MRSAB ADD CONSTRAINT X_MRSAB_PK PRIMARY KEY (VSAB);",
+          "CREATE INDEX X_MRSAB_RSAB ON {schema}.MRSAB(RSAB);",
+          "CREATE INDEX X_MRSAT_CUI ON {schema}.MRSAT(CUI);",
+          "CREATE INDEX X_MRSAT_METAUI ON {schema}.MRSAT(METAUI);",
+          "ALTER TABLE {schema}.MRSAT ADD CONSTRAINT X_MRSAT_PK PRIMARY KEY (ATUI);",
+          "CREATE INDEX X_MRSAT_SAB ON {schema}.MRSAT(SAB);",
+          "CREATE INDEX X_MRSAT_ATN ON {schema}.MRSAT(ATN);",
+          "CREATE INDEX X_MRSTY_CUI ON {schema}.MRSTY(CUI);",
+          "ALTER TABLE {schema}.MRSTY ADD CONSTRAINT X_MRSTY_PK PRIMARY KEY (ATUI);",
+          "CREATE INDEX X_MRSTY_STY ON {schema}.MRSTY(STY);",
+          "CREATE INDEX X_MRXNS_ENG_NSTR ON {schema}.MRXNS_ENG(NSTR);",
+          "CREATE INDEX X_MRXNW_ENG_NWD ON {schema}.MRXNW_ENG(NWD);",
+          "CREATE INDEX X_MRXW_BAQ_WD ON {schema}.MRXW_BAQ(WD);",
+          "CREATE INDEX X_MRXW_CZE_WD ON {schema}.MRXW_CZE(WD);",
+          "CREATE INDEX X_MRXW_DAN_WD ON {schema}.MRXW_DAN(WD);",
+          "CREATE INDEX X_MRXW_DUT_WD ON {schema}.MRXW_DUT(WD);",
+          "CREATE INDEX X_MRXW_ENG_WD ON {schema}.MRXW_ENG(WD);",
+          "CREATE INDEX X_MRXW_FIN_WD ON {schema}.MRXW_FIN(WD);",
+          "CREATE INDEX X_MRXW_FRE_WD ON {schema}.MRXW_FRE(WD);",
+          "CREATE INDEX X_MRXW_GER_WD ON {schema}.MRXW_GER(WD);",
+          "CREATE INDEX X_MRXW_HEB_WD ON {schema}.MRXW_HEB(WD);",
+          "CREATE INDEX X_MRXW_HUN_WD ON {schema}.MRXW_HUN(WD);",
+          "CREATE INDEX X_MRXW_ITA_WD ON {schema}.MRXW_ITA(WD);",
+          "CREATE INDEX X_MRXW_JPN_WD ON {schema}.MRXW_JPN(WD);",
+          "CREATE INDEX X_MRXW_NOR_WD ON {schema}.MRXW_NOR(WD);",
+          "CREATE INDEX X_MRXW_POR_WD ON {schema}.MRXW_POR(WD);",
+          "CREATE INDEX X_MRXW_RUS_WD ON {schema}.MRXW_RUS(WD);",
+          "CREATE INDEX X_MRXW_SPA_WD ON {schema}.MRXW_SPA(WD);",
+          "CREATE INDEX X_MRXW_SWE_WD ON {schema}.MRXW_SWE(WD);",
+          "CREATE INDEX X_AMBIGSUI_SUI ON {schema}.AMBIGSUI(SUI);",
+          "CREATE INDEX X_AMBIGLUI_LUI ON {schema}.AMBIGLUI(LUI);"
+        )
+
+
+      pb <- progress::progress_bar$new(
+        format = "    [:bar] :current/:total :percent :elapsedfull",
+        total = length(indexes),
+        clear = FALSE,
+        width = 60
+      )
+
+      pb$tick(0)
+      Sys.sleep(0.2)
+
+
+      errors <- vector()
+      for (i in 1:length(indexes)) {
+        index <- glue::glue(indexes[i])
+
+        pb$tick()
+        Sys.sleep(1)
+        cat("\n")
+
+        output <-
+          tryCatch(
+            pg13::send(
+              conn = conn,
+              sql_statement = index,
+              verbose = verbose,
+              render_sql = render_sql
+            ),
+            error = function(e) "Error"
+          )
+
+
+        if (identical(output, "Error")) {
+            errors <-
+              c(
+                errors,
+                index
+              )
+        }
+      }
+
+      if (length(errors) > 0) {
+        typewrite_warning("Some indexes failed:")
+        errors %>%
+          purrr::map(~ typewrite(italicize(.)))
+      }
+
+
+    }
+
 
     if ("setup_crosswalk" %in% steps) {
 

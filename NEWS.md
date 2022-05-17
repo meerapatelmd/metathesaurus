@@ -6,6 +6,8 @@ extension.
 * Added postprocessing steps are part of `run_setup()`  
 * Fixed bug with `run_setup` where the `conn_fun` argument 
 was not utilized.  
+* Changed ordering of `run_setup` steps so the log occurs 
+before indexes.  
 * Added SQL script for post-processing of the MRHIER 
 table. 
 * Removed deprecated `setup_pg()`, `scrape_*`  
