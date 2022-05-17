@@ -851,14 +851,12 @@ for (i in seq_along(ddl)) {
             error = function(e) "Error"
           )
 
-        if (length(output) == 1) {
-          if (output == "Error") {
+        if (identical(output, "Error")) {
             errors <-
               c(
                 errors,
                 table
               )
-          }
         }
       }
 
@@ -965,7 +963,7 @@ for (i in seq_along(ddl)) {
 
       errors <- vector()
       for (i in 1:length(indexes)) {
-        index <- render(indexes[i])
+        index <- glue::glue(indexes[i])
 
         pb$tick()
         Sys.sleep(1)
@@ -983,14 +981,12 @@ for (i in seq_along(ddl)) {
           )
 
 
-        if (length(output) == 1) {
-          if (output == "Error") {
+        if (identical(output, "Error")) {
             errors <-
               c(
                 errors,
                 index
               )
-          }
         }
       }
 

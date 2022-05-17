@@ -1,6 +1,6 @@
 Package: metathesaurus
 Title: Setup UMLS Metathesaurus  
-Version: 4.0.0.9000
+Version: 4.1.0
 Authors@R: 
     person(given = "Meera",
            family = "Patel",
@@ -17,19 +17,13 @@ BugReports:
 Depends: 
     R (>= 2.10)
 Imports: 
-    dplyr,
     glue,
     huxtable,
-    magrittr,
     progress,
-    purrr,
     R.cache,
-    readr,
     rlang,
     rvest,
-    stringr,
-    tibble,
-    tidyr,
+    tidyverse,
     xml2
 Suggests: 
     knitr,

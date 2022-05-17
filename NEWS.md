@@ -1,4 +1,4 @@
-# metathesaurus 4.0.0.9000   
+# metathesaurus 4.1.0   
 
 * Added RxNorm Map family of functions  
 * Introduced RxNorm processing built on the `PL/R` 
